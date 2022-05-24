@@ -1,4 +1,4 @@
-from idanalysis import DeltaData
+from idanalysis import DeltaData, EPUData
 
 
 DEFAULT_RANDOM_IDS = True
@@ -14,6 +14,14 @@ def create_deltadata(random_ids=DEFAULT_RANDOM_IDS):
         configs = DeltaData.SABIA_CONFIGS
     deltadata = DeltaData(folder=folder, configs=configs)
     return deltadata
+
+
+def create_epudata():
+
+    folder = FOLDER_BASE + EPUData.FOLDER_EPU_MAPS
+    configs = EPUData.EPU_CONFIGS
+    epudata = EPUData(folder=folder, configs=configs)
+    return epudata
 
 
 def get_config_names(data):

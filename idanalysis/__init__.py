@@ -1,4 +1,5 @@
 from .deltadata import DeltaData
+from .epudata import EPUData
 from .trajectory import IDTrajectory
 
 import os as _os

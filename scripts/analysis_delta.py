@@ -3,13 +3,13 @@
 import numpy as np
 import matplotlib.pyplot as plt
 
-from idanalysis.trajectory import Trajectory
+from idanalysis.trajectory import IDTrajectory
 
 from pyaccel.optics.edwards_teng import estimate_coupling_parameters
 from idanalysis.deltadata import DeltaData
 from idanalysis.model import calc_optics, create_model, get_id_sabia_list
 
-from utils import create_deltadata
+from utils import create_deltadata, FOLDER_BASE
 
 
 def dGV_plot_config_space(configs, save=True):
@@ -21,7 +21,7 @@ def dGV_calc_posang_respm(configs, s_step=0.1):
         if configs.check_is_dGV(config):
             fmap, label = configs.get_fieldmap(config)
             print(label)
-            traj = Trajectory(label=label, fieldmap=fmap)
+            traj = IDTrajectory(label=label, fieldmap=fmap)
             respm = traj.calc_posang_respm(s_step=s_step, save=True)
 
 
@@ -32,7 +32,7 @@ def dGV_correct_posang(configs, s_step=0.1):
             fmap, label = configs.get_fieldmap(config)
             print(label)
             # create traj object
-            traj = Trajectory(label=label, fieldmap=fmap)
+            traj = IDTrajectory(label=label, fieldmap=fmap)
             # calc initial traj and save result
             traj.calc_trajectory(s_step=s_step)
             traj.save_posang(label='uncorrected')
@@ -63,7 +63,7 @@ def dGV_plot_rktraj(configs):
             
             # create traj object
             fmap, label = configs.get_fieldmap(config)
-            traj = Trajectory(label=label, fieldmap=fmap)
+            traj = IDTrajectory(label=label, fieldmap=fmap)
             traj.output_folder = './results/dGV/posang/'
             
             # corrected trajectory
@@ -123,9 +123,9 @@ def run():
 
     print_configs(configs)
     dGV_plot_config_space(configs)
-    dGV_calc_posang_respm(configs, s_step=0.1)
-    dGV_correct_posang(configs, s_step=0.1)
-    dGV_plot_rktraj(configs)
+    # dGV_calc_posang_respm(configs, s_step=0.1)
+    # dGV_correct_posang(configs, s_step=0.1)
+    # dGV_plot_rktraj(configs)
 
 
 # def run_new():

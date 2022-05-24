@@ -512,7 +512,6 @@ def coupling(models):
         plt.show()
 
 
-
 if __name__ == '__main__':
 
     deltadata = create_deltadata()
