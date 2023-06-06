@@ -2130,9 +2130,7 @@ class AnalysisEffects(Tools):
                 self._correct_beta(
                     straight_nr_, knobs_, goal_beta, goal_alpha)
 
-                knobs_l = list(knobs_.values())
-                knobs_out = [item for sublist in knobs_l for item in sublist]
-                self._correct_tunes(goal_tunes, knobs_out)
+                self._correct_tunes(goal_tunes)
 
                 if self.bb_plot_flag:
                     # plot results
