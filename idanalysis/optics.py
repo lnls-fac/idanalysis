@@ -175,7 +175,7 @@ def calc_dynapt_xy(
                    ring, nrturns, nrtheta=9, mindeltar=0.1e-3,
                    r1=0, r2=30e-3, print_flag=False):
 
-    ang = np.linspace(0, np.pi, nrtheta)
+    ang = np.linspace(np.pi/2, np.pi, nrtheta)
     ang[0] += 0.0001
     ang[-1] -= 0.0001
 

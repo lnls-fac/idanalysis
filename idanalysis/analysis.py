@@ -158,7 +158,7 @@ class Tools:
 
         roff_idx = _np.argmin(_np.abs(rt-utils.ROLL_OFF_RT))
         rt0_idx = _np.argmin(_np.abs(rt))
-        roff = _np.abs(b[roff_idx]/b[rt0_idx]-1)
+        roff = b[roff_idx]/b[rt0_idx]-1
         return b, roff, rz_at_max
 
     @staticmethod
@@ -1194,7 +1194,7 @@ class FieldAnalysisFromRadia(Tools):
                 rt = data[parameter]['rolloff_ry']
             rtp_idx = _np.argmin(_np.abs(rt - utils.ROLL_OFF_RT))
             rt0_idx = _np.argmin(_np.abs(rt))
-            roff = _np.abs(b[rtp_idx]/b[rt0_idx]-1)
+            roff = b[rtp_idx]/b[rt0_idx]-1
             b0 = b[rt0_idx]
             roll_off = 100*(b/b0 - 1)
             return rt, b, roll_off, roff
@@ -1225,7 +1225,10 @@ class FieldAnalysisFromRadia(Tools):
             _plt.xlabel('y [mm]')
         _plt.ylabel('Field roll off [%]')
         _plt.xlim(-utils.ROLL_OFF_RT, utils.ROLL_OFF_RT)
-        _plt.ylim(-101*roff, 20*roff)
+        if roff >= 0:
+            _plt.ylim(-0.1, 100*roff)
+        else:
+            _plt.ylim(100*roff, 0.1)
         if field_component == 'by':
             _plt.title('Field roll-off at x = {} mm'.format(utils.ROLL_OFF_RT))
         elif field_component == 'bx':
