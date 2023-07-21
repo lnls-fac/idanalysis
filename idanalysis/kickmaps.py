@@ -278,12 +278,7 @@ class IDKickMap:
                 self.fposx[i, j] = rxf / 1e3
                 self.fposy[i, j] = ryf / 1e3
 
-    def find_fit_plateau(self, p):
-        """."""
-        opt = _curve_fit(self._plateau_function, self.posx, p)[0]
-        return opt
-
-    def filter_kmap(self, posx=None, posy=None, order=4, plot_flag=False):
+    def filter_kmap(self, posx=None, posy=None, order=5, plot_flag=False):
         self._load_kmap()
         if posx is not None:
             kickx = _np.zeros((len(self.posy), len(posx)))
@@ -298,11 +293,11 @@ class IDKickMap:
                 label = 'y = {:.2f} mm'.format(1e3*ryi)
                 if plot_flag:
                     _plt.plot(1e3*self.posx, 1e6*self.kickx[i, :],
-                              '.-', label=label)
+                              '.', label=label)
                     _plt.plot(1e3*posx, 1e6*kickx[i, :])
             if plot_flag:
                 _plt.xlabel('x pos [mm]')
-                _plt.ylabel('kicks [Tm²]')
+                _plt.ylabel('kicks x [Tm²]')
                 _plt.legend()
                 _plt.show()
 
@@ -318,11 +313,11 @@ class IDKickMap:
                 label = 'y = {:.2f} mm'.format(1e3*ryi)
                 if plot_flag:
                     _plt.plot(1e3*self.posx, 1e6*self.kicky[i, :],
-                              '.-', label=label)
+                              '.', label=label)
                     _plt.plot(1e3*posx, 1e6*kicky[i, :])
             if plot_flag:
                 _plt.xlabel('x pos [mm]')
-                _plt.ylabel('kicks [Tm²]')
+                _plt.ylabel('kicks y [Tm²]')
                 _plt.legend()
                 _plt.show()
 
@@ -347,11 +342,11 @@ class IDKickMap:
                 label = 'x = {:.2f} mm'.format(1e3*rxi)
                 if plot_flag:
                     _plt.plot(1e3*self.posy, 1e6*self.kickx[:, i],
-                              '.-', label=label)
+                              '.', label=label)
                     _plt.plot(1e3*posy, 1e6*kickx[:, i])
             if plot_flag:
                 _plt.xlabel('y pos [mm]')
-                _plt.ylabel('kicks [Tm²]')
+                _plt.ylabel('kicks x [Tm²]')
                 _plt.legend()
                 _plt.show()
 
@@ -367,11 +362,11 @@ class IDKickMap:
                 label = 'x = {:.2f} mm'.format(1e3*rxi)
                 if plot_flag:
                     _plt.plot(1e3*self.posy, 1e6*self.kicky[:, i],
-                              '.-', label=label)
+                              '.', label=label)
                     _plt.plot(1e3*posy, 1e6*kicky[:, i])
             if plot_flag:
                 _plt.xlabel('y pos [mm]')
-                _plt.ylabel('kicks [Tm²]')
+                _plt.ylabel('kicks y [Tm²]')
                 _plt.legend()
                 _plt.show()
 

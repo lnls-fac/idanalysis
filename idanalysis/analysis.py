@@ -974,6 +974,7 @@ class FieldAnalysisFromRadia(Tools):
         rz, rx, ry = dict(), dict(), dict()
         px, py, pz = dict(), dict(), dict()
         s = dict()
+        traj_ = dict()
         for var_params, id in self.models.items():
             # create IDKickMap and calc trajectory
             self.idkickmap = id
@@ -988,6 +989,7 @@ class FieldAnalysisFromRadia(Tools):
             px[var_params], py[var_params], pz[var_params] =\
                 traj.px, traj.py, traj.pz
             s[var_params] = traj.s
+            traj_[var_params] = traj
 
         self.data['ontraj_bx'] = bx
         self.data['ontraj_by'] = by
@@ -1002,6 +1004,7 @@ class FieldAnalysisFromRadia(Tools):
         self.data['ontraj_pz'] = pz
 
         self.data['ontraj_s'] = s
+        self.data['traj'] = traj_
 
     def _generate_field_data_fname(self, keys):
         fname = self.FOLDER_DATA
@@ -1451,7 +1454,7 @@ class AnalysisKickmap(Tools):
                                width=None, phase=None, gap=None):
         fname = utils.FOLDER_DATA
         if self.meas_flag:
-            fpath = fpath.replace('model/', 'measurements/')
+            fname = fname.replace('model/', 'measurements/')
         sulfix = 'kick{}-vs-{}-all-planes'.format(
             kick_plane.lower(), var.lower())
 
@@ -1483,7 +1486,7 @@ class AnalysisKickmap(Tools):
                     self._idkickmap.save_kickmap_file(fname)
 
     def run_filter_kickmap(self, widths, phases, gaps,
-                           rx, filter_order=4, is_shifted=True):
+                           rx, ry, filter_order=5, is_shifted=True):
         for width in widths:
             for phase in phases:
                 for gap in gaps:
@@ -1492,7 +1495,7 @@ class AnalysisKickmap(Tools):
                         shift_flag=is_shifted, meas_flag=self.meas_flag)
                     self._idkickmap = _IDKickMap(fname)
                     self._idkickmap.filter_kmap(
-                        posx=rx, order=filter_order, plot_flag=False)
+                        posx=rx, posy=ry, order=filter_order, plot_flag=True)
                     self._idkickmap.kmap_idlen = utils.ID_KMAP_LEN
                     fname = fname.replace('.txt', '-filtered.txt')
                     self._idkickmap.save_kickmap_file(fname)
@@ -1584,10 +1587,10 @@ class AnalysisKickmap(Tools):
 
                     if var.lower() == 'x':
                         r0, xlabel, rvar = (rx0, 'x0 [mm]', 'y')
-                        pfit = _np.polyfit(r0, pf, 21)
+                        pfit = _np.polyfit(r0, pf, len(r0)-1)
                     else:
                         r0, xlabel, rvar = (ry0, 'y0 [mm]', 'x')
-                        pfit = _np.polyfit(r0, pf, 11)
+                        pfit = _np.polyfit(r0, pf, len(r0)-1)
                     pf_fit = _np.polyval(pfit, r0)
 
                     label = utils.var_param + ' = {} mm'.format(var_param)
@@ -1624,7 +1627,9 @@ class AnalysisKickmap(Tools):
                                                 phase=phase,
                                                 gap=gap,
                                                 linear=self.linear,
-                                                meas_flag=self.meas_flag)
+                                                meas_flag=self.meas_flag,
+                                                shift_flag=self.shift_flag,
+                                                filter_flag=self.filter_flag)
                 self._idkickmap = _IDKickMap(fname)
                 fname_fig = self._get_figname_allplanes(
                     width=width, phase=phase, gap=gap,
@@ -1636,8 +1641,8 @@ class AnalysisKickmap(Tools):
                     kmappos = self._idkickmap.posx
 
                 for plane_idx, pos in enumerate(kmappos):
-                    if pos < 0:
-                        continue
+                    # if pos > 0:
+                        # continue
                     rx0, ry0, pxf, pyf, *_ = self._calc_idkmap_kicks(
                         var=var, plane_idx=plane_idx)
                     if not self.linear:
@@ -1670,7 +1675,9 @@ class AnalysisKickmap(Tools):
     def check_kick_at_plane_trk(self, width, gap, phase):
         fname = self._get_kmap_filename(width=width, gap=gap,
                                         phase=phase, linear=self.linear,
-                                        meas_flag=self.meas_flag)
+                                        meas_flag=self.meas_flag,
+                                        shift_flag=self.shift_flag,
+                                        filter_flag=self.filter_flag)
         self._idkickmap = _IDKickMap(fname)
         plane_idx = list(self._idkickmap.posy).index(0)
         out = self._calc_idkmap_kicks(plane_idx=plane_idx)
