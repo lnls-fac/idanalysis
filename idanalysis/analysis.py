@@ -29,48 +29,54 @@ class Tools:
         symmetrized = 2
 
     @staticmethod
-    def _get_data_path(width, phase, gap, meas_flag=False):
+    def _create_config_path(**kwargs):
+        path = ''
+        for key, value in kwargs.items():
+            if key == 'phase':
+                phase_str = Tools._get_phase_str(value)
+                path += 'phases/phase_{}/'.format(phase_str)
+            elif key == 'gap':
+                gap_str = Tools._get_gap_str(value)
+                path += 'gap_{}/'.format(gap_str)
+            else:
+                path += '{}/{}_{}/'.format(key + 's', key, value)
+        return path
+
+    @staticmethod
+    def _get_data_path(meas_flag=False, **kwargs):
         fpath = utils.FOLDER_DATA
         if meas_flag:
             fpath = fpath.replace('model/', 'measurements/')
-        else:
-            fpath = fpath.replace(
-                'data/', 'data/widths/width_{}/'.format(width))
-
-        phase_str = Tools._get_phase_str(phase)
-        fpath += 'phases/phase_{}/'.format(phase_str)
-
-        gap_str = Tools._get_gap_str(gap)
-        fpath += 'gap_{}/'.format(gap_str)
+        config = Tools._create_config_path(**kwargs)
+        fpath += config
         return fpath
 
     @staticmethod
-    def _get_meas_data_path(phase, gap):
-        fpath = utils.FOLDER_DATA
-        fpath = fpath.replace('model', 'measurements')
-
-        phase_str = Tools._get_phase_str(phase)
-        fpath = fpath.replace(
-            'data/', 'data/phases/phase_{}/'.format(phase_str))
-
-        gap_str = Tools._get_gap_str(gap)
-        fpath += 'gap_{}/'.format(gap_str)
+    def _get_meas_data_path(**kwargs):
+        fpath = Tools._get_data_path(meas_flag=True, **kwargs)
         return fpath
 
     @staticmethod
     def _get_kmap_filename(
-            width, gap, phase,
             shift_flag=False, filter_flag=False, linear=False,
-            meas_flag=False):
+            meas_flag=False, **kwargs):
         fpath = utils.FOLDER_DATA + 'kickmaps/'
         fpath = fpath.replace('model/data/', 'model/')
         if meas_flag:
             fpath = fpath.replace('model/', 'measurements/')
-        gap_str = Tools._get_gap_str(gap)
-        phase_str = Tools._get_phase_str(phase)
-        width = width
-        fname = fpath + f'kickmap-ID_width{width}_phase{phase_str}' +\
-            f'_gap{gap_str}.txt'
+
+        fname = 'kickmap-ID_width_'
+        for key, value in kwargs.items():
+            if key == 'phase':
+                phase_str = Tools._get_phase_str(value)
+                fname += 'phase{}_'.format(phase_str)
+            elif key == 'gap':
+                gap_str = Tools._get_gap_str(value)
+                fname += 'gap{}_'.format(gap_str)
+            else:
+                fname += '{}{}_'.format(key, value)
+        fname += '.txt'
+
         if linear:
             fname = fname.replace('.txt', '-linear.txt')
             return fname
@@ -128,13 +134,26 @@ class Tools:
         period = model.period_length
         phase_flag = False
 
-        # Relations valid for Apple-II devices not for APU
+        # get ID type
+        id_class = model.__class__.__name__
+        if 'Delta' in id_class or 'Apple' in id_class:
+            id_type = 'Apple'
+        else:
+            id_type = 'APU'
+
+        # set field component which will be analised
         if _np.isclose(_np.abs(phase), period/2, atol=0.1*period):
             phase_flag = True
             if field_component == 'by':
-                field_component = 'bx'
+                if id_type == 'Apple':
+                    field_component = 'bx'
+                else:
+                    field_component = 'bz'
             else:
-                field_component = 'by'
+                if id_type == 'Apple':
+                    field_component = 'by'
+                else:
+                    field_component = 'bz'
 
         comp_idx = Tools._get_field_component_idx(field_component)
         rz = _np.linspace(-period/2, period/2, 201)
@@ -143,7 +162,6 @@ class Tools:
         b_max_idx = _np.argmax(b)
         rz_at_max = rz[b_max_idx] + peak_idx*period
 
-        # Relations valid for Apple-II devices not for APU
         if field_component == 'bx':
             if phase_flag:
                 field = model.get_field(rt, 0, rz_at_max)
@@ -196,18 +214,24 @@ class Tools:
         return fmap, fmap_fname
 
     @staticmethod
-    def _get_fmap_roll_off(fmap, phase, plot_flag=False):
+    def _get_fmap_roll_off(fmap, phase, id_type='Apple', plot_flag=False):
         period = utils.ID_PERIOD
         field_component = utils.field_component
         phase_flag = False
 
-        # Relations valid for Apple-II devices not for APU
         if _np.isclose(a=_np.abs(phase), b=period/2, atol=0.1*period):
             phase_flag = True
             if field_component == 'by':
-                field_component = 'bx'
+                if id_type == 'Apple':
+                    field_component = 'bx'
+                else:
+                    field_component = 'bz'
             else:
-                field_component = 'by'
+                if id_type == 'Apple':
+                    field_component = 'by'
+                else:
+                    field_component = 'bz'
+
         if field_component == 'by':
             by = fmap.by[fmap.ry_zero][fmap.rx_zero][:]
             rx = fmap.rx
