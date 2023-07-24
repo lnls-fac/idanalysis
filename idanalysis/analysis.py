@@ -65,16 +65,16 @@ class Tools:
         if meas_flag:
             fpath = fpath.replace('model/', 'measurements/')
 
-        fname = 'kickmap-ID_width_'
+        fname = 'kickmap-ID'
         for key, value in kwargs.items():
             if key == 'phase':
                 phase_str = Tools._get_phase_str(value)
-                fname += 'phase{}_'.format(phase_str)
+                fname += '_phase{}'.format(phase_str)
             elif key == 'gap':
                 gap_str = Tools._get_gap_str(value)
-                fname += 'gap{}_'.format(gap_str)
+                fname += '_gap{}'.format(gap_str)
             else:
-                fname += '{}{}_'.format(key, value)
+                fname += '_{}{}'.format(key, value)
         fname += '.txt'
 
         if linear:
@@ -84,6 +84,7 @@ class Tools:
             fname = fname.replace('.txt', '-shifted_on_axis.txt')
         if filter_flag:
             fname = fname.replace('.txt', '-filtered.txt')
+        fname = fpath + fname
         print(fname)
         return fname
 
@@ -1584,7 +1585,7 @@ class AnalysisKickmap(Tools):
                             width=width, gap=gap, phase=var_param)
                     if utils.var_param == 'gap':
                         fname = self._get_kmap_filename(
-                            width=width, gap=var_param, phase=phase,
+                            width=width,  phase=phase, gap=var_param,
                             shift_flag=self.shift_flag,
                             filter_flag=self.filter_flag,
                             linear=self.linear,
