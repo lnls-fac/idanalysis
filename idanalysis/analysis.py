@@ -29,35 +29,37 @@ class Tools:
         symmetrized = 2
 
     @staticmethod
-    def _create_config_path(**kwargs):
+    def create_config_path(**kwargs):
         path = ''
+        if 'width' in kwargs.items():
+            path += 'widths/width_{}/'.format(kwargs.get('width'))
+        if 'phase' in kwargs.items():
+            phase_str = Tools.get_phase_str(kwargs.get('phase'))
+            path += 'phases/phase_{}/'.format(phase_str)
+        if 'gap' in kwargs.items():
+            gap_str = Tools.get_gap_str(kwargs.get('gap'))
+            path += 'gap_{}/'.format(gap_str)
+
         for key, value in kwargs.items():
-            if key == 'phase':
-                phase_str = Tools._get_phase_str(value)
-                path += 'phases/phase_{}/'.format(phase_str)
-            elif key == 'gap':
-                gap_str = Tools._get_gap_str(value)
-                path += 'gap_{}/'.format(gap_str)
-            else:
-                path += '{}/{}_{}/'.format(key + 's', key, value)
+            path += '{}/{}_{}/'.format(key + 's', key, value)
         return path
 
     @staticmethod
-    def _get_data_path(meas_flag=False, **kwargs):
+    def get_data_path(meas_flag=False, **kwargs):
         fpath = utils.FOLDER_DATA
         if meas_flag:
             fpath = fpath.replace('model/', 'measurements/')
-        config = Tools._create_config_path(**kwargs)
+        config = Tools.create_config_path(**kwargs)
         fpath += config
         return fpath
 
     @staticmethod
-    def _get_meas_data_path(**kwargs):
-        fpath = Tools._get_data_path(meas_flag=True, **kwargs)
+    def get_meas_data_path(**kwargs):
+        fpath = Tools.get_data_path(meas_flag=True, **kwargs)
         return fpath
 
     @staticmethod
-    def _get_kmap_filename(
+    def get_kmap_filename(
             shift_flag=False, filter_flag=False, linear=False,
             meas_flag=False, **kwargs):
         fpath = utils.FOLDER_DATA + 'kickmaps/'
@@ -68,10 +70,10 @@ class Tools:
         fname = 'kickmap-ID'
         for key, value in kwargs.items():
             if key == 'phase':
-                phase_str = Tools._get_phase_str(value)
+                phase_str = Tools.get_phase_str(value)
                 fname += '_phase{}'.format(phase_str)
             elif key == 'gap':
-                gap_str = Tools._get_gap_str(value)
+                gap_str = Tools.get_gap_str(value)
                 fname += '_gap{}'.format(gap_str)
             else:
                 fname += '_{}{}'.format(key, value)
@@ -89,7 +91,7 @@ class Tools:
         return fname
 
     @staticmethod
-    def _create_model_ids(
+    def create_model_ids(
             fname,
             rescale_kicks=utils.RESCALE_KICKS,
             rescale_length=utils.RESCALE_LENGTH,
@@ -121,12 +123,12 @@ class Tools:
         return model, ids
 
     @staticmethod
-    def _get_field_component_idx(field_component):
+    def get_field_component_idx(field_component):
         components = {'bx': 0, 'by': 1, 'bz': 2}
         return components[field_component]
 
     @staticmethod
-    def _calc_radia_roll_off(model, rt, peak_idx=0):
+    def calc_radia_roll_off(model, rt, peak_idx=0):
         field_component = utils.field_component
         if hasattr(model, 'dp'):
             phase = model.dp
@@ -156,7 +158,7 @@ class Tools:
                 else:
                     field_component = 'bz'
 
-        comp_idx = Tools._get_field_component_idx(field_component)
+        comp_idx = Tools.get_field_component_idx(field_component)
         rz = _np.linspace(-period/2, period/2, 201)
         field = model.get_field(0, 0, rz)
         b = field[:, comp_idx]
@@ -181,18 +183,18 @@ class Tools:
         return b, roff, rz_at_max
 
     @staticmethod
-    def _get_gap_str(gap):
+    def get_gap_str(gap):
         gap_str = '{:04.1f}'.format(gap).replace('.', 'p')
         return gap_str
 
     @staticmethod
-    def _get_phase_str(phase):
+    def get_phase_str(phase):
         phase_str = '{:+07.3f}'.format(phase).replace('.', 'p')
         phase_str = phase_str.replace('+', 'pos').replace('-', 'neg')
         return phase_str
 
     @staticmethod
-    def _get_meas_idconfig(phase, gap, config_idx=None):
+    def get_meas_idconfig(phase, gap, config_idx=None):
         phase_idx = utils.MEAS_PHASES.index(phase)
         gap_idx = utils.MEAS_GAPS.index(gap)
         if config_idx is not None:
@@ -202,8 +204,8 @@ class Tools:
         return idconfig
 
     @staticmethod
-    def _get_fmap(phase, gap, config_idx=None):
-        idconfig = Tools._get_meas_idconfig(phase, gap, config_idx=config_idx)
+    def get_fmap(phase, gap, config_idx=None):
+        idconfig = Tools.get_meas_idconfig(phase, gap, config_idx=config_idx)
         print(idconfig)
         MEAS_FILE = utils.ID_CONFIGS[idconfig]
         _, meas_id = MEAS_FILE.split('ID=')
@@ -215,7 +217,7 @@ class Tools:
         return fmap, fmap_fname
 
     @staticmethod
-    def _get_fmap_roll_off(fmap, phase, id_type='Apple', plot_flag=False):
+    def get_fmap_roll_off(fmap, phase, id_type='Apple', plot_flag=False):
         period = utils.ID_PERIOD
         field_component = utils.field_component
         phase_flag = False
@@ -275,7 +277,7 @@ class Tools:
         return rx, byx, rzmax, roff
 
     @staticmethod
-    def _mkdir_function(mypath):
+    def mkdir_function(mypath):
         from errno import EEXIST
         from os import makedirs, path
 
@@ -382,7 +384,7 @@ class FieldAnalysisFromFieldmap(Tools):
         fmaps_names_ = dict()
         for phase in utils.phases:
             for gap in utils.gaps:
-                fmap, fmap_name = self._get_fmap(
+                fmap, fmap_name = self.get_fmap(
                     phase, gap, config_idx=config_idx)
                 key = (('phase', phase), ('gap', gap))
                 fmaps_[(key)] = fmap
@@ -395,7 +397,7 @@ class FieldAnalysisFromFieldmap(Tools):
         gap = key[1][1]
         self.idkickmap = id
         self.idkickmap.fmap_calc_kickmap(posx=self.gridx, posy=self.gridy)
-        fname = self._get_kmap_filename(
+        fname = self.get_kmap_filename(
             width=utils.REAL_WIDTH, phase=phase, gap=gap, meas_flag=True)
         self.idkickmap.save_kickmap_file(kickmap_filename=fname)
 
@@ -418,7 +420,7 @@ class FieldAnalysisFromFieldmap(Tools):
         roll_off = dict()
         for var_params, fmap in self.fmaps.items():
             phase = var_params[0][1]
-            rt, b, rzmax, roff = self._get_fmap_roll_off(
+            rt, b, rzmax, roff = self.get_fmap_roll_off(
                 fmap=fmap, phase=phase)
             b_[var_params] = b
             rt_dict[var_params] = rt
@@ -488,12 +490,12 @@ class FieldAnalysisFromFieldmap(Tools):
         sulfix = 'field_data'
         for parameter in keys:
             if parameter[0] == 'phase':
-                phase_str = self._get_phase_str(parameter[1])
+                phase_str = self.get_phase_str(parameter[1])
                 fname += 'phases/phase_{}/'.format(phase_str)
                 sulfix += '_phase{}'.format(phase_str)
 
             if parameter[0] == 'gap':
-                gap_str = self._get_gap_str(parameter[1])
+                gap_str = self.get_gap_str(parameter[1])
                 fname += 'gap_{}/'.format(gap_str)
                 sulfix += '_gap{}'.format(gap_str)
         return fname + sulfix
@@ -521,14 +523,14 @@ class FieldAnalysisFromFieldmap(Tools):
 
     def _get_field_data_fname(self, phase, gap):
 
-        fpath = self._get_meas_data_path(phase=phase, gap=gap)
+        fpath = self.get_meas_data_path(phase=phase, gap=gap)
 
         sulfix = 'field_data'
 
-        phase_str = self._get_phase_str(phase)
+        phase_str = self.get_phase_str(phase)
         sulfix += '_phase{}'.format(phase_str)
 
-        gap_str = self._get_gap_str(gap)
+        gap_str = self.get_gap_str(gap)
         sulfix += '_gap{}'.format(gap_str)
         return fpath + sulfix
 
@@ -568,7 +570,7 @@ class FieldAnalysisFromFieldmap(Tools):
         filename = output_dir + '/field-profile'
         if sulfix is not None:
             filename += sulfix
-        self._mkdir_function(output_dir)
+        self.mkdir_function(output_dir)
         var_parameters = list(data.keys())
         for i, parameter in enumerate(var_parameters):
             label = utils.var_param + ' {}'.format(parameter)
@@ -747,7 +749,7 @@ class RadiaModelCalibration(Tools):
         self._rx_meas = rx
         self._rx_model = rx
         self._byx_meas = b
-        b_model, _, rzmax = self._calc_radia_roll_off(
+        b_model, _, rzmax = self.calc_radia_roll_off(
             rt=rx, model=self._model)
         self._byx_model = b_model
         self._df_bmeas = _np.diff(self._byx_meas)/_np.diff(self._rx_meas)
@@ -932,7 +934,7 @@ class FieldAnalysisFromRadia(Tools):
         gap = key[2][1]
         self.idkickmap = id
         self.idkickmap.fmap_calc_kickmap(posx=self.gridx, posy=self.gridy)
-        fname = self._get_kmap_filename(
+        fname = self.get_kmap_filename(
             width=width, phase=phase, gap=gap)
         self.idkickmap.save_kickmap_file(kickmap_filename=fname)
 
@@ -966,7 +968,7 @@ class FieldAnalysisFromRadia(Tools):
         rt_dict = dict()
         roll_off = dict()
         for var_params, id in self.models.items():
-            b, roff, _ = self._calc_radia_roll_off(
+            b, roff, _ = self.calc_radia_roll_off(
                 model=id, rt=rt, peak_idx=peak_idx)
             b_[var_params] = b
             rt_dict[var_params] = rt
@@ -1042,26 +1044,26 @@ class FieldAnalysisFromRadia(Tools):
                 sulfix += '_width{}'.format(width)
 
             if parameter[0] == 'phase':
-                phase_str = self._get_phase_str(parameter[1])
+                phase_str = self.get_phase_str(parameter[1])
                 fname += 'phases/phase_{}/'.format(phase_str)
                 sulfix += '_phase{}'.format(phase_str)
 
             if parameter[0] == 'gap':
-                gap_str = self._get_gap_str(parameter[1])
+                gap_str = self.get_gap_str(parameter[1])
                 fname += 'gap_{}/'.format(gap_str)
                 sulfix += '_gap{}'.format(gap_str)
         return fname + sulfix
 
     def _get_field_data_fname(self, width, phase, gap):
-        fpath = self._get_data_path(width=width, phase=phase, gap=gap)
+        fpath = self.get_data_path(width=width, phase=phase, gap=gap)
 
         sulfix = 'field_data'
         sulfix += '_width{}'.format(width)
 
-        phase_str = self._get_phase_str(phase)
+        phase_str = self.get_phase_str(phase)
         sulfix += '_phase{}'.format(phase_str)
 
-        gap_str = self._get_gap_str(gap)
+        gap_str = self.get_gap_str(gap)
         sulfix += '_gap{}'.format(gap_str)
         return fpath + sulfix
 
@@ -1146,7 +1148,7 @@ class FieldAnalysisFromRadia(Tools):
         filename = output_dir + '/field-profile'
         if sulfix is not None:
             filename += sulfix
-        self._mkdir_function(output_dir)
+        self.mkdir_function(output_dir)
         var_parameters = list(data.keys())
         for i, parameter in enumerate(var_parameters):
             label = utils.var_param + ' {}'.format(parameter)
@@ -1364,7 +1366,7 @@ class FieldAnalysisFromRadia(Tools):
         idkickmap.generate_linear_kickmap(brho=brho, posx=self.gridx,
                                           posy=self.gridy, cxx=cxx, cyy=cyy,
                                           cxy=cxy, cyx=cyx)
-        fname = self._get_kmap_filename(
+        fname = self.get_kmap_filename(
             width=width, phase=phase, gap=gap)
         fname = fname.replace('.txt', '-linear.txt')
         idkickmap.kmap_idlen = utils.ID_KMAP_LEN
@@ -1378,9 +1380,9 @@ class FieldAnalysisFromRadia(Tools):
                     print(
                         f'calibrating model for gap {gap} mm, phase {phase}' +
                         f' mm and width {width} mm')
-                    fmap, _ = self._get_fmap(
+                    fmap, _ = self.get_fmap(
                         phase=phase, gap=gap, config_idx=self.config_idx)
-                    rx, byx, rzmax, roff = self._get_fmap_roll_off(
+                    rx, byx, rzmax, roff = self.get_fmap_roll_off(
                         fmap, plot_flag=plot_flag, phase=phase)
                     model = utils.generate_radia_model(
                         width=width, phase=phase, gap=gap,
@@ -1456,18 +1458,18 @@ class AnalysisKickmap(Tools):
         fpath = fpath.replace('data/', 'data/general/')
 
         if utils.var_param == 'gap':
-            phase_str = self._get_phase_str(phase)
+            phase_str = self.get_phase_str(phase)
             fname = fpath + 'kick{}-vs-{}-width{}mm-phase{}.png'.format(
                 kick_plane, var.lower(), width, phase_str)
 
         if utils.var_param == 'phase':
-            gap_str = self._get_gap_str(gap)
+            gap_str = self.get_gap_str(gap)
             fname = fpath + 'kick{}-vs-{}-width{}mm-gap{}.png'.format(
                 kick_plane, var.lower(), width, gap_str)
 
         if utils.var_param == 'width':
-            phase_str = self._get_phase_str(phase)
-            gap_str = self._get_gap_str(gap)
+            phase_str = self.get_phase_str(phase)
+            gap_str = self.get_gap_str(gap)
             fname = fpath + 'kick{}-vs-{}-phase{}-gap{}.png'.format(
                 kick_plane, var.lower(), phase_str, gap_str)
         if self.linear:
@@ -1486,10 +1488,10 @@ class AnalysisKickmap(Tools):
         fname = fname.replace(
             'data/', 'data/widths/width_{}/'.format(width))
 
-        phase_str = self._get_phase_str(phase)
+        phase_str = self.get_phase_str(phase)
         fname += 'phases/phase_{}/'.format(phase_str)
 
-        gap_str = self._get_gap_str(gap)
+        gap_str = self.get_gap_str(gap)
         fname += 'gap_{}/'.format(gap_str)
 
         fname += sulfix
@@ -1502,7 +1504,7 @@ class AnalysisKickmap(Tools):
         for width in widths:
             for phase in phases:
                 for gap in gaps:
-                    fname = self._get_kmap_filename(
+                    fname = self.get_kmap_filename(
                         width=width, phase=phase, gap=gap,
                         meas_flag=self.meas_flag)
                     self._idkickmap = _IDKickMap(
@@ -1515,7 +1517,7 @@ class AnalysisKickmap(Tools):
         for width in widths:
             for phase in phases:
                 for gap in gaps:
-                    fname = self._get_kmap_filename(
+                    fname = self.get_kmap_filename(
                         width=width, phase=phase, gap=gap,
                         shift_flag=is_shifted, meas_flag=self.meas_flag)
                     self._idkickmap = _IDKickMap(fname)
@@ -1564,7 +1566,7 @@ class AnalysisKickmap(Tools):
                 for var_param, color in zip(var_params, colors):
 
                     if utils.var_param == 'width':
-                        fname = self._get_kmap_filename(
+                        fname = self.get_kmap_filename(
                             width=var_param, gap=gap, phase=phase,
                             shift_flag=self.shift_flag,
                             filter_flag=self.filter_flag,
@@ -1574,7 +1576,7 @@ class AnalysisKickmap(Tools):
                             kick_plane=kick_plane, var=var,
                             width=var_param, gap=gap, phase=phase)
                     if utils.var_param == 'phase':
-                        fname = self._get_kmap_filename(
+                        fname = self.get_kmap_filename(
                             width=width, gap=gap, phase=var_param,
                             shift_flag=self.shift_flag,
                             filter_flag=self.filter_flag,
@@ -1584,7 +1586,7 @@ class AnalysisKickmap(Tools):
                             kick_plane=kick_plane, var=var,
                             width=width, gap=gap, phase=var_param)
                     if utils.var_param == 'gap':
-                        fname = self._get_kmap_filename(
+                        fname = self.get_kmap_filename(
                             width=width,  phase=phase, gap=var_param,
                             shift_flag=self.shift_flag,
                             filter_flag=self.filter_flag,
@@ -1648,7 +1650,7 @@ class AnalysisKickmap(Tools):
             planes=['X', 'Y'], kick_planes=['X', 'Y']):
         for var in planes:
             for kick_plane in kick_planes:
-                fname = self._get_kmap_filename(width=width,
+                fname = self.get_kmap_filename(width=width,
                                                 phase=phase,
                                                 gap=gap,
                                                 linear=self.linear,
@@ -1698,7 +1700,7 @@ class AnalysisKickmap(Tools):
                 _plt.close()
 
     def check_kick_at_plane_trk(self, width, gap, phase):
-        fname = self._get_kmap_filename(width=width, gap=gap,
+        fname = self.get_kmap_filename(width=width, gap=gap,
                                         phase=phase, linear=self.linear,
                                         meas_flag=self.meas_flag,
                                         shift_flag=self.shift_flag,
@@ -1714,7 +1716,7 @@ class AnalysisKickmap(Tools):
             pyf *= utils.RESCALE_KICKS
 
         # lattice with IDs
-        model, _ = self._create_model_ids(fname, linear=self.linear)
+        model, _ = self.create_model_ids(fname, linear=self.linear)
 
         famdata = pymodels.si.get_family_data(model)
 
@@ -1901,7 +1903,7 @@ class AnalysisEffects(Tools):
             _plt.show()
 
     def _plot_beta_beating(self, width, phase, gap, xlim=None):
-        fpath = self._get_data_path(width=width, phase=phase,
+        fpath = self.get_data_path(width=width, phase=phase,
                                     gap=gap, meas_flag=self.meas_flag)
         # Compare optics between nominal value and uncorrect optics due ID
         results = self._calc_dtune_betabeat(twiss1=self._twiss1)
@@ -2090,12 +2092,12 @@ class AnalysisEffects(Tools):
         print('tunex  : {:.6f}'.format(self._twiss0.mux[-1]/2/_np.pi))
         print('tuney  : {:.6f}'.format(self._twiss0.muy[-1]/2/_np.pi))
         # create model with ID
-        fname = self._get_kmap_filename(width=width, phase=phase, gap=gap,
+        fname = self.get_kmap_filename(width=width, phase=phase, gap=gap,
                                         shift_flag=self.shift_flag,
                                         filter_flag=self.filter_flag,
                                         linear=self.linear,
                                         meas_flag=self.meas_flag)
-        self._model_id, self._ids = self._create_model_ids(fname=fname,
+        self._model_id, self._ids = self.create_model_ids(fname=fname,
                                                            linear=self.linear)
         knobs, locs_beta, straight_nr = self._get_knobs_locs()
 
@@ -2191,7 +2193,7 @@ class AnalysisEffects(Tools):
             nuy_bounds=(14.12, 14.45),
             nux_bounds=(49.05, 49.50))
 
-        fpath = self._get_data_path(width=width, phase=phase,
+        fpath = self.get_data_path(width=width, phase=phase,
                                     gap=gap, meas_flag=self.meas_flag)
         print(fpath)
         label1 = ['', '-ids-nonsymm', '-ids-symm'][self.calc_type]
