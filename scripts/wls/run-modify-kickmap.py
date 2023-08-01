@@ -17,5 +17,5 @@ if __name__ == "__main__":
                                    widths=widths)
     rx = np.linspace(-4.0, +4.0, 21) / 1000  # [m]
     ry = np.linspace(-2.6, +2.6, 21) / 1000  # [m]
-    # kickanalysis.run_filter_kickmap(gaps=gaps, phases=phases,
-                                    # widths=widths, rx=rx, ry=ry)
+    kickanalysis.run_filter_kickmap(gaps=gaps, phases=phases,
+                                    widths=widths, rx=rx, ry=ry)
