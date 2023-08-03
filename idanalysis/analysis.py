@@ -31,16 +31,19 @@ class Tools:
     @staticmethod
     def create_config_path(**kwargs):
         path = ''
-        if 'width' in kwargs.items():
+        if 'width' in kwargs.keys():
             path += 'widths/width_{}/'.format(kwargs.get('width'))
-        if 'phase' in kwargs.items():
+        if 'phase' in kwargs.keys():
             phase_str = Tools.get_phase_str(kwargs.get('phase'))
             path += 'phases/phase_{}/'.format(phase_str)
-        if 'gap' in kwargs.items():
+        if 'gap' in kwargs.keys():
             gap_str = Tools.get_gap_str(kwargs.get('gap'))
             path += 'gap_{}/'.format(gap_str)
 
-        for key, value in kwargs.items():
+        forbidden_list = ['width', 'phase', 'gap']
+        items = list(kwargs.items())
+        items_ = [elem for elem in items if elem[0] not in forbidden_list]
+        for key, value in items_:
             path += '{}/{}_{}/'.format(key + 's', key, value)
         return path
 
