@@ -71,15 +71,20 @@ class Tools:
             fpath = fpath.replace('model/', 'measurements/')
 
         fname = 'kickmap-ID'
-        for key, value in kwargs.items():
-            if key == 'phase':
-                phase_str = Tools.get_phase_str(value)
-                fname += '_phase{}'.format(phase_str)
-            elif key == 'gap':
-                gap_str = Tools.get_gap_str(value)
-                fname += '_gap{}'.format(gap_str)
-            else:
-                fname += '_{}{}'.format(key, value)
+        if 'width' in kwargs.keys():
+            fname += '_width{}/'.format(kwargs.get('width'))
+        if 'phase' in kwargs.keys():
+            phase_str = Tools.get_phase_str(kwargs.get('phase'))
+            fname += '_phase{}'.format(phase_str)
+        if 'gap' in kwargs.keys():
+            gap_str = Tools.get_gap_str(kwargs.get('gap'))
+            fname += '_gap{}'.format(gap_str)
+
+        forbidden_list = ['width', 'phase', 'gap']
+        items = list(kwargs.items())
+        items_ = [elem for elem in items if elem[0] not in forbidden_list]
+        for key, value in items_:
+            fname += '_{}{}'.format(key, value)
         fname += '.txt'
 
         if linear:
