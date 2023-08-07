@@ -9,6 +9,7 @@ BEAM_ENERGY = 3.0  # [GeV]
 DEF_RK_S_STEP = 0.5  # [mm] seems converged for the measurement fieldmap grids
 ROLL_OFF_POS = 5.0  # [mm]
 ROLL_OFF_PLANE = 'x'
+FIELD_COMPONENT = 'by'
 SOLVE_FLAG = True
 
 ID_PERIOD = 50  # [mm]
@@ -18,7 +19,6 @@ SIMODEL_ID_LEN = 1.200  # [m]
 ID_KMAP_LEN = SIMODEL_ID_LEN  # [m]
 RESCALE_KICKS = NR_PERIODS_REAL_ID/NR_PERIODS
 RESCALE_LENGTH = 1
-NOMINAL_GAP = 236.2
 ID_FAMNAME = 'WLS'
 
 SIMODEL_FITTED = False
@@ -29,11 +29,6 @@ FILTER_FLAG = False
 FOLDER_DATA = './results/model/data/'
 
 MEAS_FLAG = False
-REAL_WIDTH = 50
-
-widths = [REAL_WIDTH]
-FIELD_COMPONENT = 'by'
-var_param = 'gap'
 
 FOLDER_BASE = '/home/gabriel/repos-dev/'
 
@@ -61,9 +56,7 @@ ID_CONFIGS = {
     'X=-10_10mm_Y=-3_3mm_Z=-1000_1000mm_ID=0007.txt',
 }
 
-# gaps = [60, 236.0]
-gaps = [20.0, 60.0, 100.0, 150.0, 200.0, 236.2, 240.0]
-phases = [0.0]
+currents = [20.0, 60.0, 100.0, 150.0, 200.0, 236.2, 240.0]
 
 curr_dict = {(20.0, ): 'ID001', (60.0, ): 'ID002', (100.0, ): 'ID003',
              (150.0, ): 'ID004', (200.0, ): 'ID005', (236.2, ): 'ID006',

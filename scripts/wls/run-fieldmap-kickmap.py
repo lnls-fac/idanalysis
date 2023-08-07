@@ -15,6 +15,6 @@ if __name__ == "__main__":
 
     # fmap_fanalysis.run_calc_fields()
     # phase = utils.phases[0]
-    # fmap_fanalysis.run_plot_data(sulfix=None,
-                                #  current=utils.gaps)
-    fmap_fanalysis.run_generate_kickmap()
+    fmap_fanalysis.run_plot_data(sulfix=None,
+                                 current=utils.currents)
+    # fmap_fanalysis.run_generate_kickmap()
