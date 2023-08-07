@@ -7,10 +7,11 @@ from idanalysis import IDKickMap
 
 BEAM_ENERGY = 3.0  # [GeV]
 DEF_RK_S_STEP = 0.5  # [mm] seems converged for the measurement fieldmap grids
-ROLL_OFF_RT = 5.0  # [mm]
+ROLL_OFF_POS = 5.0  # [mm]
+ROLL_OFF_PLANE = 'x'
 SOLVE_FLAG = True
 
-ID_PERIOD = 1200  # [mm]
+ID_PERIOD = 50  # [mm]
 NR_PERIODS = 1  #
 NR_PERIODS_REAL_ID = 1  #
 SIMODEL_ID_LEN = 1.200  # [m]
@@ -31,7 +32,7 @@ MEAS_FLAG = False
 REAL_WIDTH = 50
 
 widths = [REAL_WIDTH]
-field_component = 'by'
+FIELD_COMPONENT = 'by'
 var_param = 'gap'
 
 FOLDER_BASE = '/home/gabriel/repos-dev/'
@@ -63,11 +64,13 @@ ID_CONFIGS = {
 # gaps = [60, 236.0]
 gaps = [20.0, 60.0, 100.0, 150.0, 200.0, 236.2, 240.0]
 phases = [0.0]
-MEAS_GAPS = gaps
-MEAS_PHASES = [00.00]
 
-ORDERED_CONFIGS = [['ID001', 'ID002', 'ID003', 'ID004',
-                    'ID005', 'ID006', 'ID007']]
+curr_dict = {(20.0, ): 'ID001', (60.0, ): 'ID002', (100.0, ): 'ID003',
+             (150.0, ): 'ID004', (200.0, ): 'ID005', (236.2, ): 'ID006',
+             (240.0, ): 'ID007'}
+
+CONFIG_DICT = {'params': ['current', ],
+               'configs': curr_dict}
 
 
 def create_ids(
