@@ -811,7 +811,7 @@ class FieldAnalysisFromRadia(Tools):
         self.rt_field_nrpts = None
         self.rz_field_max = None  # [mm]
         self.rz_field_nrpts = None
-        self.roll_off_rt = utils.ROLL_OFF_RT  # [mm]
+        self.roll_off_rt = utils.ROLL_OFF_POS  # [mm]
         self.data = dict()
         self._models = dict()
 
@@ -885,21 +885,33 @@ class FieldAnalysisFromRadia(Tools):
             folder_data=utils.FOLDER_DATA, width=width, phase=phase, gap=gap)
         self.idkickmap.save_kickmap_file(kickmap_filename=fname)
 
-    def _create_models(self):
-        models_ = dict()
-        for width in utils.widths:
-            for phase in utils.phases:
-                for gap in utils.gaps:
-                    print(
-                        f'creating model for gap {gap} mm, phase {phase} mm' +
-                        f' and width {width} mm')
-                    id = utils.generate_radia_model(
-                        width=width,
-                        phase=phase,
-                        gap=gap,
-                        solve=utils.SOLVE_FLAG)
-                    key = (('width', width), ('phase', phase), ('gap', gap))
-                    models_[(key)] = id
+    def _create_models(self, **kwargs):
+        models_ = {'params': list(kwargs.keys()),
+                   'configs': dict()}
+        config_list = list()
+        for values in kwargs.values():
+            config_list.append(_np.array(values))
+        config_matrix =
+
+            # stg = 'Generating model for '
+            # for i, config in enumerate(configs):
+                # stg += param_names[i]
+                # stg += f' {config}, '
+                # kwargs[param_names[i]] = config
+            # print(stg)
+
+        raise ValueError
+
+                    # print(
+                        # f'creating model for gap {gap} mm, phase {phase} mm' +
+                        # f' and width {width} mm')
+                    # id = utils.generate_radia_model(
+                        # width=width,
+                        # phase=phase,
+                        # gap=gap,
+                        # solve=utils.SOLVE_FLAG)
+                    # key = (('width', width), ('phase', phase), ('gap', gap))
+                    # models_[(key)] = id
         self.models = models_
 
     def _get_field_roll_off(self, rt, peak_idx=0):
@@ -1029,9 +1041,9 @@ class FieldAnalysisFromRadia(Tools):
             print(fname)
             _save_pickle(fdata, fname, overwrite=True, makedirs=True)
 
-    def run_calc_fields(self):
+    def run_calc_fields(self, **kwargs):
         if not self.models:
-            self._create_models()
+            self._create_models(**kwargs)
 
         rt = _np.linspace(
             -self.rt_field_max, self.rt_field_max, self.rt_field_nrpts)

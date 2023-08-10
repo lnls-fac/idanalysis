@@ -14,7 +14,6 @@ if __name__ == "__main__":
     fmap_fanalysis.gridy = list(np.linspace(-2.6, +2.6, 11) / 1000)  # [m]
 
     # fmap_fanalysis.run_calc_fields()
-    # phase = utils.phases[0]
     fmap_fanalysis.run_plot_data(sulfix=None,
                                  current=utils.currents)
     # fmap_fanalysis.run_generate_kickmap()

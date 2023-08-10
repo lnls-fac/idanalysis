@@ -9,6 +9,9 @@ from idanalysis import IDKickMap
 BEAM_ENERGY = 3.0  # [GeV]
 DEF_RK_S_STEP = 1  # [mm] seems converged for the measurement fieldmap grids
 ROLL_OFF_RT = 5.0  # [mm]
+ROLL_OFF_POS = 5.0  # [mm]
+ROLL_OFF_PLANE = 'x'
+FIELD_COMPONENT = 'by'
 SOLVE_FLAG = True
 
 ID_PERIOD = 52.5  # [mm]
@@ -29,15 +32,11 @@ FILTER_FLAG = False
 FOLDER_DATA = './results/model/data/'
 MEAS_DATA_PATH = './meas-data/id-sabia/model-03/measurement/magnetic/hallprobe/'
 MEAS_FLAG = True
-REAL_WIDTH = 45
 
 gaps = [13.125, 26.250]
 phases = [0, -13.125, -26.25]
 # gaps = [0]
 # phases = [0]
-widths = [REAL_WIDTH]
-field_component = 'by'
-var_param = 'gap'
 
 FOLDER_BASE = '/home/gabriel/repos-dev/'
 
@@ -112,25 +111,16 @@ ID_CONFIGS = {
     }
 
 
-MEAS_phase00p_nsh = ['ID4381', 'ID4378', 'ID4384']
-MEAS_phase13n_nsh = ['ID4383', 'ID4380']
-MEAS_phase26n_nsh = ['ID4382', 'ID4379']
+phases = [00.00, -13.125, -26.25]
+dgv = [13.125, 26.25]
 
-MEAS_phase00p_Ash = ['ID4462', 'ID4459', 'ID4458']
-MEAS_phase13n_Ash = ['ID4464', 'ID4461']
-MEAS_phase26n_Ash = ['ID4463', 'ID4460']
+dp_dgv_dict = {(0, 0): 'ID4465', (0, 26.25): 'ID4466',
+               (-26.25, 26.25): 'ID4467', (-13.125, 26.25): 'ID4468',
+               (0, 13.125): 'ID4469', (-26.25, 13.125): 'ID4470',
+               (-13.125, 13.125): 'ID4471'}
 
-MEAS_phase00p_Bsh = ['ID4469', 'ID4466', 'ID4465']
-MEAS_phase13n_Bsh = ['ID4471', 'ID4468']
-MEAS_phase26n_Bsh = ['ID4470', 'ID4467']
-
-
-MEAS_GAPS = [13.125, 26.25, 0]
-MEAS_PHASES = [00.00, -13.125, -26.25]
-
-ORDERED_CONFIGS = [[MEAS_phase00p_nsh, MEAS_phase13n_nsh, MEAS_phase26n_nsh],
-                   [MEAS_phase00p_Ash, MEAS_phase13n_Ash, MEAS_phase26n_Ash],
-                   [MEAS_phase00p_Bsh, MEAS_phase13n_Bsh, MEAS_phase26n_Bsh]]
+CONFIG_DICT = {'params': ['phase', 'dgv'],
+               'configs': dp_dgv_dict}
 
 
 def create_ids(
