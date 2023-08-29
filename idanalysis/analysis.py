@@ -888,31 +888,31 @@ class FieldAnalysisFromRadia(Tools):
     def _create_models(self, **kwargs):
         models_ = {'params': list(kwargs.keys()),
                    'configs': dict()}
+        param_names = models_['params']
         config_list = list()
         for values in kwargs.values():
             config_list.append(_np.array(values))
-        config_matrix =
-
-            # stg = 'Generating model for '
-            # for i, config in enumerate(configs):
-                # stg += param_names[i]
-                # stg += f' {config}, '
-                # kwargs[param_names[i]] = config
-            # print(stg)
-
-        raise ValueError
-
-                    # print(
-                        # f'creating model for gap {gap} mm, phase {phase} mm' +
-                        # f' and width {width} mm')
-                    # id = utils.generate_radia_model(
-                        # width=width,
-                        # phase=phase,
-                        # gap=gap,
-                        # solve=utils.SOLVE_FLAG)
-                    # key = (('width', width), ('phase', phase), ('gap', gap))
-                    # models_[(key)] = id
+        config_grid = _np.meshgrid(*config_list)
+        flat_grid = list()
+        for grid in config_grid:
+            flat_list = list(_np.concatenate(grid).flat)
+            flat_grid.append(flat_list)
+        matrix = _np.array(flat_grid)
+        configs = list()
+        for j in _np.arange(_np.shape(matrix)[1]):
+            configs.append(tuple(matrix[:, j]))
+        print(configs)
+        for config in configs:
+            stg = 'Generating model for: \n'
+            for j, param in enumerate(config):
+                stg += param_names[j]
+                stg += f' = {param} \n'
+                kwargs[param_names[j]] = param
+            print(stg)
+            id = utils.generate_radia_model(solve=utils.SOLVE_FLAG, **kwargs)
+            models_['configs'][config] = id
         self.models = models_
+
 
     def _get_field_roll_off(self, rt, peak_idx=0):
         """Calculate the roll-off of a field component.

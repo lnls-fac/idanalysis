@@ -12,7 +12,7 @@ ROLL_OFF_RT = 5.0  # [mm]
 ROLL_OFF_POS = 5.0  # [mm]
 ROLL_OFF_PLANE = 'x'
 FIELD_COMPONENT = 'by'
-SOLVE_FLAG = True
+SOLVE_FLAG = False
 
 ID_PERIOD = 52.5  # [mm]
 NR_PERIODS = 21  #
@@ -142,13 +142,13 @@ def create_ids(
     return ids
 
 
-def generate_radia_model(phase, gap,
-                         solve=SOLVE_FLAG, **kwargs):
+def generate_radia_model(solve=SOLVE_FLAG, **kwargs):
     """."""
 
     delta = DeltaSabia()
-
-    delta.set_cassete_positions(dp=phase, dgv=gap)
+    phase = kwargs['phase']
+    dgv = kwargs['dgv']
+    delta.set_cassete_positions(dp=phase, dgv=dgv)
 
     if solve:
         delta.solve()
