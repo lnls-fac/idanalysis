@@ -29,13 +29,11 @@ if __name__ == "__main__":
     radia_fanalysis.gridx = list(np.linspace(-4.0, +4.0, 21) / 1000)  # [m]
     radia_fanalysis.gridy = list(np.linspace(-2.5, +2.5, 11) / 1000)  # [m]
 
-    radia_fanalysis.run_calc_fields(phase=utils.phases, dgv=utils.dgv)
+    # radia_fanalysis.run_calc_fields(phase=utils.phases, dgv=utils.dgv)
     # phase = utils.phases[2]
     # sulfix = '-phase' + radia_fanalysis._get_phase_str(phase)
-    # radia_fanalysis.run_plot_data(width=utils.widths[0],
-                                #   phase=phase,
-                                #   gap=utils.gaps[0],
-                                #   sulfix=sulfix)
+    radia_fanalysis.run_plot_data(sulfix=None,
+                                  phase=utils.phases, dgv=utils.dgv)
     # radia_fanalysis.run_generate_kickmap()
 
     # betax = 2.77
