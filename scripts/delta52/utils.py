@@ -12,7 +12,7 @@ ROLL_OFF_RT = 5.0  # [mm]
 ROLL_OFF_POS = 5.0  # [mm]
 ROLL_OFF_PLANE = 'x'
 FIELD_COMPONENT = 'by'
-SOLVE_FLAG = False
+SOLVE_FLAG = True
 
 ID_PERIOD = 52.5  # [mm]
 NR_PERIODS = 21  #

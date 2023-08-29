@@ -508,8 +508,7 @@ class FieldAnalysisFromFieldmap(Tools):
     def _plot_field_on_axis(self, data, sulfix=None):
         colors = ['C0', 'b', 'g', 'y', 'C1', 'r', 'k']
         fig, axs = _plt.subplots(3, 1, sharex=True, figsize=(12, 8))
-        output_dir = utils.FOLDER_DATA + 'general'
-        output_dir = output_dir.replace('model', 'measurements')
+        output_dir = self.FOLDER_DATA + 'general'
         filename = output_dir + '/field-profile'
         if sulfix is not None:
             filename += sulfix
@@ -536,8 +535,7 @@ class FieldAnalysisFromFieldmap(Tools):
 
     def _plot_rk_traj(self, data, sulfix=None):
         colors = ['C0', 'b', 'g', 'y', 'C1', 'r', 'k']
-        output_dir = utils.FOLDER_DATA + 'general'
-        output_dir = output_dir.replace('model', 'measurements')
+        output_dir = self.FOLDER_DATA + 'general'
         var_parameter_name = list(data.keys())[0]
         for i, value in enumerate(data[var_parameter_name].keys()):
             s = data[var_parameter_name][value]['ontraj_s']
@@ -875,16 +873,6 @@ class FieldAnalysisFromRadia(Tools):
         self._idkickmap.traj_rk_min_rz = self.traj_max_rz
         self._idkickmap.kmap_idlen = self.kmap_idlen
 
-    def _generate_kickmap(self, key, id):
-        width = key[0][1]
-        phase = key[1][1]
-        gap = key[2][1]
-        self.idkickmap = id
-        self.idkickmap.fmap_calc_kickmap(posx=self.gridx, posy=self.gridy)
-        fname = self.get_kmap_filename(
-            folder_data=utils.FOLDER_DATA, width=width, phase=phase, gap=gap)
-        self.idkickmap.save_kickmap_file(kickmap_filename=fname)
-
     def _create_models(self, **kwargs):
         models_ = {'params': list(kwargs.keys()),
                    'configs': dict()}
@@ -901,7 +889,6 @@ class FieldAnalysisFromRadia(Tools):
         configs = list()
         for j in _np.arange(_np.shape(matrix)[1]):
             configs.append(tuple(matrix[:, j]))
-        print(configs)
         for config in configs:
             stg = 'Generating model for: \n'
             for j, param in enumerate(config):
@@ -913,7 +900,6 @@ class FieldAnalysisFromRadia(Tools):
             models_['configs'][config] = id
         self.models = models_
 
-
     def _get_field_roll_off(self, rt, peak_idx=0):
         """Calculate the roll-off of a field component.
 
@@ -923,21 +909,19 @@ class FieldAnalysisFromRadia(Tools):
             peak_idx (int): Peak index where the roll-off will be calculated.
                 Defaults to 0.
         """
-        b_ = dict()
-        rt_dict = dict()
-        roll_off = dict()
-        for var_params, id in self.models.items():
-            b, roff, _ = self.calc_radia_roll_off(
-                field_component=utils.FIELD_COMPONENT,
-                plane=utils.ROLL_OFF_PLANE,
-                roff_pos=utils.ROLL_OFF_POS,
-                model=id, rt=rt, peak_idx=peak_idx)
-            b_[var_params] = b
-            rt_dict[var_params] = rt
-            roll_off[var_params] = roff
-        self.data['rolloff_rt'] = rt_dict
-        self.data['rolloff_{}'.format(utils.FIELD_COMPONENT)] = b_
-        self.data['rolloff_value'] = roll_off
+        field_component = utils.FIELD_COMPONENT
+        roff_pos = utils.ROLL_OFF_POS
+        plane = utils.ROLL_OFF_PLANE
+        print('Calculating field roll off...')
+        for config, model in self.models['configs'].items():
+            b, roff, _ = self.calc_radia_roll_off(field_component, model,
+                                                  rt, roff_pos, plane=plane,
+                                                  peak_idx=0)
+            self.data[config] = dict()
+            self.data[config].update({'rolloff_rt': rt})
+            self.data[config].update({'rolloff_{}'.format(field_component): b})
+            self.data[config].update({'rolloff_value': roff})
+        print(self.data)
 
     def _get_field_on_axis(self, rz):
         """Get the field along z axis.
@@ -946,100 +930,98 @@ class FieldAnalysisFromRadia(Tools):
             rz (numpy 1D array): array with longitudinal positions where the
                 field will be calculated
         """
-        bx_dict, by_dict, bz_dict, rz_dict = dict(), dict(), dict(), dict()
-        for var_params, id in self.models.items():
-            field = id.get_field(0, 0, rz)
-            bx_dict[var_params] = field[:, 0]
-            by_dict[var_params] = field[:, 1]
-            bz_dict[var_params] = field[:, 2]
-            rz_dict[var_params] = rz
-        self.data['onaxis_bx'] = bx_dict
-        self.data['onaxis_by'] = by_dict
-        self.data['onaxis_bz'] = bz_dict
-        self.data['onaxis_rz'] = rz_dict
+        print('Calculating field on axis...')
+        for config, model in self.models['configs'].items():
+            field = model.get_field(0, 0, rz)
+            bx = field[:, 0]
+            by = field[:, 1]
+            bz = field[:, 2]
+        self.data[config].update({'onaxis_bx': bx})
+        self.data[config].update({'onaxis_by': by})
+        self.data[config].update({'onaxis_bz': bz})
+        self.data[config].update({'onaxis_rz': rz})
 
     def _get_field_on_trajectory(self):
-        bx, by, bz = dict(), dict(), dict()
-        rz, rx, ry = dict(), dict(), dict()
-        px, py, pz = dict(), dict(), dict()
-        s = dict()
-        traj_ = dict()
-        for var_params, id in self.models.items():
+        print('Calculating field on trajectory...')
+        for config, model in self.models['configs'].items():
             # create IDKickMap and calc trajectory
-            self.idkickmap = id
+            self.idkickmap = model
             self.idkickmap.fmap_calc_trajectory(
                 traj_init_rx=0, traj_init_ry=0,
                 traj_init_px=0, traj_init_py=0)
             traj = self.idkickmap.traj
-            bx[var_params], by[var_params], bz[var_params] =\
-                traj.bx, traj.by, traj.bz
-            rx[var_params], ry[var_params], rz[var_params] =\
-                traj.rx, traj.ry, traj.rz
-            px[var_params], py[var_params], pz[var_params] =\
-                traj.px, traj.py, traj.pz
-            s[var_params] = traj.s
-            traj_[var_params] = traj
 
-        self.data['ontraj_bx'] = bx
-        self.data['ontraj_by'] = by
-        self.data['ontraj_bz'] = bz
+            self.data[config].update({'ontraj_bx': traj.bx})
+            self.data[config].update({'ontraj_by': traj.by})
+            self.data[config].update({'ontraj_bz': traj.bz})
+            self.data[config].update({'ontraj_rx': traj.rx})
+            self.data[config].update({'ontraj_ry': traj.ry})
+            self.data[config].update({'ontraj_rz': traj.rz})
+            self.data[config].update({'ontraj_px': traj.px})
+            self.data[config].update({'ontraj_py': traj.py})
+            self.data[config].update({'ontraj_pz': traj.pz})
+            self.data[config].update({'ontraj_s': traj.s})
 
-        self.data['ontraj_rx'] = rx
-        self.data['ontraj_ry'] = ry
-        self.data['ontraj_rz'] = rz
+    def _generate_field_data_fname(self, params, config):
+        fpath = self.FOLDER_DATA
+        fname = 'field_data'
 
-        self.data['ontraj_px'] = px
-        self.data['ontraj_py'] = py
-        self.data['ontraj_pz'] = pz
+        if 'phase' in params:
+            idx = params.index('phase')
+            phase_str = self.get_phase_str(config[idx])
+            fpath += 'phases/phase_{}/'.format(phase_str)
+            fname += '_phase{}'.format(phase_str)
 
-        self.data['ontraj_s'] = s
-        self.data['traj'] = traj_
+        if 'gap' in params:
+            idx = params.index('gap')
+            gap_str = self.get_gap_str(config[idx])
+            fpath += 'gap_{}/'.format(gap_str)
+            fname += '_gap{}'.format(gap_str)
 
-    def _generate_field_data_fname(self, keys):
-        fname = self.FOLDER_DATA
-        sulfix = 'field_data'
-        for parameter in keys:
-            if parameter[0] == 'width':
-                width = parameter[1]
-                fname = fname.replace(
-                    'data/', 'data/widths/width_{}/'.format(width))
-                sulfix += '_width{}'.format(width)
+        forbidden_list = ['phase', 'gap']
+        params_ = [elem for elem in params if elem not in forbidden_list]
+        for param in params_:
+            idx = params.index(param)
+            value = config[idx]
+            fpath += '{}/{}_{}/'.format(param + 's', param, value)
+            fname += '_{}{}'.format(param, value)
 
-            if parameter[0] == 'phase':
-                phase_str = self.get_phase_str(parameter[1])
-                fname += 'phases/phase_{}/'.format(phase_str)
-                sulfix += '_phase{}'.format(phase_str)
+        return fpath + fname
 
-            if parameter[0] == 'gap':
-                gap_str = self.get_gap_str(parameter[1])
-                fname += 'gap_{}/'.format(gap_str)
-                sulfix += '_gap{}'.format(gap_str)
-        return fname + sulfix
+    def _get_field_data_fname(self, **kwargs):
 
-    def _get_field_data_fname(self, width, phase, gap):
-        fpath = self.get_data_path(folder_data=utils.FOLDER_DATA,
-                                   width=width, phase=phase, gap=gap)
+        folder_data = self.FOLDER_DATA
+        fpath = self.get_data_path(
+            folder_data=folder_data, meas_flag=False, **kwargs)
+        fname = 'field_data'
 
-        sulfix = 'field_data'
-        sulfix += '_width{}'.format(width)
+        if 'phase' in kwargs.keys():
+            phase_str = self.get_phase_str(kwargs.get('phase'))
+            fname += '_phase{}'.format(phase_str)
 
-        phase_str = self.get_phase_str(phase)
-        sulfix += '_phase{}'.format(phase_str)
+        if 'gap' in kwargs.keys():
+            gap_str = self.get_gap_str(kwargs.get('gap'))
+            fname += '_gap{}'.format(gap_str)
 
-        gap_str = self.get_gap_str(gap)
-        sulfix += '_gap{}'.format(gap_str)
-        return fpath + sulfix
+        forbidden_list = ['phase', 'gap']
+        items = list(kwargs.items())
+        items_ = [elem for elem in items if elem[0] not in forbidden_list]
+        for key, value in items_:
+            fname += '_{}{}'.format(key, value)
+
+        return fpath + fname
 
     def _save_field_data(self):
         #  re-organize data
-        for keys in list(self.models.keys()):
-            fdata = dict()
-            for info, value in self.data.items():
-                fdata[info] = value[keys]
+        fdata = {'params': self.models['params'],
+                 'configs': self.data}
+
+        params = fdata['params']
+        for config, data in fdata['configs'].items():
             # get filename
-            fname = self._generate_field_data_fname(keys=keys)
+            fname = self._generate_field_data_fname(params, config)
             print(fname)
-            _save_pickle(fdata, fname, overwrite=True, makedirs=True)
+            _save_pickle(data, fname, overwrite=True, makedirs=True)
 
     def run_calc_fields(self, **kwargs):
         if not self.models:
@@ -1056,93 +1038,72 @@ class FieldAnalysisFromRadia(Tools):
 
         self._save_field_data()
 
-    def get_data_plot(self, width=0, phase=0, gap=0):
+    def get_data_plot(self, **kwargs):
         data_plot = dict()
-        if utils.var_param == 'gap':
-            for gap_ in utils.gaps:
-                fname = self._get_field_data_fname(width, phase, gap_)
-                try:
-                    fdata = _load_pickle(fname)
-                    data_plot[gap_] = fdata
-                except FileNotFoundError:
-                    print('File does not exist.')
-        if utils.var_param == 'phase':
-            for phase_ in utils.phases:
-                fname = self._get_field_data_fname(width, phase_, gap)
-                try:
-                    fdata = _load_pickle(fname)
-                    data_plot[phase_] = fdata
-                except FileNotFoundError:
-                    print('File does not exist.')
-        if utils.var_param == 'width':
-            for width_ in utils.widths:
-                fname = self._get_field_data_fname(width_, phase, gap)
-                try:
-                    fdata = _load_pickle(fname)
-                    data_plot[width_] = fdata
-                except FileNotFoundError:
-                    print('File does not exist.')
+        fdata_dict = dict()
+        var_param = [item for item in kwargs.items() if type(item[1]) == list]
+        var_param = var_param[0]
+        var_param_name = var_param[0]
+        var_param_values = var_param[1]
+        del kwargs[var_param_name]
+
+        for var_param_value in var_param_values:
+            kwargs[var_param_name] = var_param_value
+            fname = self._get_field_data_fname(**kwargs)
+            try:
+                fdata_dict[var_param_value] = _load_pickle(fname)
+            except FileNotFoundError:
+                print('File does not exist.')
+        data_plot[var_param_name] = fdata_dict
+
         return data_plot
 
-    def run_plot_data(self, width=0, phase=0, gap=0, sulfix=None):
-        data_plot = self.get_data_plot(width=width, phase=phase, gap=gap)
-        self._plot_field_on_axis(data=data_plot, sulfix=sulfix)
+    def run_plot_data(self, sulfix=None, **kwargs):
+        data_plot = self.get_data_plot(**kwargs)
+        self._plot_field_on_axis(data=data_plot,
+                                 sulfix=sulfix)
         self._plot_rk_traj(data=data_plot, sulfix=sulfix)
         self._plot_field_roll_off(data=data_plot, sulfix=sulfix)
 
-    def run_generate_kickmap(self):
-        if self.models:
-            print("models ready")
-        else:
-            self._create_models()
-            print("models ready")
-
-        for key, id in self.models.items():
-            print(f'calc kickmap for gap {key[2][1]} mm, ' +
-                  f'phase {key[1][1]} mm ' +
-                  f'and width {key[0][1]} mm')
-            self._generate_kickmap(key, id)
-
     def _plot_field_on_axis(self, data, sulfix=None):
-        colors = ['b', 'g', 'y', 'C1', 'r', 'k']
-        field_component = utils.FIELD_COMPONENT
+        colors = ['C0', 'b', 'g', 'y', 'C1', 'r', 'k']
         fig, axs = _plt.subplots(3, 1, sharex=True, figsize=(12, 8))
-        output_dir = utils.FOLDER_DATA + 'general'
+        output_dir = self.FOLDER_DATA + 'general'
         filename = output_dir + '/field-profile'
         if sulfix is not None:
             filename += sulfix
         self.mkdir_function(output_dir)
-        var_parameters = list(data.keys())
-        for i, parameter in enumerate(var_parameters):
-            label = utils.var_param + ' {}'.format(parameter)
-            bx = data[parameter]['onaxis_bx']
-            by = data[parameter]['onaxis_by']
-            bz = data[parameter]['onaxis_bz']
-            rz = data[parameter]['onaxis_rz']
+        var_parameter_name = list(data.keys())[0]
+        for i, value in enumerate(data[var_parameter_name].keys()):
+            label = var_parameter_name + ' {}'.format(value)
+            bx = data[var_parameter_name][value]['onaxis_bx']
+            by = data[var_parameter_name][value]['onaxis_by']
+            bz = data[var_parameter_name][value]['onaxis_bz']
+            rz = data[var_parameter_name][value]['onaxis_rz']
             axs[0].plot(rz, bx, label=label, color=colors[i])
             axs[0].set_ylabel('bx [T]')
             axs[1].plot(rz, by, label=label, color=colors[i])
             axs[1].set_ylabel('by [T]')
             axs[2].plot(rz, bz, label=label, color=colors[i])
             axs[2].set_ylabel('bz [T]')
-            for j in _np.arange(3):
-                axs[j].set_xlabel('z [mm]')
-                axs[j].legend()
-                axs[j].grid()
+        for j in _np.arange(3):
+            axs[j].set_xlabel('z [mm]')
+            axs[j].legend()
+            axs[j].grid()
         _plt.savefig(filename, dpi=300)
         _plt.show()
 
     def _plot_rk_traj(self, data, sulfix=None):
-        colors = ['b', 'g', 'y', 'C1', 'r', 'k']
-        var_parameters = list(data.keys())
-        output_dir = utils.FOLDER_DATA + 'general'
-        for i, parameter in enumerate(var_parameters):
-            s = data[parameter]['ontraj_s']
-            rx = data[parameter]['ontraj_rx']
-            ry = data[parameter]['ontraj_ry']
-            px = 1e6*data[parameter]['ontraj_px']
-            py = 1e6*data[parameter]['ontraj_py']
-            label = utils.var_param + ' {}'.format(parameter)
+        colors = ['C0', 'b', 'g', 'y', 'C1', 'r', 'k']
+        output_dir = self.FOLDER_DATA + 'general'
+        var_parameter_name = list(data.keys())[0]
+        for i, value in enumerate(data[var_parameter_name].keys()):
+            s = data[var_parameter_name][value]['ontraj_s']
+            rx = data[var_parameter_name][value]['ontraj_rx']
+            ry = data[var_parameter_name][value]['ontraj_ry']
+            px = 1e6*data[var_parameter_name][value]['ontraj_px']
+            py = 1e6*data[var_parameter_name][value]['ontraj_py']
+            label = var_parameter_name + ' {}'.format(value)
 
             _plt.figure(1)
             _plt.plot(s, 1e3*rx, color=colors[i], label=label)
@@ -1175,61 +1136,83 @@ class FieldAnalysisFromRadia(Tools):
             _plt.savefig(filename, dpi=300)
         _plt.show()
 
-    def _read_data_roll_off(self, data, parameter):
+    def _read_data_roll_off(self, data, value):
         field_component = utils.FIELD_COMPONENT
-        if 'rolloff_{}'.format(field_component) in data[parameter]:
-            b = data[parameter]['rolloff_{}'.format(field_component)]
-            if 'rolloff_rt' in data[parameter]:
-                rt = data[parameter]['rolloff_rt']
-            elif 'rolloff_rx' in data[parameter]:
-                rt = data[parameter]['rolloff_rx']
-            elif 'rolloff_ry' in data[parameter]:
-                rt = data[parameter]['rolloff_ry']
-            rtp_idx = _np.argmin(_np.abs(rt - utils.ROLL_OFF_RT))
+        if 'rolloff_{}'.format(field_component) in data[value]:
+            b = data[value]['rolloff_{}'.format(field_component)]
+            if 'rolloff_rt' in data[value]:
+                rt = data[value]['rolloff_rt']
+            elif 'rolloff_rx' in data[value]:
+                rt = data[value]['rolloff_rx']
+            elif 'rolloff_ry' in data[value]:
+                rt = data[value]['rolloff_ry']
+            rtp_idx = _np.argmin(_np.abs(rt - utils.ROLL_OFF_POS))
             rt0_idx = _np.argmin(_np.abs(rt))
-            roff = b[rtp_idx]/b[rt0_idx]-1
+            roff = _np.abs(b[rtp_idx]/b[rt0_idx]-1)
             b0 = b[rt0_idx]
             roll_off = 100*(b/b0 - 1)
             return rt, b, roll_off, roff
 
-        return
-
     def _plot_field_roll_off(self, data, sulfix=None):
         field_component = utils.FIELD_COMPONENT
         _plt.figure(1)
-        output_dir = utils.FOLDER_DATA + 'general'
+        output_dir = self.FOLDER_DATA + 'general'
         filename = output_dir + '/field-rolloff'
         if sulfix is not None:
             filename += sulfix
-        colors = ['b', 'g', 'y', 'C1', 'r', 'k']
-        var_parameters = list(data.keys())
-        for i, parameter in enumerate(var_parameters):
-            roff_data = self._read_data_roll_off(data, parameter)
+        colors = ['C0', 'b', 'g', 'y', 'C1', 'r', 'k']
+        var_parameter_name = list(data.keys())[0]
+        for i, value in enumerate(data[var_parameter_name].keys()):
+            roff_data = self._read_data_roll_off(
+                data[var_parameter_name], value)
             if roff_data is None:
                 continue
             else:
                 rt, b, roll_off, roff = roff_data
-            label = utils.var_param +\
-                " {} mm, roll-off = {:.2f} %".format(parameter, 100*roff)
+            label = var_parameter_name +\
+                " {} mm, roll-off = {:.2f} %".format(value, 100*roff)
             _plt.plot(rt, roll_off, '.-', label=label, color=colors[i])
         if field_component == 'by':
             _plt.xlabel('x [mm]')
         else:
             _plt.xlabel('y [mm]')
         _plt.ylabel('Field roll off [%]')
-        _plt.xlim(-utils.ROLL_OFF_RT, utils.ROLL_OFF_RT)
-        if roff >= 0:
-            _plt.ylim(-0.1, 100*roff)
-        else:
-            _plt.ylim(100*roff, 0.1)
+        _plt.xlim(-utils.ROLL_OFF_POS, utils.ROLL_OFF_POS)
+        _plt.ylim(-101*roff, 20*roff)
         if field_component == 'by':
-            _plt.title('Field roll-off at x = {} mm'.format(utils.ROLL_OFF_RT))
+            _plt.title(
+                'Field roll-off at x = {} mm'.format(utils.ROLL_OFF_POS))
         elif field_component == 'bx':
-            _plt.title('Field roll-off at y = {} mm'.format(utils.ROLL_OFF_RT))
+            _plt.title(
+                'Field roll-off at y = {} mm'.format(utils.ROLL_OFF_POS))
         _plt.legend()
         _plt.grid()
         _plt.savefig(filename, dpi=300)
         _plt.show()
+
+    def _generate_kickmap(self, model, **kwargs):
+        self.idkickmap = model
+        self.idkickmap.fmap_calc_kickmap(posx=self.gridx, posy=self.gridy)
+        fname = self.get_kmap_filename(folder_data=utils.FOLDER_DATA,
+                                       meas_flag=True, **kwargs)
+        self.idkickmap.save_kickmap_file(kickmap_filename=fname)
+
+    def run_generate_kickmap(self, **kwargs):
+        if self.models:
+            print("models ready")
+        else:
+            self._create_models(**kwargs)
+            print("models ready")
+
+        param_names = self.models['params']
+        for configs, value in self.models['configs'].items():
+            stg = 'calc kickmap for '
+            for i, config in enumerate(configs):
+                stg += param_names[i]
+                stg += f' = {config} \n, '
+                kwargs[param_names[i]] = config
+            print(stg)
+            self._generate_kickmap(model=value, **kwargs)
 
     def _get_planar_id_features(self,
                                 width=0, phase=0, gap=0,
