@@ -921,7 +921,6 @@ class FieldAnalysisFromRadia(Tools):
             self.data[config].update({'rolloff_rt': rt})
             self.data[config].update({'rolloff_{}'.format(field_component): b})
             self.data[config].update({'rolloff_value': roff})
-        print(self.data)
 
     def _get_field_on_axis(self, rz):
         """Get the field along z axis.
@@ -936,10 +935,10 @@ class FieldAnalysisFromRadia(Tools):
             bx = field[:, 0]
             by = field[:, 1]
             bz = field[:, 2]
-        self.data[config].update({'onaxis_bx': bx})
-        self.data[config].update({'onaxis_by': by})
-        self.data[config].update({'onaxis_bz': bz})
-        self.data[config].update({'onaxis_rz': rz})
+            self.data[config].update({'onaxis_bx': bx})
+            self.data[config].update({'onaxis_by': by})
+            self.data[config].update({'onaxis_bz': bz})
+            self.data[config].update({'onaxis_rz': rz})
 
     def _get_field_on_trajectory(self):
         print('Calculating field on trajectory...')
@@ -990,23 +989,24 @@ class FieldAnalysisFromRadia(Tools):
 
     def _get_field_data_fname(self, **kwargs):
 
-        folder_data = self.FOLDER_DATA
-        fpath = self.get_data_path(
-            folder_data=folder_data, meas_flag=False, **kwargs)
+        fpath = self.FOLDER_DATA
         fname = 'field_data'
 
         if 'phase' in kwargs.keys():
             phase_str = self.get_phase_str(kwargs.get('phase'))
+            fpath += 'phases/phase_{}/'.format(phase_str)
             fname += '_phase{}'.format(phase_str)
 
         if 'gap' in kwargs.keys():
             gap_str = self.get_gap_str(kwargs.get('gap'))
+            fpath += 'gap_{}/'.format(gap_str)
             fname += '_gap{}'.format(gap_str)
 
         forbidden_list = ['phase', 'gap']
         items = list(kwargs.items())
         items_ = [elem for elem in items if elem[0] not in forbidden_list]
         for key, value in items_:
+            fpath += '{}/{}_{}/'.format(key + 's', key, value)
             fname += '_{}{}'.format(key, value)
 
         return fpath + fname
@@ -2063,9 +2063,9 @@ class AnalysisEffects(Tools):
                                        filter_flag=self.filter_flag,
                                        linear=self.linear,
                                        meas_flag=self.meas_flag)
-        self._model_id, self._ids = self.create_model_ids(fname=fname,
-                                                          linear=self.linear,
-                                                          create_ids=utils.create_ids)
+        self._model_id, self._ids = self.create_model_ids(
+                                        fname=fname, linear=self.linear,
+                                        create_ids=utils.create_ids)
         knobs, locs_beta, straight_nr = self._get_knobs_locs()
 
         print('element indices for straight section begin and end:')
@@ -2161,7 +2161,8 @@ class AnalysisEffects(Tools):
             nux_bounds=(49.05, 49.50))
 
         fpath = self.get_data_path(folder_data=utils.FOLDER_DATA, width=width,
-                                   phase=phase, gap=gap, meas_flag=self.meas_flag)
+                                   phase=phase, gap=gap,
+                                   meas_flag=self.meas_flag)
         print(fpath)
         label1 = ['', '-ids-nonsymm', '-ids-symm'][self.calc_type]
         label2 = {False: '-nominal', True: '-fittedmodel'}[self.fitted_model]
