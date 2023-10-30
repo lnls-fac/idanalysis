@@ -7,14 +7,15 @@ import utils
 
 if __name__ == "__main__":
 
-    gaps = utils.gaps
+    dgvs = utils.dgv
     phases = utils.phases
-    widths = utils.widths
 
     kickanalysis = AnalysisKickmap()
-    kickanalysis.meas_flag = utils.MEAS_FLAG
-    kickanalysis.run_shift_kickmap(gaps=gaps, phases=phases,
-                                   widths=widths)
+    kickanalysis.meas_flag = False
+
+    for phase in phases:
+        for dgv in dgvs:
+            kickanalysis.run_shift_kickmap(phase=phase, dgv=dgv, mf='_True')
 
     # kickanalysis.run_filter_kickmap(gaps=gaps, phases=phases,
                                     # widths=widths)

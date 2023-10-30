@@ -9,25 +9,24 @@ if __name__ == '__main__':
 
     planes = ['x', 'y']
     kick_planes = ['x', 'y']
-    gaps = utils.gaps
-    phase = utils.phases[2]
-    width = utils.widths[0]
+    dgvs = utils.dgv
+    phase = utils.phases[0]
 
     kickanalysis = AnalysisKickmap()
     kickanalysis.save_flag = True
     kickanalysis.plot_flag = True
-    kickanalysis.shift_flag = utils.SHIFT_FLAG
-    kickanalysis.filter_flag = utils.FILTER_FLAG
+    kickanalysis.shift_flag = True
+    kickanalysis.filter_flag = False
     kickanalysis.linear = False
-    kickanalysis.meas_flag = utils.MEAS_FLAG
+    kickanalysis.meas_flag = True
 
-    kickanalysis.check_kick_at_plane(
-        width=width, gap=gaps, phase=phase,
-        planes=planes, kick_planes=kick_planes)
-
-    # kickanalysis.check_kick_all_planes(
-        # width=widths[0], phase=phase, gap=gap,
+    # kickanalysis.check_kick_at_plane(
+        # phase=0, dgv=[0, 13.125, 26.25], mf='_True',
         # planes=planes, kick_planes=kick_planes)
 
+    kickanalysis.check_kick_all_planes(
+        phase=-13.125, dgv=26.25, mf='_True',
+        planes=planes, kick_planes=kick_planes)
+
     # kickanalysis.check_kick_at_plane_trk(
-        # width=width, phase=phase, gap=gaps[0])
+    #    phase=-26.25, dgv=26.25, mf='_True')

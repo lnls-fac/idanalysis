@@ -111,7 +111,7 @@ class Tools:
     @staticmethod
     def create_model_ids(
             fname, rescale_kicks, rescale_length,
-            fitted_model, linear, create_ids):
+            fitted_model, linear, create_ids, fit_path):
         if linear:
             rescale_kicks = 1
             rescale_length = 1
@@ -125,7 +125,7 @@ class Tools:
             famdata = pymodels.si.families.get_family_data(model)
             idcs_qn = _np.array(famdata['QN']['index']).ravel()
             idcs_qs = _np.array(famdata['QS']['index']).ravel()
-            data = _load_pickle(utils.FIT_PATH)
+            data = _load_pickle(fit_path)
             kl = data['KL']
             ksl = data['KsL']
             pyaccel.lattice.set_attribute(model, 'KL', idcs_qn, kl)
@@ -173,15 +173,16 @@ class Tools:
         return idconfig
 
     @staticmethod
-    def get_fmap_fname(config_keys=None, config_dict=None, idconfig=None):
+    def get_fmap_fname(id_configs, meas_data_path, config_keys=None,
+                       config_dict=None, idconfig=None):
         if idconfig is None:
             if config_dict is None:
                 raise ValueError
             idconfig = Tools.get_meas_idconfig(config_keys, config_dict)
-        MEAS_FILE = utils.ID_CONFIGS[idconfig]
+        MEAS_FILE = id_configs[idconfig]
         _, meas_id = MEAS_FILE.split('ID=')
         meas_id = meas_id.replace('.dat', '')
-        fmap_fname = utils.MEAS_DATA_PATH + MEAS_FILE
+        fmap_fname = meas_data_path + MEAS_FILE
         return fmap_fname
 
     @staticmethod
@@ -254,7 +255,6 @@ class FieldAnalysisFromFieldmap(Tools):
         # fmap attributes
         self._fmaps = None
         self._fmaps_names = None
-        self.config_idx = None
         self.data = dict()
 
         # Trajectory attributes
@@ -325,7 +325,9 @@ class FieldAnalysisFromFieldmap(Tools):
         fmaps_names_ = {'params': None,
                         'configs': dict()}
         for config_key in config_dict['configs'].keys():
-            fmap_fname = self.get_fmap_fname(config_keys=config_key,
+            fmap_fname = self.get_fmap_fname(utils.ID_CONFIGS,
+                                             utils.MEAS_DATA_PATH,
+                                             config_keys=config_key,
                                              config_dict=config_dict)
             fmap = self.get_fmap(fmap_fname=fmap_fname)
             fmaps_['configs'][config_key] = fmap
@@ -824,7 +826,6 @@ class FieldAnalysisFromRadia(Tools):
         self.gridy = None
 
         # fmap attributes
-        self.config_idx = None
         self.roff_deltas = _np.linspace(1, 1, 1)
 
         self.FOLDER_DATA = './results/model/data/'
@@ -1333,7 +1334,9 @@ class FieldAnalysisFromRadia(Tools):
                         f'calibrating model for gap {gap} mm, phase {phase}' +
                         f' mm and width {width} mm')
 
-                    fmap_fname = self.get_fmap_fname(config_keys=(phase, gap),
+                    fmap_fname = self.get_fmap_fname(utils.ID_CONFIGS,
+                                                     utils.MEAS_DATA_PATH,
+                                                     config_keys=(phase, gap),
                                                      config_dict=config_dict)
                     fmap = self.get_fmap(fmap_fname=fmap_fname)
                     rx, byx, rzmax, roff = self.get_fmap_roll_off(
@@ -1406,84 +1409,78 @@ class AnalysisKickmap(Tools):
         self.meas_flag = False
         self.FOLDER_DATA = utils.FOLDER_DATA
 
-    def _get_figname_plane(self, kick_plane, var='X',
-                           width=None, phase=None, gap=None):
+    def _get_figname_plane(self, kick_plane, var_param_name, var='X',
+                           **kwargs):
         fpath = utils.FOLDER_DATA
         if self.meas_flag:
             fpath = fpath.replace('model/', 'measurements/')
         fpath = fpath.replace('data/', 'data/general/')
 
-        if utils.var_param == 'gap':
-            phase_str = self.get_phase_str(phase)
-            fname = fpath + 'kick{}-vs-{}-width{}mm-phase{}.png'.format(
-                kick_plane, var.lower(), width, phase_str)
+        fname = fpath + 'kick{}-vs-{}'.format(kick_plane, var.lower())
+        forbidden_list = [var_param_name]
+        items = list(kwargs.items())
+        items_ = [elem for elem in items if elem[0] not in forbidden_list]
+        for key, value in items_:
+            fname += '_{}{}'.format(key, value)
+        fname += '.png'
 
-        if utils.var_param == 'phase':
-            gap_str = self.get_gap_str(gap)
-            fname = fpath + 'kick{}-vs-{}-width{}mm-gap{}.png'.format(
-                kick_plane, var.lower(), width, gap_str)
-
-        if utils.var_param == 'width':
-            phase_str = self.get_phase_str(phase)
-            gap_str = self.get_gap_str(gap)
-            fname = fpath + 'kick{}-vs-{}-phase{}-gap{}.png'.format(
-                kick_plane, var.lower(), phase_str, gap_str)
         if self.linear:
             fname = fname.replace('.png', '-linear.png')
 
         return fname
 
     def _get_figname_allplanes(self, kick_plane, var='X',
-                               width=None, phase=None, gap=None):
+                               **kwargs):
         fname = utils.FOLDER_DATA
         if self.meas_flag:
             fname = fname.replace('model/', 'measurements/')
         sulfix = 'kick{}-vs-{}-all-planes'.format(
             kick_plane.lower(), var.lower())
 
-        fname = fname.replace(
-            'data/', 'data/widths/width_{}/'.format(width))
+        if 'width' in kwargs.keys():
+            fname += 'widths/width_{}/'.format(kwargs.get('width'))
+        if 'phase' in kwargs.keys():
+            phase_str = Tools.get_phase_str(kwargs.get('phase'))
+            fname += 'phases/phase_{}/'.format(phase_str)
+        if 'gap' in kwargs.keys():
+            gap_str = Tools.get_gap_str(kwargs.get('gap'))
+            fname += 'gap_{}/'.format(gap_str)
 
-        phase_str = self.get_phase_str(phase)
-        fname += 'phases/phase_{}/'.format(phase_str)
+        forbidden_list = ['width', 'phase', 'gap']
+        items = list(kwargs.items())
+        items_ = [elem for elem in items if elem[0] not in forbidden_list]
+        for key, value in items_:
+            fname += '{}{}/'.format(key, value)
 
-        gap_str = self.get_gap_str(gap)
-        fname += 'gap_{}/'.format(gap_str)
-
+        Tools.mkdir_function(fname)
         fname += sulfix
         if self.linear:
             fname += '-linear'
 
         return fname
 
-    def run_shift_kickmap(self, widths, phases, gaps):
-        for width in widths:
-            for phase in phases:
-                for gap in gaps:
-                    fname = self.get_kmap_filename(
-                        folder_data=utils.FOLDER_DATA, width=width,
-                        phase=phase, gap=gap,
-                        meas_flag=self.meas_flag)
-                    self._idkickmap = _IDKickMap(
-                        kmap_fname=fname, shift_on_axis=True)
-                    fname = fname.replace('.txt', '-shifted_on_axis.txt')
-                    self._idkickmap.save_kickmap_file(fname)
+    def run_shift_kickmap(self, **kwargs):
+        fname = self.get_kmap_filename(
+                    folder_data=utils.FOLDER_DATA,
+                    meas_flag=self.meas_flag,
+                    **kwargs)
+        self._idkickmap = _IDKickMap(
+                    kmap_fname=fname, shift_on_axis=True)
+        fname = fname.replace('.txt', '-shifted_on_axis.txt')
+        self._idkickmap.save_kickmap_file(fname)
 
-    def run_filter_kickmap(self, widths, phases, gaps,
-                           rx, ry, filter_order=5, is_shifted=True):
-        for width in widths:
-            for phase in phases:
-                for gap in gaps:
-                    fname = self.get_kmap_filename(
-                        folder_data=utils.FOLDER_DATA, width=width,
-                        phase=phase, gap=gap,
-                        shift_flag=is_shifted, meas_flag=self.meas_flag)
-                    self._idkickmap = _IDKickMap(fname)
-                    self._idkickmap.filter_kmap(
+    def run_filter_kickmap(self, rx, ry,
+                           filter_order=5, is_shifted=True, **kwargs):
+        fname = self.get_kmap_filename(
+                    folder_data=utils.FOLDER_DATA,
+                    shift_flag=is_shifted, meas_flag=self.meas_flag,
+                    **kwargs)
+        self._idkickmap = _IDKickMap(fname)
+        self._idkickmap.filter_kmap(
                         posx=rx, posy=ry, order=filter_order, plot_flag=True)
-                    self._idkickmap.kmap_idlen = utils.ID_KMAP_LEN
-                    fname = fname.replace('.txt', '-filtered.txt')
-                    self._idkickmap.save_kickmap_file(fname)
+        self._idkickmap.kmap_idlen = utils.ID_KMAP_LEN
+        fname = fname.replace('.txt', '-filtered.txt')
+        self._idkickmap.save_kickmap_file(fname)
 
     def _calc_idkmap_kicks(self, plane_idx=0, var='X'):
         beam = Beam(energy=3)
@@ -1508,54 +1505,29 @@ class AnalysisKickmap(Tools):
         return rx0, ry0, pxf, pyf, rxf, ryf
 
     def check_kick_at_plane(
-            self, width=None, phase=None, gap=None,
-            planes=['X', 'Y'], kick_planes=['X', 'Y']):
+            self, planes=['X', 'Y'], kick_planes=['X', 'Y'], **kwargs):
 
-        if utils.var_param == 'width':
-            var_params = utils.widths
-        if utils.var_param == 'phase':
-            var_params = utils.phases
-        if utils.var_param == 'gap':
-            var_params = utils.gaps
+        var_param = [item for item in kwargs.items() if type(item[1]) == list]
+        var_param = var_param[0]
+        var_param_name = var_param[0]
+        var_param_values = var_param[1]
 
         for var in planes:
             for kick_plane in kick_planes:
-                colors = ['b', 'g', 'y', 'C1', 'r', 'k']
-                for var_param, color in zip(var_params, colors):
+                for i, var_param_value in enumerate(var_param_values):
+                    kwargs[var_param_name] = var_param_value
 
-                    if utils.var_param == 'width':
-                        fname = self.get_kmap_filename(
-                            folder_data=utils.FOLDER_DATA, width=var_param,
-                            gap=gap, phase=phase,
+                    fname = self.get_kmap_filename(
+                            folder_data=utils.FOLDER_DATA,
                             shift_flag=self.shift_flag,
                             filter_flag=self.filter_flag,
                             linear=self.linear,
-                            meas_flag=self.meas_flag)
-                        fname_fig = self._get_figname_plane(
+                            meas_flag=self.meas_flag,
+                            **kwargs)
+                    fname_fig = self._get_figname_plane(
                             kick_plane=kick_plane, var=var,
-                            width=var_param, gap=gap, phase=phase)
-                    if utils.var_param == 'phase':
-                        fname = self.get_kmap_filename(
-                            folder_data=utils.FOLDER_DATA, width=width,
-                            gap=gap, phase=var_param,
-                            shift_flag=self.shift_flag,
-                            filter_flag=self.filter_flag,
-                            linear=self.linear,
-                            meas_flag=self.meas_flag)
-                        fname_fig = self._get_figname_plane(
-                            kick_plane=kick_plane, var=var,
-                            width=width, gap=gap, phase=var_param)
-                    if utils.var_param == 'gap':
-                        fname = self.get_kmap_filename(
-                            folder_data=utils.FOLDER_DATA, width=width,
-                            phase=phase, gap=var_param,
-                            shift_flag=self.shift_flag,
-                            filter_flag=self.filter_flag,
-                            linear=self.linear,
-                            meas_flag=self.meas_flag)
-                        fname_fig = self._get_figname_plane(
-                            kick_plane=kick_plane, var=var,
-                            width=width, gap=var_param, phase=phase)
+                            var_param_name=var_param_name,
+                            **kwargs)
 
                     self._idkickmap = _IDKickMap(fname)
                     if var.lower() == 'x':
@@ -1581,12 +1553,16 @@ class AnalysisKickmap(Tools):
                         pfit = _np.polyfit(r0, pf, len(r0)-1)
                     pf_fit = _np.polyval(pfit, r0)
 
-                    label = utils.var_param + ' = {} mm'.format(var_param)
+                    label = var_param_name + ' = {} mm'.format(var_param_value)
                     _plt.figure(1)
                     _plt.plot(
-                        1e3*r0, 1e6*pf, '.-', color=color, label=label)
+                        1e3*r0, 1e6*pf, '.-',
+                        color=_plt.cm.jet(i/len(var_param_values)),
+                        label=label)
                     _plt.plot(
-                        1e3*r0, 1e6*pf_fit, '-', color=color, alpha=0.6)
+                        1e3*r0, 1e6*pf_fit, '-',
+                        color=_plt.cm.jet(i/len(var_param_values)),
+                        alpha=0.6)
                     print('kick plane: ', kick_plane)
                     print('plane: ', var)
                     print('Fitting:')
@@ -1595,8 +1571,8 @@ class AnalysisKickmap(Tools):
                 _plt.figure(1)
                 _plt.xlabel(xlabel)
                 _plt.ylabel('final {} [urad]'.format(klabel))
-                _plt.title('Kick{} for gap {} mm, at pos{} {:+.3f} mm'.format(
-                    kick_plane.upper(), gap, rvar, 0))
+                _plt.title('Kick{}, at pos{} {:+.3f} mm'.format(
+                    kick_plane.upper(), rvar, 0))
                 _plt.legend()
                 _plt.grid()
                 _plt.tight_layout()
@@ -1607,22 +1583,18 @@ class AnalysisKickmap(Tools):
                 _plt.close()
 
     def check_kick_all_planes(
-            self, width=None, phase=None, gap=None,
-            planes=['X', 'Y'], kick_planes=['X', 'Y']):
+            self, planes=['X', 'Y'], kick_planes=['X', 'Y'], **kwargs):
         for var in planes:
             for kick_plane in kick_planes:
                 fname = self.get_kmap_filename(folder_data=utils.FOLDER_DATA,
-                                               width=width,
-                                               phase=phase,
-                                               gap=gap,
                                                linear=self.linear,
                                                meas_flag=self.meas_flag,
                                                shift_flag=self.shift_flag,
-                                               filter_flag=self.filter_flag)
+                                               filter_flag=self.filter_flag,
+                                               **kwargs)
                 self._idkickmap = _IDKickMap(fname)
                 fname_fig = self._get_figname_allplanes(
-                    width=width, phase=phase, gap=gap,
-                    var=var, kick_plane=kick_plane)
+                    var=var, kick_plane=kick_plane, **kwargs)
 
                 if var.lower() == 'x':
                     kmappos = self._idkickmap.posy
@@ -1647,11 +1619,12 @@ class AnalysisKickmap(Tools):
                     rvar = 'y' if var.lower() == 'x' else 'x'
                     label = 'pos{} = {:+.3f} mm'.format(rvar, 1e3*pos)
                     _plt.plot(
-                        1e3*r0, 1e6*pf, '.-', label=label)
+                        1e3*r0, 1e6*pf, '.-',
+                        color=_plt.cm.jet(plane_idx/len(kmappos)), label=label)
                     _plt.xlabel(xlabel)
                     _plt.ylabel('final {} [urad]'.format(klabel))
-                    _plt.title(
-                        'Kicks for gap {} mm, width {} mm'.format(gap, width))
+                    # _plt.title(
+                    #     'Kicks for gap {} mm, width {} mm'.format(gap, width))
                 _plt.legend()
                 _plt.grid()
                 _plt.tight_layout()
@@ -1661,13 +1634,13 @@ class AnalysisKickmap(Tools):
                     _plt.show()
                 _plt.close()
 
-    def check_kick_at_plane_trk(self, width, gap, phase):
+    def check_kick_at_plane_trk(self, **kwargs):
         fname = self.get_kmap_filename(folder_data=utils.FOLDER_DATA,
-                                       width=width, gap=gap,
-                                       phase=phase, linear=self.linear,
+                                       linear=self.linear,
                                        meas_flag=self.meas_flag,
                                        shift_flag=self.shift_flag,
-                                       filter_flag=self.filter_flag)
+                                       filter_flag=self.filter_flag,
+                                       **kwargs)
         self._idkickmap = _IDKickMap(fname)
         plane_idx = list(self._idkickmap.posy).index(0)
         out = self._calc_idkmap_kicks(plane_idx=plane_idx)
@@ -1679,8 +1652,13 @@ class AnalysisKickmap(Tools):
             pyf *= utils.RESCALE_KICKS
 
         # lattice with IDs
-        model, _ = self.create_model_ids(fname, linear=self.linear,
-                                         create_ids=utils.create_ids)
+        model, _ = self.create_model_ids(
+                                        fname=fname, linear=self.linear,
+                                        create_ids=utils.create_ids,
+                                        rescale_kicks=utils.RESCALE_KICKS,
+                                        rescale_length=utils.RESCALE_LENGTH,
+                                        fitted_model=False,
+                                        fit_path=utils.FIT_PATH)
 
         famdata = pymodels.si.get_family_data(model)
 
@@ -1866,10 +1844,9 @@ class AnalysisEffects(Tools):
             _plt.grid()
             _plt.show()
 
-    def _plot_beta_beating(self, width, phase, gap, xlim=None):
+    def _plot_beta_beating(self, xlim=None, **kwargs):
         fpath = self.get_data_path(folder_data=utils.FOLDER_DATA,
-                                   width=width, phase=phase,
-                                   gap=gap, meas_flag=self.meas_flag)
+                                   meas_flag=self.meas_flag, **kwargs)
         # Compare optics between nominal value and uncorrect optics due ID
         results = self._calc_dtune_betabeat(twiss1=self._twiss1)
         dtunex, dtuney = results[0], results[1]
@@ -1897,6 +1874,7 @@ class AnalysisEffects(Tools):
         labelx = f'X ({bbeatx_rms:.3f} % rms)'
         labely = f'Y ({bbeaty_rms:.3f} % rms)'
         figname = fpath + 'opt{}-ids-nonsymm'.format(label1)
+        Tools.mkdir_function(fpath)
         if self.linear:
             figname += '-linear'
         _plt.plot(self._twiss0.spos, bbeatx,
@@ -2047,7 +2025,7 @@ class AnalysisEffects(Tools):
             self._model_id, indices='closed')
         print()
 
-    def _correct_optics(self, width, phase, gap):
+    def _execute_correction_algorithm(self, **kwargs):
 
         # create unperturbed model for reference
         model0 = self._create_model_nominal()
@@ -2058,14 +2036,17 @@ class AnalysisEffects(Tools):
         print('tuney  : {:.6f}'.format(self._twiss0.muy[-1]/2/_np.pi))
         # create model with ID
         fname = self.get_kmap_filename(folder_data=utils.FOLDER_DATA,
-                                       width=width, phase=phase, gap=gap,
                                        shift_flag=self.shift_flag,
                                        filter_flag=self.filter_flag,
                                        linear=self.linear,
-                                       meas_flag=self.meas_flag)
+                                       meas_flag=self.meas_flag, **kwargs)
         self._model_id, self._ids = self.create_model_ids(
                                         fname=fname, linear=self.linear,
-                                        create_ids=utils.create_ids)
+                                        create_ids=utils.create_ids,
+                                        rescale_kicks=utils.RESCALE_KICKS,
+                                        rescale_length=utils.RESCALE_LENGTH,
+                                        fitted_model=self.fitted_model,
+                                        fit_path=utils.FIT_PATH)
         knobs, locs_beta, straight_nr = self._get_knobs_locs()
 
         print('element indices for straight section begin and end:')
@@ -2093,7 +2074,6 @@ class AnalysisEffects(Tools):
             rescale_kicks_orig.append(self._model_id[ind_id[0]].rescale_kicks)
             self._model_id[ind_id[0]].rescale_kicks = 0
             self._model_id[ind_id[1]].rescale_kicks = 0
-
 
         # loop over IDs turning rescale_kicks on, one by one.
         for idx in range(len(ids_ind_all)//2):
@@ -2138,11 +2118,11 @@ class AnalysisEffects(Tools):
 
                 if self.bb_plot_flag:
                     # plot results
-                    self._plot_beta_beating(width=width, phase=phase, gap=gap)
+                    self._plot_beta_beating(**kwargs)
 
         return self._model_id
 
-    def _analysis_dynapt(self, model, width, phase, gap):
+    def _analysis_dynapt(self, model, **kwargs):
 
         model.radiation_on = 0
         model.cavity_on = False
@@ -2160,9 +2140,9 @@ class AnalysisEffects(Tools):
             nuy_bounds=(14.12, 14.45),
             nux_bounds=(49.05, 49.50))
 
-        fpath = self.get_data_path(folder_data=utils.FOLDER_DATA, width=width,
-                                   phase=phase, gap=gap,
-                                   meas_flag=self.meas_flag)
+        fpath = self.get_data_path(folder_data=utils.FOLDER_DATA,
+                                   meas_flag=self.meas_flag, **kwargs)
+        Tools.mkdir_function(fpath)
         print(fpath)
         label1 = ['', '-ids-nonsymm', '-ids-symm'][self.calc_type]
         label2 = {False: '-nominal', True: '-fittedmodel'}[self.fitted_model]
@@ -2172,15 +2152,14 @@ class AnalysisEffects(Tools):
         fig.savefig(fig_name, dpi=300, format='png')
         fig.clf()
 
-    def run_analysis_dynapt(self, width, phase, gap):
+    def run_analysis_dynapt(self, **kwargs):
         if self.calc_type == self.CALC_TYPES.nominal:
             model = self._create_model_nominal()
         elif self.calc_type in (
                 self.CALC_TYPES.symmetrized, self.CALC_TYPES.nonsymmetrized):
             self._beta_flag = self.calc_type == self.CALC_TYPES.symmetrized
-            model = self._correct_optics(
-                width=width, phase=phase, gap=gap)
+            model = self._execute_correction_algorithm(**kwargs)
         else:
             raise ValueError('Invalid calc_type')
 
-        self._analysis_dynapt(model=model, width=width, phase=phase, gap=gap)
+        self._analysis_dynapt(model=model, **kwargs)

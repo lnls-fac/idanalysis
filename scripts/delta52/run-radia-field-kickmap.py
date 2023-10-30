@@ -20,8 +20,6 @@ if __name__ == "__main__":
     radia_fanalysis.traj_max_rz = radia_fanalysis.rz_field_max
     radia_fanalysis.kmap_idlen = utils.ID_KMAP_LEN
 
-    radia_fanalysis.config_idx = 2
-
     # radia_fanalysis.roff_deltas = np.linspace(0.1, 1, 1)
     # radia_fanalysis.calibrate_models(plot_flag=True)
 
@@ -32,9 +30,9 @@ if __name__ == "__main__":
     # radia_fanalysis.run_calc_fields(phase=utils.phases, dgv=utils.dgv)
     # phase = utils.phases[2]
     # sulfix = '-phase' + radia_fanalysis._get_phase_str(phase)
-    radia_fanalysis.run_plot_data(sulfix=None,
-                                  phase=utils.phases, dgv=utils.dgv)
-    # radia_fanalysis.run_generate_kickmap()
+    # radia_fanalysis.run_plot_data(sulfix=None,
+    #                               phase=utils.phases[1], dgv=utils.dgv)
+    radia_fanalysis.run_generate_kickmap()
 
     # betax = 2.77
     # betay = 2.80

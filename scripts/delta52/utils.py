@@ -5,9 +5,10 @@ import numpy as np
 
 from imaids.models import DeltaSabia
 from idanalysis import IDKickMap
+from mathphys.functions import load_pickle
 
 BEAM_ENERGY = 3.0  # [GeV]
-DEF_RK_S_STEP = 1  # [mm] seems converged for the measurement fieldmap grids
+DEF_RK_S_STEP = .5  # [mm] seems converged for the measurement fieldmap grids
 ROLL_OFF_RT = 5.0  # [mm]
 ROLL_OFF_POS = 5.0  # [mm]
 ROLL_OFF_PLANE = 'x'
@@ -24,7 +25,7 @@ RESCALE_LENGTH = 1
 NOMINAL_GAP = 13.6
 ID_FAMNAME = 'DELTA52'
 
-SIMODEL_FITTED = True
+SIMODEL_FITTED = False
 FIT_PATH = '/home/gabriel/Desktop/my-data-by-day/2023-05-15-SI_low_coupling/fitting_ref_config_before_low_coupling_strengths.pickle'
 SHIFT_FLAG = True
 FILTER_FLAG = False
@@ -65,59 +66,64 @@ ID_CONFIGS = {
     'ID4383': 'delta_sabia_no_shimming/2023-03-28_' +
     'DeltaSabia_Phase07_Fieldmap_Corrected_X=-5_5mm_Z=-900_900mm_ID=4383.dat',
 
-    # shimming A
-    'ID4458': 'delta_sabia_shimmingA/2023-04-18_' +
-    'DeltaSabia_Phase01_Fieldmap_Corrected_X=-5_5mm_Z=-900_900mm_ID=4458.dat',
+    # shimming E
+    'ID4818': 'delta_sabia_shimmingE/2023-09-04_' +
+    'DeltaSabia_Phase01_Fieldmap_Corrected_X=-5_5mm_Z=-900_900mm_ID=4818.dat',
 
-    'ID4459': 'delta_sabia_shimmingA/2023-04-18_' +
-    'DeltaSabia_Phase02_Fieldmap_Corrected_X=-5_5mm_Z=-900_900mm_ID=4459.dat',
+    'ID4819': 'delta_sabia_shimmingE/2023-09-04_' +
+    'DeltaSabia_Phase02_Fieldmap_Corrected_X=-5_5mm_Z=-900_900mm_ID=4819.dat',
 
-    'ID4460': 'delta_sabia_shimmingA/2023-04-18_' +
-    'DeltaSabia_Phase03_Fieldmap_Corrected_X=-5_5mm_Z=-900_900mm_ID=4460.dat',
+    'ID4820': 'delta_sabia_shimmingE/2023-09-04_' +
+    'DeltaSabia_Phase03_Fieldmap_Corrected_X=-5_5mm_Z=-900_900mm_ID=4820.dat',
 
-    'ID4461': 'delta_sabia_shimmingA/2023-04-19_' +
-    'DeltaSabia_Phase04_Fieldmap_Corrected_X=-5_5mm_Z=-900_900mm_ID=4461.dat',
+    'ID4821': 'delta_sabia_shimmingE/2023-09-04_' +
+    'DeltaSabia_Phase04_Fieldmap_Corrected_X=-5_5mm_Z=-900_900mm_ID=4821.dat',
 
-    'ID4462': 'delta_sabia_shimmingA/2023-04-19_' +
-    'DeltaSabia_Phase05_Fieldmap_Corrected_X=-5_5mm_Z=-900_900mm_ID=4462.dat',
+    'ID4822': 'delta_sabia_shimmingE/2023-09-04_' +
+    'DeltaSabia_Phase05_Fieldmap_Corrected_X=-5_5mm_Z=-900_900mm_ID=4822.dat',
 
-    'ID4463': 'delta_sabia_shimmingA/2023-04-19_' +
-    'DeltaSabia_Phase06_Fieldmap_Corrected_X=-5_5mm_Z=-900_900mm_ID=4463.dat',
+    'ID4823': 'delta_sabia_shimmingE/2023-09-04_' +
+    'DeltaSabia_Phase06_Fieldmap_Corrected_X=-5_5mm_Z=-900_900mm_ID=4823.dat',
 
-    'ID4464': 'delta_sabia_shimmingA/2023-04-19_' +
-    'DeltaSabia_Phase07_Fieldmap_Corrected_X=-5_5mm_Z=-900_900mm_ID=4464.dat',
+    'ID4824': 'delta_sabia_shimmingE/2023-09-05_' +
+    'DeltaSabia_Phase07_Fieldmap_Corrected_X=-5_5mm_Z=-900_900mm_ID=4824.dat',
 
-    # shimming B
-    'ID4465': 'delta_sabia_shimmingB/2023-05-02_' +
-    'DeltaSabia_Phase01_Fieldmap_Corrected_X=-5_5mm_Z=-900_900mm_ID=4465.dat',
+    # shimming E + magic fingers
+    'ID4836': 'delta_sabia_shimmingE_magic_fingers/2023-09-14_' +
+    'DeltaSabia_Phase01_Fieldmap_Corrected_X=-5_5mm_Z=-900_900mm_ID=4836.dat',
 
-    'ID4466': 'delta_sabia_shimmingB/2023-05-02_' +
-    'DeltaSabia_Phase02_Fieldmap_Corrected_X=-5_5mm_Z=-900_900mm_ID=4466.dat',
+    'ID4837': 'delta_sabia_shimmingE_magic_fingers/2023-09-14_' +
+    'DeltaSabia_Phase02_Fieldmap_Corrected_X=-5_5mm_Z=-900_900mm_ID=4837.dat',
 
-    'ID4467': 'delta_sabia_shimmingB/2023-05-02_' +
-    'DeltaSabia_Phase03_Fieldmap_Corrected_X=-5_5mm_Z=-900_900mm_ID=4467.dat',
+    'ID4838': 'delta_sabia_shimmingE_magic_fingers/2023-09-14_' +
+    'DeltaSabia_Phase03_Fieldmap_Corrected_X=-5_5mm_Z=-900_900mm_ID=4838.dat',
 
-    'ID4468': 'delta_sabia_shimmingB/2023-05-02_' +
-    'DeltaSabia_Phase04_Fieldmap_Corrected_X=-5_5mm_Z=-900_900mm_ID=4468.dat',
+    'ID4839': 'delta_sabia_shimmingE_magic_fingers/2023-09-15_' +
+    'DeltaSabia_Phase04_Fieldmap_Corrected_X=-5_5mm_Z=-900_900mm_ID=4839.dat',
 
-    'ID4469': 'delta_sabia_shimmingB/2023-05-02_' +
-    'DeltaSabia_Phase05_Fieldmap_Corrected_X=-5_5mm_Z=-900_900mm_ID=4469.dat',
+    'ID4840': 'delta_sabia_shimmingE_magic_fingers/2023-09-15_' +
+    'DeltaSabia_Phase05_Fieldmap_Corrected_X=-5_5mm_Z=-900_900mm_ID=4840.dat',
 
-    'ID4470': 'delta_sabia_shimmingB/2023-05-02_' +
-    'DeltaSabia_Phase06_Fieldmap_Corrected_X=-5_5mm_Z=-900_900mm_ID=4470.dat',
+    'ID4841': 'delta_sabia_shimmingE_magic_fingers/2023-09-15_' +
+    'DeltaSabia_Phase06_Fieldmap_Corrected_X=-5_5mm_Z=-900_900mm_ID=4841.dat',
 
-    'ID4471': 'delta_sabia_shimmingB/2023-05-02_' +
-    'DeltaSabia_Phase07_Fieldmap_Corrected_X=-5_5mm_Z=-900_900mm_ID=4471.dat',
+    'ID4842': 'delta_sabia_shimmingE_magic_fingers/2023-09-15_' +
+    'DeltaSabia_Phase07_Fieldmap_Corrected_X=-5_5mm_Z=-900_900mm_ID=4842.dat',
     }
 
 
 phases = [00.00, -13.125, -26.25]
 dgv = [13.125, 26.25]
 
-dp_dgv_dict = {(0, 0): 'ID4465', (0, 26.25): 'ID4466',
-               (-26.25, 26.25): 'ID4467', (-13.125, 26.25): 'ID4468',
-               (0, 13.125): 'ID4469', (-26.25, 13.125): 'ID4470',
-               (-13.125, 13.125): 'ID4471'}
+dp_dgv_dict = {(0, 0): 'ID4818', (0, 26.25): 'ID4819',
+               (-26.25, 26.25): 'ID4820', (-13.125, 26.25): 'ID4821',
+               (0, 13.125): 'ID4822', (-26.25, 13.125): 'ID4823',
+               (-13.125, 13.125): 'ID4824'}
+
+# dp_dgv_dict = {(0, 0): 'ID4836', (0, 26.25): 'ID4837',
+#                (-26.25, 26.25): 'ID4838', (-13.125, 26.25): 'ID4839',
+#                (0, 13.125): 'ID4840', (-26.25, 13.125): 'ID4841',
+#                (-13.125, 13.125): 'ID4842'}
 
 CONFIG_DICT = {'params': ['phase', 'dgv'],
                'configs': dp_dgv_dict}
@@ -148,9 +154,18 @@ def generate_radia_model(solve=SOLVE_FLAG, **kwargs):
     delta = DeltaSabia()
     phase = kwargs['phase']
     dgv = kwargs['dgv']
+    apply_mag = kwargs['apply_mag']
+
+    if apply_mag:
+        p = str(int(np.modf(np.abs(phase))[-1]))
+        gv = str(int(np.modf(np.abs(dgv))[-1]))
+        mag_fname = './mags/p{}_dgv{}.pickle'.format(p, gv)
+
+        mag_dict = load_pickle(mag_fname)
+        delta.create_radia_object(magnetization_dict=mag_dict)
     delta.set_cassete_positions(dp=phase, dgv=dgv)
 
-    if solve:
-        delta.solve()
+    # if solve:
+        # delta.solve()
 
     return delta
