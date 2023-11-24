@@ -23,91 +23,6 @@ import utils
 
 class Tools:
 
-    class CALC_TYPES:
-        nominal = 0
-        nonsymmetrized = 1
-        symmetrized = 2
-
-    @staticmethod
-    def get_gap_str(gap):
-        gap_str = '{:04.1f}'.format(gap).replace('.', 'p')
-        return gap_str
-
-    @staticmethod
-    def get_phase_str(phase):
-        phase_str = '{:+07.3f}'.format(phase).replace('.', 'p')
-        phase_str = phase_str.replace('+', 'pos').replace('-', 'neg')
-        return phase_str
-
-    @staticmethod
-    def create_config_path(**kwargs):
-        path = ''
-        if 'width' in kwargs.keys():
-            path += 'widths/width_{}/'.format(kwargs.get('width'))
-        if 'phase' in kwargs.keys():
-            phase_str = Tools.get_phase_str(kwargs.get('phase'))
-            path += 'phases/phase_{}/'.format(phase_str)
-        if 'gap' in kwargs.keys():
-            gap_str = Tools.get_gap_str(kwargs.get('gap'))
-            path += 'gap_{}/'.format(gap_str)
-
-        forbidden_list = ['width', 'phase', 'gap']
-        items = list(kwargs.items())
-        items_ = [elem for elem in items if elem[0] not in forbidden_list]
-        for key, value in items_:
-            path += '{}/{}_{}/'.format(key + 's', key, value)
-        return path
-
-    @staticmethod
-    def get_data_path(folder_data, meas_flag, **kwargs):
-        fpath = folder_data
-        if meas_flag:
-            fpath = fpath.replace('model/', 'measurements/')
-        config = Tools.create_config_path(**kwargs)
-        fpath += config
-        return fpath
-
-    @staticmethod
-    def get_meas_data_path(folder_data, **kwargs):
-        fpath = Tools.get_data_path(folder_data, meas_flag=True, **kwargs)
-        return fpath
-
-    @staticmethod
-    def get_kmap_filename(folder_data, shift_flag=False, filter_flag=False,
-                          linear=False, meas_flag=False, **kwargs):
-        fpath = folder_data + 'kickmaps/'
-        fpath = fpath.replace('model/data/', 'model/')
-        if meas_flag:
-            fpath = fpath.replace('model/', 'measurements/')
-
-        fname = 'kickmap-ID'
-        if 'width' in kwargs.keys():
-            fname += '_width{}/'.format(kwargs.get('width'))
-        if 'phase' in kwargs.keys():
-            phase_str = Tools.get_phase_str(kwargs.get('phase'))
-            fname += '_phase{}'.format(phase_str)
-        if 'gap' in kwargs.keys():
-            gap_str = Tools.get_gap_str(kwargs.get('gap'))
-            fname += '_gap{}'.format(gap_str)
-
-        forbidden_list = ['width', 'phase', 'gap']
-        items = list(kwargs.items())
-        items_ = [elem for elem in items if elem[0] not in forbidden_list]
-        for key, value in items_:
-            fname += '_{}{}'.format(key, value)
-        fname += '.txt'
-
-        if linear:
-            fname = fname.replace('.txt', '-linear.txt')
-            return fname
-        if shift_flag:
-            fname = fname.replace('.txt', '-shifted_on_axis.txt')
-        if filter_flag:
-            fname = fname.replace('.txt', '-filtered.txt')
-        fname = fpath + fname
-        print(fname)
-        return fname
-
     @staticmethod
     def create_model_ids(
             fname, rescale_kicks, rescale_length,
@@ -167,32 +82,6 @@ class Tools:
         return b, roff, rz_at_max
 
     @staticmethod
-    def get_meas_idconfig(config_keys, config_dict):
-        idconfig = config_dict['configs'][config_keys]
-        print(idconfig)
-        return idconfig
-
-    @staticmethod
-    def get_fmap_fname(id_configs, meas_data_path, config_keys=None,
-                       config_dict=None, idconfig=None):
-        if idconfig is None:
-            if config_dict is None:
-                raise ValueError
-            idconfig = Tools.get_meas_idconfig(config_keys, config_dict)
-        MEAS_FILE = id_configs[idconfig]
-        _, meas_id = MEAS_FILE.split('ID=')
-        meas_id = meas_id.replace('.dat', '')
-        fmap_fname = meas_data_path + MEAS_FILE
-        return fmap_fname
-
-    @staticmethod
-    def get_fmap(fmap_fname):
-        idkickmap = _IDKickMap()
-        idkickmap.fmap_fname = fmap_fname
-        fmap = idkickmap.fmap_config.fmap
-        return fmap
-
-    @staticmethod
     def get_fmap_roll_off(field_component, fmap, roff_pos,
                           period, plane='x'):
 
@@ -233,19 +122,6 @@ class Tools:
         roff = 100*(b_rt[rt0_idx] - b_rt[rt_idx])/b_rt[rt0_idx]
 
         return rt, b_rt, rzmax, roff
-
-    @staticmethod
-    def mkdir_function(mypath):
-        from errno import EEXIST
-        from os import makedirs, path
-
-        try:
-            makedirs(mypath)
-        except OSError as exc:
-            if exc.errno == EEXIST and path.isdir(mypath):
-                pass
-            else:
-                raise
 
 
 class FieldAnalysisFromFieldmap(Tools):
