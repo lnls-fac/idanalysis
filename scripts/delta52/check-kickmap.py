@@ -18,15 +18,15 @@ if __name__ == '__main__':
     kickanalysis.shift_flag = True
     kickanalysis.filter_flag = False
     kickanalysis.linear = False
-    kickanalysis.meas_flag = True
+    kickanalysis.meas_flag = False
 
-    # kickanalysis.check_kick_at_plane(
-        # phase=0, dgv=[0, 13.125, 26.25], mf='_True',
-        # planes=planes, kick_planes=kick_planes)
-
-    kickanalysis.check_kick_all_planes(
-        phase=-13.125, dgv=26.25, mf='_True',
+    kickanalysis.check_kick_at_plane(
+        phase=-26.25, dgv=[0, 6.5625, 13.125, 19.6875, 26.25],
         planes=planes, kick_planes=kick_planes)
+
+    # kickanalysis.check_kick_all_planes(
+    #     phase=-13.125, dgv=26.25,
+    #     planes=planes, kick_planes=kick_planes)
 
     # kickanalysis.check_kick_at_plane_trk(
     #    phase=-26.25, dgv=26.25, mf='_True')

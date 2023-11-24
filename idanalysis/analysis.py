@@ -901,7 +901,7 @@ class FieldAnalysisFromRadia(Tools):
             models_['configs'][config] = id
         self.models = models_
 
-    def _get_field_roll_off(self, rt, peak_idx=0):
+    def _get_field_roll_off(self, rt, peak_idx=0, field_component='by', plane='x'):
         """Calculate the roll-off of a field component.
 
         Args:
@@ -910,9 +910,7 @@ class FieldAnalysisFromRadia(Tools):
             peak_idx (int): Peak index where the roll-off will be calculated.
                 Defaults to 0.
         """
-        field_component = utils.FIELD_COMPONENT
         roff_pos = utils.ROLL_OFF_POS
-        plane = utils.ROLL_OFF_PLANE
         print('Calculating field roll off...')
         for config, model in self.models['configs'].items():
             b, roff, _ = self.calc_radia_roll_off(field_component, model,
@@ -1137,8 +1135,7 @@ class FieldAnalysisFromRadia(Tools):
             _plt.savefig(filename, dpi=300)
         _plt.show()
 
-    def _read_data_roll_off(self, data, value):
-        field_component = utils.FIELD_COMPONENT
+    def _read_data_roll_off(self, data, value, field_component='by'):
         if 'rolloff_{}'.format(field_component) in data[value]:
             b = data[value]['rolloff_{}'.format(field_component)]
             if 'rolloff_rt' in data[value]:
@@ -1154,8 +1151,7 @@ class FieldAnalysisFromRadia(Tools):
             roll_off = 100*(b/b0 - 1)
             return rt, b, roll_off, roff
 
-    def _plot_field_roll_off(self, data, sulfix=None):
-        field_component = utils.FIELD_COMPONENT
+    def _plot_field_roll_off(self, data, sulfix=None, field_component='by'):
         _plt.figure(1)
         output_dir = self.FOLDER_DATA + 'general'
         filename = output_dir + '/field-rolloff'
@@ -1216,20 +1212,21 @@ class FieldAnalysisFromRadia(Tools):
             self._generate_kickmap(model=value, **kwargs)
 
     def _get_planar_id_features(self,
-                                width=0, phase=0, gap=0,
-                                plot_flag=False):
+                                id_period,
+                                plot_flag=False,
+                                field_component='by',
+                                **kwargs):
 
         def cos(x, b0, kx):
             b = b0*_np.cos(kx*x)
             return b
 
-        data = self.get_data_plot(width=width, phase=phase, gap=gap)
-        if utils.var_param == 'width':
-            rt, b, *_ = self._read_data_roll_off(data, width)
-        elif utils.var_param == 'phase':
-            rt, b, *_ = self._read_data_roll_off(data, phase)
-        elif utils.var_param == 'gap':
-            rt, b, *_ = self._read_data_roll_off(data, gap)
+        data = self.get_data_plot(**kwargs)
+        var_parameter_name = list(data.keys())[0]
+
+        rt, b, *_ = self._read_data_roll_off(
+            data[var_parameter_name], kwargs[var_parameter_name])
+
         idxi = _np.argmin(_np.abs(rt+1))
         idxf = _np.argmin(_np.abs(rt-1))
         rt = rt[idxi:idxf]
@@ -1242,9 +1239,9 @@ class FieldAnalysisFromRadia(Tools):
             _plt.plot(rt, b, label='model')
             b_fitted = cos(rt, opt[0], opt[1])
             _plt.plot(rt, b_fitted, label='fitting')
-            if utils.FIELD_COMPONENT == 'by':
+            if field_component == 'by':
                 _plt.xlabel('x [mm]')
-            elif utils.FIELD_COMPONENT == 'bx':
+            elif field_component == 'bx':
                 _plt.xlabel('y [mm]')
             _plt.ylabel('B [T]')
             _plt.title('Field Roll-off fitting')
@@ -1252,13 +1249,13 @@ class FieldAnalysisFromRadia(Tools):
             _plt.legend()
             _plt.show()
 
-        kz = 2*_np.pi/(utils.ID_PERIOD*1e-3)
+        kz = 2*_np.pi/(id_period*1e-3)
         kx = k*1e3
         ky = _np.sqrt(kx**2+kz**2)
-        if utils.FIELD_COMPONENT == 'by':
+        if field_component == 'by':
             print('kx = {:.2f}'.format(kx))
             print('ky = {:.2f}'.format(ky))
-        elif utils.FIELD_COMPONENT == 'bx':
+        elif field_component == 'bx':
             print('kx = {:.2f}'.format(ky))
             print('ky = {:.2f}'.format(kx))
         print('kz = {:.2f}'.format(kz))
@@ -1266,32 +1263,33 @@ class FieldAnalysisFromRadia(Tools):
         return b0, kx, ky, kz
 
     def _get_id_quad_coef(self,
-                          width=0, phase=0, gap=0,
-                          plot_flag=False):
+                          id_period,
+                          plot_flag=False,
+                          field_component='by',
+                          **kwargs):
         id_len = utils.SIMODEL_ID_LEN
-        b0, kx, ky, kz = self._get_planar_id_features(width=width,
-                                                      phase=0, gap=gap,
-                                                      plot_flag=plot_flag)
+        b0, kx, ky, kz = self._get_planar_id_features(plot_flag=plot_flag,
+                                                      id_period=id_period,
+                                                      **kwargs)
         beam = Beam(energy=3)
         brho = beam.brho
         phase = phase*1e-3
         factor = 1 + _np.cos(kz*phase)
         factor -= (kx**2)/(kz**2+kx**2)*(1-_np.cos(kz*phase))
         a = (1/(kz**2))*id_len*(b0**2)/(4*brho**2)
-        if utils.FIELD_COMPONENT == 'by':
+        if field_component == 'by':
             coefx = a*factor*kx**2
             coefy = -a*2*ky**2
-        elif utils.FIELD_COMPONENT == 'bx':
+        elif field_component == 'bx':
             coefx = -a*factor*ky**2
             coefy = a*2*kx**2
 
         return coefx, coefy
 
-    def get_id_estimated_focusing(self, betax, betay,
-                                  width=0, phase=0, gap=0, plot_flag=False):
+    def get_id_estimated_focusing(self, betax, betay, id_period,
+                                  plot_flag=False, field_component='by', **kwargs):
 
-        coefx, coefy = self._get_id_quad_coef(width=width, phase=phase,
-                                              gap=gap, plot_flag=plot_flag)
+        coefx, coefy = self._get_id_quad_coef(plot_flag=plot_flag, id_period=id_period, field_component=field_component, **kwargs)
         dtunex = -coefx*betax/(4*_np.pi)
         dtuney = -coefy*betay/(4*_np.pi)
 
@@ -1302,19 +1300,17 @@ class FieldAnalysisFromRadia(Tools):
 
         return coefx, coefy, dtunex, dtuney
 
-    def generate_linear_kickmap(self, width=0, phase=0, gap=0,
-                                cxy=0, cyx=0):
+    def generate_linear_kickmap(self, cxy=0, cyx=0, **kwargs):
         beam = Beam(energy=3)
         brho = beam.brho
         idkickmap = _IDKickMap()
-        cxx, cyy = self._get_id_quad_coef(width=width,
-                                          phase=phase, gap=gap)
+        cxx, cyy = self._get_id_quad_coef(**kwargs)
 
         idkickmap.generate_linear_kickmap(brho=brho, posx=self.gridx,
                                           posy=self.gridy, cxx=cxx, cyy=cyy,
                                           cxy=cxy, cyx=cyx)
         fname = self.get_kmap_filename(
-            folder_data=utils.FOLDER_DATA, width=width, phase=phase, gap=gap)
+            folder_data=utils.FOLDER_DATA, **kwargs)
         fname = fname.replace('.txt', '-linear.txt')
         idkickmap.kmap_idlen = utils.ID_KMAP_LEN
         idkickmap.save_kickmap_file(kickmap_filename=fname)
@@ -1843,6 +1839,7 @@ class AnalysisEffects(Tools):
             _plt.legend()
             _plt.grid()
             _plt.show()
+            _plt.clf()
 
     def _plot_beta_beating(self, xlim=None, **kwargs):
         fpath = self.get_data_path(folder_data=utils.FOLDER_DATA,
@@ -1898,6 +1895,7 @@ class AnalysisEffects(Tools):
         _plt.legend()
         _plt.grid()
         _plt.savefig(figname, dpi=300)
+        _plt.clf()
 
         # Compare optics between nominal value and symmetrized optics
         results = self._calc_dtune_betabeat(twiss1=self._twiss2)
@@ -1943,6 +1941,7 @@ class AnalysisEffects(Tools):
         _plt.grid()
         _plt.tight_layout()
         _plt.savefig(figname, dpi=300)
+        _plt.clf()
 
         # Compare optics between nominal value and all corrected
         results = self._calc_dtune_betabeat(twiss1=self._twiss3)
@@ -1987,7 +1986,7 @@ class AnalysisEffects(Tools):
         _plt.grid()
         _plt.tight_layout()
         _plt.savefig(figname, dpi=300)
-        _plt.show()
+        # _plt.show()
         _plt.clf()
 
     def _correct_beta(self, straight_nr, knobs, goal_beta, goal_alpha):
@@ -2150,7 +2149,8 @@ class AnalysisEffects(Tools):
         if self.linear:
             fig_name = fig_name.replace('.png', '-linear.png')
         fig.savefig(fig_name, dpi=300, format='png')
-        fig.clf()
+        # fig.clf()
+        # _plt.show()
 
     def run_analysis_dynapt(self, **kwargs):
         if self.calc_type == self.CALC_TYPES.nominal:

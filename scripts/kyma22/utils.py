@@ -8,7 +8,7 @@ from idanalysis import IDKickMap
 
 BEAM_ENERGY = 3.0  # [GeV]
 DEF_RK_S_STEP = 1  # [mm] seems converged for the measurement fieldmap grids
-ROLL_OFF_RT = 10.0  # [mm]
+ROLL_OFF_POS = 10.0  # [mm]
 SOLVE_FLAG = True
 
 ID_PERIOD = 22  # [mm]

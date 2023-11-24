@@ -15,9 +15,9 @@ if __name__ == "__main__":
     analysis.orbcorr_plot_flag = False
     analysis.bb_plot_flag = True
     analysis.linear = False
-    analysis.meas_flag = True
+    analysis.meas_flag = False
 
     dgvs = utils.dgv
-    # for phase in utils.phases:
-        # for dgv in dgvs:
-    analysis.run_analysis_dynapt(phase=0, dgv=0, mf='_True')
+    for phase in utils.phases:
+        for dgv in dgvs:
+            analysis.run_analysis_dynapt(phase=phase, dgv=dgv)

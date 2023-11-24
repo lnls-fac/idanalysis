@@ -30,11 +30,11 @@ if __name__ == "__main__":
 
     betax = 1.36*1.30
     betay = 1.60*1.22
-    radia_fanalysis.get_id_estimated_focusing(betax=betax, betay=betay,
-                                              phase=utils.phases[0],
-                                              gap=utils.gaps[0],
-                                              width=utils.widths[0],
-                                              plot_flag=False)
+    # radia_fanalysis.get_id_estimated_focusing(betax=betax, betay=betay,
+                                            #   phase=utils.phases[0],
+                                            #   gap=utils.gaps[0],
+                                            #   width=utils.widths[0],
+                                            #   plot_flag=False)
 
     # radia_fanalysis.generate_linear_kickmap(width=utils.widths[0],
                                             # phase=utils.phases[0],

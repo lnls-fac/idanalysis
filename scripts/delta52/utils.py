@@ -41,30 +41,7 @@ phases = [0, -13.125, -26.25]
 
 FOLDER_BASE = '/home/gabriel/repos-dev/'
 
-
 ID_CONFIGS = {
-
-    # no shimming
-    'ID4384': 'delta_sabia_no_shimming/2023-03-29_' +
-    'DeltaSabia_Phase01_Fieldmap_Corrected_X=-5_5mm_Z=-900_900mm_ID=4384.dat',
-
-    'ID4378': 'delta_sabia_no_shimming/2023-03-28_' +
-    'DeltaSabia_Phase02_Fieldmap_Corrected_X=-5_5mm_Z=-900_900mm_ID=4378.dat',
-
-    'ID4379': 'delta_sabia_no_shimming/2023-03-28_' +
-    'DeltaSabia_Phase03_Fieldmap_Corrected_X=-5_5mm_Z=-900_900mm_ID=4379.dat',
-
-    'ID4380': 'delta_sabia_no_shimming/2023-03-28_' +
-    'DeltaSabia_Phase04_Fieldmap_Corrected_X=-5_5mm_Z=-900_900mm_ID=4380.dat',
-
-    'ID4381': 'delta_sabia_no_shimming/2023-03-28_' +
-    'DeltaSabia_Phase05_Fieldmap_Corrected_X=-5_5mm_Z=-900_900mm_ID=4381.dat',
-
-    'ID4382': 'delta_sabia_no_shimming/2023-03-28_' +
-    'DeltaSabia_Phase06_Fieldmap_Corrected_X=-5_5mm_Z=-900_900mm_ID=4382.dat',
-
-    'ID4383': 'delta_sabia_no_shimming/2023-03-28_' +
-    'DeltaSabia_Phase07_Fieldmap_Corrected_X=-5_5mm_Z=-900_900mm_ID=4383.dat',
 
     # shimming E
     'ID4818': 'delta_sabia_shimmingE/2023-09-04_' +
@@ -88,37 +65,103 @@ ID_CONFIGS = {
     'ID4824': 'delta_sabia_shimmingE/2023-09-05_' +
     'DeltaSabia_Phase07_Fieldmap_Corrected_X=-5_5mm_Z=-900_900mm_ID=4824.dat',
 
-    # shimming E + magic fingers
-    'ID4836': 'delta_sabia_shimmingE_magic_fingers/2023-09-14_' +
-    'DeltaSabia_Phase01_Fieldmap_Corrected_X=-5_5mm_Z=-900_900mm_ID=4836.dat',
+    # Final configuration
+        # phase 0
+    'ID4862': 'delta_sabia_final/LinH/2023-10-25_' +
+    'DeltaSabia_Phase=0mm_GV=0mm_Fieldmap_Corrected_X=-5_5mm_Z=-900_900mm_ID=4862.dat',
 
-    'ID4837': 'delta_sabia_shimmingE_magic_fingers/2023-09-14_' +
-    'DeltaSabia_Phase02_Fieldmap_Corrected_X=-5_5mm_Z=-900_900mm_ID=4837.dat',
+    'ID4863': 'delta_sabia_final/LinH/2023-10-25_' +
+    'DeltaSabia_Phase=0mm_GV=6.5625mm_Fieldmap_Corrected_X=-5_5mm_Z=-900_900mm_ID=4863.dat',
 
-    'ID4838': 'delta_sabia_shimmingE_magic_fingers/2023-09-14_' +
-    'DeltaSabia_Phase03_Fieldmap_Corrected_X=-5_5mm_Z=-900_900mm_ID=4838.dat',
+    'ID4864': 'delta_sabia_final/LinH/2023-10-25_' +
+    'DeltaSabia_Phase=0mm_GV=13.125mm_Fieldmap_Corrected_X=-5_5mm_Z=-900_900mm_ID=4864.dat',
 
-    'ID4839': 'delta_sabia_shimmingE_magic_fingers/2023-09-15_' +
-    'DeltaSabia_Phase04_Fieldmap_Corrected_X=-5_5mm_Z=-900_900mm_ID=4839.dat',
+    'ID4865': 'delta_sabia_final/LinH/2023-10-25_' +
+    'DeltaSabia_Phase=0mm_GV=19.6875mm_Fieldmap_Corrected_X=-5_5mm_Z=-900_900mm_ID=4865.dat',
 
-    'ID4840': 'delta_sabia_shimmingE_magic_fingers/2023-09-15_' +
-    'DeltaSabia_Phase05_Fieldmap_Corrected_X=-5_5mm_Z=-900_900mm_ID=4840.dat',
+    'ID4866': 'delta_sabia_final/LinH/2023-10-25_' +
+    'DeltaSabia_Phase=0mm_GV=26.25mm_Fieldmap_Corrected_X=-5_5mm_Z=-900_900mm_ID=4866.dat',
 
-    'ID4841': 'delta_sabia_shimmingE_magic_fingers/2023-09-15_' +
-    'DeltaSabia_Phase06_Fieldmap_Corrected_X=-5_5mm_Z=-900_900mm_ID=4841.dat',
+        # phase -26.25
+    'ID4872': 'delta_sabia_final/LinV/2023-10-26_' +
+    'DeltaSabia_Phase=-26.25mm_GV=0mm_Fieldmap_Corrected_X=-5_5mm_Z=-900_900mm_ID=4872.dat',
 
-    'ID4842': 'delta_sabia_shimmingE_magic_fingers/2023-09-15_' +
-    'DeltaSabia_Phase07_Fieldmap_Corrected_X=-5_5mm_Z=-900_900mm_ID=4842.dat',
+    'ID4873': 'delta_sabia_final/LinV/2023-10-26_' +
+    'DeltaSabia_Phase=-26.25mm_GV=6.5625mm_Fieldmap_Corrected_X=-5_5mm_Z=-900_900mm_ID=4873.dat',
+
+    'ID4874': 'delta_sabia_final/LinV/2023-10-26_' +
+    'DeltaSabia_Phase=-26.25mm_GV=13.125mm_Fieldmap_Corrected_X=-5_5mm_Z=-900_900mm_ID=4874.dat',
+
+    'ID4875': 'delta_sabia_final/LinV/2023-10-26_' +
+    'DeltaSabia_Phase=-26.25mm_GV=19.6875mm_Fieldmap_Corrected_X=-5_5mm_Z=-900_900mm_ID=4875.dat',
+
+    'ID4876': 'delta_sabia_final/LinV/2023-10-27_' +
+    'DeltaSabia_Phase=-26.25mm_GV=26.25mm_Fieldmap_Corrected_X=-5_5mm_Z=-900_900mm_ID=4876.dat',
+
+        # phase -13.125
+    'ID4867': 'delta_sabia_final/CircN/2023-10-25_' +
+    'DeltaSabia_Phase=-13.125mm_GV=0mm_Fieldmap_Corrected_X=-5_5mm_Z=-900_900mm_ID=4867.dat',
+
+    'ID4868': 'delta_sabia_final/CircN/2023-10-26_' +
+    'DeltaSabia_Phase=-13.125mm_GV=6.5625mm_Fieldmap_Corrected_X=-5_5mm_Z=-900_900mm_ID=4868.dat',
+
+    'ID4869': 'delta_sabia_final/CircN/2023-10-26_' +
+    'DeltaSabia_Phase=-13.125mm_GV=13.125mm_Fieldmap_Corrected_X=-5_5mm_Z=-900_900mm_ID=4869.dat',
+
+    'ID4870': 'delta_sabia_final/CircN/2023-10-26_' +
+    'DeltaSabia_Phase=-13.125mm_GV=19.6875mm_Fieldmap_Corrected_X=-5_5mm_Z=-900_900mm_ID=4870.dat',
+
+    'ID4871': 'delta_sabia_final/CircN/2023-10-26_' +
+    'DeltaSabia_Phase=-13.125mm_GV=26.25mm_Fieldmap_Corrected_X=-5_5mm_Z=-900_900mm_ID=4871.dat',
+
+        # phase 13.125
+    'ID4877': 'delta_sabia_final/CircP/2023-10-27_' +
+    'DeltaSabia_Phase=13.125mm_GV=0mm_Fieldmap_Corrected_X=-5_5mm_Z=-900_900mm_ID=4877.dat',
+
+    'ID4878': 'delta_sabia_final/CircP/2023-10-27_' +
+    'DeltaSabia_Phase=13.125mm_GV=-6.5625mm_Fieldmap_Corrected_X=-5_5mm_Z=-900_900mm_ID=4878.dat',
+
+    'ID4879': 'delta_sabia_final/CircP/2023-10-27_' +
+    'DeltaSabia_Phase=13.125mm_GV=-13.125mm_Fieldmap_Corrected_X=-5_5mm_Z=-900_900mm_ID=4879.dat',
+
+    'ID4880': 'delta_sabia_final/CircP/2023-10-27_' +
+    'DeltaSabia_Phase=13.125mm_GV=-19.6875mm_Fieldmap_Corrected_X=-5_5mm_Z=-900_900mm_ID=4880.dat',
+
+    'ID4881': 'delta_sabia_final/CircP/2023-10-27_' +
+    'DeltaSabia_Phase=13.125mm_GV=-26.25mm_Fieldmap_Corrected_X=-5_5mm_Z=-900_900mm_ID=4881.dat',
+
+        # zero K
+    'ID4884': 'delta_sabia_final/zeroK/2023-10-27_' +
+    'DeltaSabia_Phase=6.5625mm_GV=0mm_Fieldmap_Corrected_X=-5_5mm_Z=-900_900mm_ID=4884.dat',
+
+    'ID4882': 'delta_sabia_final/zeroK/2023-10-27_' +
+    'DeltaSabia_Phase=-6.5625mm_GV=0mm_Fieldmap_Corrected_X=-5_5mm_Z=-900_900mm_ID=4882.dat',
+
+    'ID4883': 'delta_sabia_final/zeroK/2023-10-27_' +
+    'DeltaSabia_Phase=-19.6875mm_GV=0mm_Fieldmap_Corrected_X=-5_5mm_Z=-900_900mm_ID=4883.dat',
+
     }
 
 
-phases = [00.00, -13.125, -26.25]
-dgv = [13.125, 26.25]
+phases = [0, -13.125, 13.125, -26.25]
+dgv = [0, 6.5625, 13.125, 19.6875, 26.25]
 
-dp_dgv_dict = {(0, 0): 'ID4818', (0, 26.25): 'ID4819',
-               (-26.25, 26.25): 'ID4820', (-13.125, 26.25): 'ID4821',
-               (0, 13.125): 'ID4822', (-26.25, 13.125): 'ID4823',
-               (-13.125, 13.125): 'ID4824'}
+# phases = [6.5625, -6.5625, 19.6875]
+# dgv = [0]
+
+dp_dgv_dict = {(0, 0): 'ID4862', (0, 6.5625): 'ID4863', (0, 13.125): 'ID4864',
+               (0, 19.6875): 'ID4865', (0, 26.25): 'ID4866',
+
+               (-13.125, 0): 'ID4867', (-13.125, 6.5625): 'ID4868', (-13.125, 13.125): 'ID4869',
+               (-13.125, 19.6875): 'ID4870', (-13.125, 26.25): 'ID4871',
+
+               (13.125, 0): 'ID4877', (13.125, 6.5625): 'ID4878', (13.125, 13.125): 'ID4879',
+               (13.125, 19.6875): 'ID4880', (13.125, 26.25): 'ID4881',
+
+               (-26.25, 0): 'ID4872', (-26.25, 6.5625): 'ID4873', (-26.25, 13.125): 'ID4874',
+               (-26.25, 19.6875): 'ID4875', (-26.25, 26.25): 'ID4876',
+
+               (6.5625, 0): 'ID4884', (-6.5625, 0): 'ID4882', (-19.6875, 0): 'ID4883'}
 
 # dp_dgv_dict = {(0, 0): 'ID4836', (0, 26.25): 'ID4837',
 #                (-26.25, 26.25): 'ID4838', (-13.125, 26.25): 'ID4839',
@@ -154,9 +197,8 @@ def generate_radia_model(solve=SOLVE_FLAG, **kwargs):
     delta = DeltaSabia()
     phase = kwargs['phase']
     dgv = kwargs['dgv']
-    apply_mag = kwargs['apply_mag']
-
-    if apply_mag:
+    if 'apply_mag' in kwargs.keys():
+        apply_mag = kwargs['apply_mag']
         p = str(int(np.modf(np.abs(phase))[-1]))
         gv = str(int(np.modf(np.abs(dgv))[-1]))
         mag_fname = './mags/p{}_dgv{}.pickle'.format(p, gv)

@@ -10,7 +10,7 @@ from mathphys.functions import load_pickle
 
 BEAM_ENERGY = 3.0  # [GeV]
 DEF_RK_S_STEP = 0.5  # [mm] seems converged for the measurement fieldmap grids
-ROLL_OFF_RT = 3.0  # [mm]
+ROLL_OFF_POS = 3.0  # [mm]
 SOLVE_FLAG = True
 
 ID_PERIOD = 29.0  # [mm]

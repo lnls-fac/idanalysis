@@ -318,7 +318,7 @@ def create_ids(
 
 
 def generate_radia_model(phase, gap, nr_periods=NR_PERIODS, width=widths[0],
-                         solve=SOLVE_FLAG, **kwargs):
+                         solve=False, **kwargs):
     """."""
     gap = gap
     nr_periods = nr_periods

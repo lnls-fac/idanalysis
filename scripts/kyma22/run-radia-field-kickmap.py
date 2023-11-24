@@ -28,20 +28,21 @@ if __name__ == "__main__":
     radia_fanalysis.gridx = list(np.linspace(-12, +12, 23) / 1000)  # [m]
     radia_fanalysis.gridy = list(np.linspace(-5, +5, 11) / 1000)  # [m]
 
-    # radia_fanalysis.run_calc_fields()
-    radia_fanalysis.run_plot_data(width=utils.widths[0],
-                                  phase=utils.phases[0],
+    radia_fanalysis.run_calc_fields(phases=utils.phases,
+                                    gap=utils.gaps[0])
+    radia_fanalysis.run_plot_data(phases=utils.phases,
                                   gap=utils.gaps[0])
     # radia_fanalysis.run_generate_kickmap()
 
     betax = 17.80
     betay = 3.69
-    # radia_fanalysis.get_id_estimated_focusing(betax=betax, betay=betay,
-                                            #   phase=utils.phases[1],
-                                            #   gap=utils.gaps[0],
-                                            #   width=utils.widths[0],
-                                            #   plot_flag=False)
+    radia_fanalysis.get_id_estimated_focusing(betax=betax, betay=betay,
+                                              id_period=utils.ID_PERIOD,
+                                              plot_flag=False,
+                                              phase=[utils.phases[1]],
+                                              gap=utils.gaps[0],
+                                              width=utils.widths[0])
 
     # radia_fanalysis.generate_linear_kickmap(width=utils.widths[0],
-                                            # phase=utils.phases[1],
-                                            # gap=utils.gaps[0], cxy=0, cyx=0)
+    #                                         phase=utils.phases[1],
+    #                                         gap=[utils.gaps[0]], cxy=0, cyx=0)
