@@ -1,12 +1,14 @@
 """IDs data."""
 
 from idanalysis import IDKickMap as _IDKickMap
+import pymodels
 
 REPOS_PATH = "/media/gabriel/Dados/"  # Put your repository path here
 
 
-class Tools():
+class Tools:
     """Common tools for IDs data manipulation."""
+
     def __init__(self):
         """Class constructor."""
         self.fmap = None
@@ -285,6 +287,7 @@ class _PARAMS:
     DEFAULT_PPARAMETER = None
     DEFAULT_KPARAMETER = None
     ID_FAMNAME = None
+    SUBSECS = None
 
     # --- data parameters
     FIELDMAPS_DATA_PATH = None
@@ -302,9 +305,13 @@ class DELTA52Data(Tools):
     PARAMS.PPARAMETER_NAME = "dp"
     PARAMS.KPARAMETER_NAME = "dgv"
     PARAMS.ID_FAMNAME = "DELTA52"
+    PARAMS.SUBSECS = ["ID10SB"]
 
     PARAMS.KICKMAPS_DATA_PATH = "../scripts/delta52/kickmaps/"
-    PARAMS.FIELDMAPS_DATA_PATH = REPOS_PATH + "lnls-ima/delta52/id-sabia/model-03/measurement/magnetic/hallprobe/"  # noqa: E501
+    PARAMS.FIELDMAPS_DATA_PATH = (
+        REPOS_PATH
+        + "lnls-ima/delta52/id-sabia/model-03/measurement/magnetic/hallprobe/"
+    )  # noqa: E501
     PARAMS.FOLDER_BASE_OUTPUT = "../scripts/delta52/results/data/"
 
     FIELMAPS_CONFIGS = {
@@ -413,6 +420,7 @@ class DELTA52Data(Tools):
     def __init__(self):
         """Class constructor."""
         self._params = DELTA52Data.PARAMS
+        self.si_idmodel = None
 
     @staticmethod
     def _get_config_path(dp, dgv):
@@ -458,9 +466,13 @@ class APU22Data(Tools):
     PARAMS.NR_PERIODS = 51
     PARAMS.KPARAMETER_NAME = "phase"
     PARAMS.ID_FAMNAME = "APU22"
+    PARAMS.SUBSECS = ["ID06SB", "ID07SP", "ID08SB", "ID09SA"]
 
     PARAMS.KICKMAPS_DATA_PATH = "../scripts/apu22/kickmaps/"
-    PARAMS.FIELDMAPS_DATA_PATH = REPOS_PATH + "lnls-ima/kyma22/id-manaca/commissioning_id/measurement/magnetic/lnls/hallprobe/vertical_position_0mm/"  # noqa: E501
+    PARAMS.FIELDMAPS_DATA_PATH = (
+        REPOS_PATH
+        + "lnls-ima/kyma22/id-manaca/commissioning_id/measurement/magnetic/lnls/hallprobe/vertical_position_0mm/"
+    )  # noqa: E501
     PARAMS.FOLDER_BASE_OUTPUT = "../scripts/apu22/results/data/"
 
     FIELMAPS_CONFIGS = {
@@ -508,6 +520,7 @@ class APU22Data(Tools):
     def __init__(self):
         """Class constructor."""
         self._params = APU22Data.PARAMS
+        self.si_idmodel = None
 
     @staticmethod
     def _get_config_path(phase):
@@ -548,9 +561,13 @@ class APU58Data(Tools):
     PARAMS.NR_PERIODS = 18
     PARAMS.KPARAMETER_NAME = "phase"
     PARAMS.ID_FAMNAME = "APU58"
+    PARAMS.SUBSECS = ["ID11SP"]
 
     PARAMS.KICKMAPS_DATA_PATH = "../scripts/apu58/kickmaps/"
-    PARAMS.FIELDMAPS_DATA_PATH = REPOS_PATH + "lnls-ima/kyma58/id-ipe/commissioning_id/measurement/magnetic/lnls/hallprobe/vertical_position_0mm/"  # noqa: E501
+    PARAMS.FIELDMAPS_DATA_PATH = (
+        REPOS_PATH
+        + "lnls-ima/kyma58/id-ipe/commissioning_id/measurement/magnetic/lnls/hallprobe/vertical_position_0mm/"
+    )  # noqa: E501
     PARAMS.FOLDER_BASE_OUTPUT = "../scripts/apu58/results/data/"
 
     FIELMAPS_CONFIGS = {
@@ -613,6 +630,7 @@ class APU58Data(Tools):
     def __init__(self):
         """Class constructor."""
         self._params = APU58Data.PARAMS
+        self.si_idmodel = None
 
     @staticmethod
     def _get_config_path(phase):
@@ -653,9 +671,13 @@ class PAPU50Data(Tools):
     PARAMS.NR_PERIODS = 18
     PARAMS.KPARAMETER_NAME = "phase"
     PARAMS.ID_FAMNAME = "PAPU50"
+    PARAMS.SUBSECS = ["ID09SA"]
 
     PARAMS.KICKMAPS_DATA_PATH = "../scripts/papu50/kickmaps/"
-    PARAMS.FIELDMAPS_DATA_PATH = REPOS_PATH + "lnls-ima/papu50/id-papu/model-01/measurement/magnetic/hallprobe/"  # noqa: E501
+    PARAMS.FIELDMAPS_DATA_PATH = (
+        REPOS_PATH
+        + "lnls-ima/papu50/id-papu/model-01/measurement/magnetic/hallprobe/"
+    )  # noqa: E501
     PARAMS.FOLDER_BASE_OUTPUT = "../scripts/papu50/results/data/"
 
     FIELMAPS_CONFIGS = {
@@ -694,6 +716,7 @@ class PAPU50Data(Tools):
     def __init__(self):
         """Class constructor."""
         self._params = PAPU50Data.PARAMS
+        self.si_idmodel = None
 
     @staticmethod
     def _get_config_path(phase):
@@ -734,9 +757,13 @@ class WIG180Data(Tools):
     PARAMS.NR_PERIODS = 13
     PARAMS.KPARAMETER_NAME = "gap"
     PARAMS.ID_FAMNAME = "WIG180"
+    PARAMS.SUBSECS = ["ID14SB"]
 
     PARAMS.KICKMAPS_DATA_PATH = "../scripts/wig180/kickmaps/"
-    PARAMS.FIELDMAPS_DATA_PATH = REPOS_PATH + "lnls-ima/wig180/wiggler-2T-STI/commissioning_id/measurement/magnetic/lnls/hallprobe/vertical_position_0mm/"  # noqa: E501
+    PARAMS.FIELDMAPS_DATA_PATH = (
+        REPOS_PATH
+        + "lnls-ima/wig180/wiggler-2T-STI/commissioning_id/measurement/magnetic/lnls/hallprobe/vertical_position_0mm/"
+    )  # noqa: E501
     PARAMS.FOLDER_BASE_OUTPUT = "../scripts/wig180/results/data/"
 
     FIELMAPS_CONFIGS = {
@@ -800,6 +827,7 @@ class WIG180Data(Tools):
     def __init__(self):
         """Class constructor."""
         self._params = WIG180Data.PARAMS
+        self.si_idmodel = None
 
     @staticmethod
     def _get_config_path(gap):
@@ -841,9 +869,13 @@ class EPU50Data(Tools):
     PARAMS.PPARAMETER_NAME = "phase"
     PARAMS.KPARAMETER_NAME = "gap"
     PARAMS.ID_FAMNAME = "EPU50"
+    PARAMS.SUBSECS = ["ID10SB"]
 
     PARAMS.KICKMAPS_DATA_PATH = "../scripts/epu50/kickmaps/"
-    PARAMS.FIELDMAPS_DATA_PATH = REPOS_PATH + "lnls-ima/epu-uvx/measurement/magnetic/hallprobe/probes 133-14/"  # noqa: E501
+    PARAMS.FIELDMAPS_DATA_PATH = (
+        REPOS_PATH
+        + "lnls-ima/epu-uvx/measurement/magnetic/hallprobe/probes 133-14/"
+    )  # noqa: E501
     PARAMS.FOLDER_BASE_OUTPUT = "../scripts/epu50/results/data/"
 
     FIELMAPS_CONFIGS = {
@@ -951,6 +983,7 @@ class EPU50Data(Tools):
     def __init__(self):
         """Class constructor."""
         self._params = EPU50Data.PARAMS
+        self.si_idmodel = None
 
     @staticmethod
     def _get_config_path(phase, gap):
@@ -982,6 +1015,126 @@ class EPU50Data(Tools):
         """
         fpath = self.folder_base_fieldmaps
         idconfig = self.phase_gap_dict[(phase, gap)]
+        fname = self.FIELMAPS_CONFIGS[idconfig]
+        fmap_fname = fpath + fname
+        return fmap_fname
+
+
+class IVU18Data(Tools):
+    """IVU18 data access and manipulation class."""
+
+    PARAMS = _PARAMS()
+    PARAMS.PERIOD_LEN = 18.5  # [mm]
+    PARAMS.ID_LEN = 2.500  # [m]
+    PARAMS.NR_PERIODS = 108
+    PARAMS.KPARAMETER_NAME = "gap"
+    PARAMS.ID_FAMNAME = "IVU18"
+    PARAMS.SUBSECS = ["ID08SB", "ID14SB"]
+
+    PARAMS.KICKMAPS_DATA_PATH = "../scripts/ivu18/kickmaps/"
+    PARAMS.FIELDMAPS_DATA_PATH = (
+        None
+    )  # noqa: E501
+    PARAMS.FOLDER_BASE_OUTPUT = "../scripts/ivu18/results/data/"
+
+    FIELMAPS_CONFIGS = {
+        None
+    }
+
+    gap_dict = {
+        None
+    }
+
+    def __init__(self):
+        """Class constructor."""
+        self._params = IVU18Data.PARAMS
+        self.si_idmodel = None
+
+    @staticmethod
+    def _get_config_path(gap):
+        path = ""
+        gap_str = Tools.get_gap_str(gap)
+        path += "gaps/gap_{}/".format(gap_str)
+        return path
+
+    @staticmethod
+    def _get_kmap_config_name(gap):
+        fname = "kickmap-ID"
+        gap_str = Tools.get_phase_str(gap)
+        fname += "_gap_{}".format(gap_str)
+        return fname
+
+    def get_fmap_fname(self, gap):
+        """Get fmap fname.
+
+        Args:
+            gap (float): gap value
+
+        Returns:
+            str: fielmap name
+        """
+        fpath = self.folder_base_fieldmaps
+        idconfig = self.gap_dict[(gap)]
+        fname = self.FIELMAPS_CONFIGS[idconfig]
+        fmap_fname = fpath + fname
+        return fmap_fname
+
+
+class VPU29Data(Tools):
+    """VPU29 data access and manipulation class."""
+
+    PARAMS = _PARAMS()
+    PARAMS.PERIOD_LEN = 29  # [mm]
+    PARAMS.ID_LEN = 1.700  # [m]
+    PARAMS.NR_PERIODS = 51
+    PARAMS.KPARAMETER_NAME = "gap"
+    PARAMS.ID_FAMNAME = "VPU29"
+    PARAMS.SUBSECS = ["ID06SB", "ID07SP"]
+
+    PARAMS.KICKMAPS_DATA_PATH = "../scripts/vpu29/kickmaps/"
+    PARAMS.FIELDMAPS_DATA_PATH = (
+        None
+    )  # noqa: E501
+    PARAMS.FOLDER_BASE_OUTPUT = "../scripts/vpu29/results/data/"
+
+    FIELMAPS_CONFIGS = {
+        None
+    }
+
+    gap_dict = {
+        None
+    }
+
+    def __init__(self):
+        """Class constructor."""
+        self._params = VPU29Data.PARAMS
+        self.si_idmodel = None
+
+    @staticmethod
+    def _get_config_path(gap):
+        path = ""
+        gap_str = Tools.get_gap_str(gap)
+        path += "gaps/gap_{}/".format(gap_str)
+        return path
+
+    @staticmethod
+    def _get_kmap_config_name(gap):
+        fname = "kickmap-ID"
+        gap_str = Tools.get_phase_str(gap)
+        fname += "_gap_{}".format(gap_str)
+        return fname
+
+    def get_fmap_fname(self, gap):
+        """Get fmap fname.
+
+        Args:
+            gap (float): gap value
+
+        Returns:
+            str: fielmap name
+        """
+        fpath = self.folder_base_fieldmaps
+        idconfig = self.gap_dict[(gap)]
         fname = self.FIELMAPS_CONFIGS[idconfig]
         fmap_fname = fpath + fname
         return fmap_fname

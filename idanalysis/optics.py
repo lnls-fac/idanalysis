@@ -92,7 +92,7 @@ def symm_get_knobs(tr, straight_nr, allquads=False):
     return knobs, knobs_in, knobs_out
 
 
-def correct_tunes_twoknobs(tr, goal_tunes, knobs_out):
+def correct_tunes_twoknobs(tr, goal_tunes):
 
     tunecorr = TuneCorr(tr, 'SI', method='Proportional', grouping='TwoKnobs')
     tunemat = tunecorr.calc_jacobian_matrix()

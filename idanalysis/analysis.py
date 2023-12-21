@@ -4,19 +4,71 @@ import matplotlib.pyplot as _plt
 import numpy as _np
 import pyaccel
 import pymodels
-import utils
 from apsuite.dynap import DynapXY
 from fieldmaptrack import Beam
-from mathphys.functions import load_pickle as _load_pickle, \
-    save_pickle as _save_pickle
-from scipy.optimize import curve_fit as _curve_fit
 
 from idanalysis import IDKickMap as _IDKickMap, optics as optics, \
     orbcorr as orbcorr
 
 
-class FieldMapAnalysis():
-    """Class for fieldmaps analysis."""
+class Tools:
+    """Class with common methods."""
+
+    @staticmethod
+    def create_si_idmodel(
+        kmap_fname,
+        subsec,
+        fam_name,
+        nr_steps=40,
+        rescale_kicks=1,
+        rescale_length=1,
+    ):
+        """Create si id model.
+
+        Args:
+            kmap_fname (str): file name of kickmap
+            subsec (str): String with ID's subsection location
+            fam_name (str): ID's family name on SIRIUS model
+            nr_steps (int, optional): nr of kickmap segments. Defaults to 40.
+            rescale_kicks (float, optional): multiplicative factor for kicks.
+            Defaults to 1.
+            rescale_length (float, optional): multiplicative factor for
+            id's length. Defaults to 1.
+
+
+        Returns:
+            IDModel object: IDModel class's object
+        """
+        idmodel = pymodels.si.IDModel
+        si_idmodel = idmodel(
+            subsec=subsec,
+            file_name=kmap_fname,
+            fam_name=fam_name,
+            nr_steps=nr_steps,
+            rescale_kicks=rescale_kicks,
+            rescale_length=rescale_length,
+        )
+        return [si_idmodel]
+
+    @staticmethod
+    def create_model_with_ids(ids):
+        """Create SI model with ids.
+
+        Args:
+            ids (IDModel objects): List with IDModel objects
+
+        Returns:
+            Accelerator: SI model with ids
+        """
+        model = pymodels.si.create_accelerator(ids=ids)
+        model.cavity_on = False
+        model.radiation_on = 0
+        return model
+
+
+class FieldMapAnalysis:
+    """Fieldmaps analysis class."""
+
     def __init__(self, fmap):
         """Class constructor.
 
@@ -61,8 +113,8 @@ class FieldMapAnalysis():
         rz = self.fmap.rz
         idx0 = _np.argmin(_np.abs(rz))
         b_slice = b[
-            idx0 - int(peak_search/2 * len(rz)) : idx0
-            + int(peak_search/2 * len(rz))
+            idx0 - int(peak_search / 2 * len(rz)) : idx0
+            + int(peak_search / 2 * len(rz))
         ]
 
         idxmax = _np.argmax(_np.abs(b_slice))
@@ -134,8 +186,9 @@ class FieldMapAnalysis():
         return rt_interp, bt_interp, roff
 
 
-class RadiaModelAnalysis():
-    """Class for RADIA models field analysis."""
+class RadiaModelAnalysis:
+    """RADIA models field analysis class."""
+
     def __init__(self, model):
         """Class constructor."""
         self.model = model
@@ -166,8 +219,9 @@ class RadiaModelAnalysis():
         rzmax = rz[idxmax]
         return idxmax, rzmax, b[idxmax]
 
-    def calc_radia_transverse_dependence(self, field_component,
-                                         r_transverse, plane="x"):
+    def calc_radia_transverse_dependence(
+        self, field_component, r_transverse, plane="x"
+    ):
         """Get field transverse dependence.
 
         Args:
@@ -209,28 +263,32 @@ class RadiaModelAnalysis():
             _1D numpy array_: Roll-off on transverse positions
         """
         _, b_transverse = self.calc_radia_transverse_dependence(
-            field_component, r_transverse, plane)
+            field_component, r_transverse, plane
+        )
 
         r0_idx = _np.argmin(_np.abs(r_transverse))
         roff = b_transverse / b_transverse[r0_idx] - 1
         return r_transverse, b_transverse, roff
 
 
-class TrajectoryAnalysis():
-    """Class for Electron Trajectory analysis."""
-    def __init__(self, fieldsource):
-        """Class constructor.
+class TrajectoryAnalysis:
+    """Electron Trajectory analysis class."""
 
-        Args:
-            fieldsource (_Fielmap or RADIA object_): _description_
-        """
-        self.fieldsource = fieldsource
-        self.beam_energy = Beam(3).energy  # [GeV]
+    def __init__(self, fieldsource):
+        """Class constructor."""
+        self._fieldsource = fieldsource
+        self._beam_energy = Beam(3).energy  # [GeV]
         self._idkickmap = None  # Radia model or fieldmap
         self._rk_s_step = None  # [mm]
         self._traj_init_rz = None  # [mm]
         self._traj_max_rz = None  # [mm]
+        self._traj_init_rx = 0  # [m]
+        self._traj_init_ry = 0  # [m]
+        self._traj_init_px = 0  # [rad]
+        self._traj_init_py = 0  # [rad]
         self._kmap_idlen = None  # [m]
+        self._kmap_fname = None
+        self.traj = None
 
     @property
     def rk_s_step(self):
@@ -260,6 +318,42 @@ class TrajectoryAnalysis():
         return self._traj_max_rz
 
     @property
+    def traj_init_rx(self):
+        """Initial rx point of trajectory.
+
+        Returns:
+            float: Initial horizontal point of traj [m]
+        """
+        return self._traj_init_rx
+
+    @property
+    def traj_init_ry(self):
+        """Initial ry point of trajectory.
+
+        Returns:
+            float: Initial vertical point of traj [m]
+        """
+        return self._traj_init_ry
+
+    @property
+    def traj_init_px(self):
+        """Initial px of trajectory.
+
+        Returns:
+            float: Initial horizontal angle of traj [rad]
+        """
+        return self._traj_init_px
+
+    @property
+    def traj_init_py(self):
+        """Initial py of trajectory.
+
+        Returns:
+            float: Initial vertical angle of traj [rad]
+        """
+        return self._traj_init_py
+
+    @property
     def kmap_idlen(self):
         """Kickmap length for SIRIUS model.
 
@@ -267,6 +361,34 @@ class TrajectoryAnalysis():
             float: Kickmap length for SIRIUS model
         """
         return self._kmap_idlen
+
+    @property
+    def beam_energy(self):
+        """Beam energy.
+
+        Returns:
+            float: Beam energy in [GeV]
+        """
+        return self._beam_energy
+
+    @property
+    def fieldsource(self):
+        """Field source.
+
+        Returns:
+            RADIA object or Fieldmap object: Fieldsource to calc
+            trajectory
+        """
+        return self._fieldsource
+
+    @property
+    def kmap_fname(self):
+        """Kickmap file name.
+
+        Returns:
+            str: File name to save kickmap
+        """
+        return self._kmap_fname
 
     @property
     def idkickmap(self):
@@ -277,627 +399,102 @@ class TrajectoryAnalysis():
         """
         return self._idkickmap
 
+    @rk_s_step.setter
+    def rk_s_step(self, step):
+        self._rk_s_step = step
 
-class Tools:
-    @staticmethod
-    def create_model_ids(
-        fname,
-        rescale_kicks,
-        rescale_length,
-        fitted_model,
-        linear,
-        create_ids,
-        fit_path,
-    ):
-        if linear:
-            rescale_kicks = 1
-            rescale_length = 1
-        if create_ids is None:
-            raise ValueError
-        ids = create_ids(
-            fname, rescale_kicks=rescale_kicks, rescale_length=rescale_length
-        )
-        model = pymodels.si.create_accelerator(ids=ids)
-        if fitted_model:
-            famdata = pymodels.si.families.get_family_data(model)
-            idcs_qn = _np.array(famdata["QN"]["index"]).ravel()
-            idcs_qs = _np.array(famdata["QS"]["index"]).ravel()
-            data = _load_pickle(fit_path)
-            kl = data["KL"]
-            ksl = data["KsL"]
-            pyaccel.lattice.set_attribute(model, "KL", idcs_qn, kl)
-            pyaccel.lattice.set_attribute(model, "KsL", idcs_qs, ksl)
-        model.cavity_on = False
-        model.radiation_on = 0
-        twiss, *_ = pyaccel.optics.calc_twiss(model, indices="closed")
-        print("\nModel with ID:")
-        print("length : {:.4f} m".format(model.length))
-        print("tunex  : {:.6f}".format(twiss.mux[-1] / 2 / _np.pi))
-        print("tuney  : {:.6f}".format(twiss.muy[-1] / 2 / _np.pi))
-        return model, ids
+    @traj_init_rz.setter
+    def traj_init_rz(self, value):
+        self._traj_init_rz = value
 
+    @traj_max_rz.setter
+    def traj_max_rz(self, value):
+        self._traj_max_rz = value
 
+    @kmap_idlen.setter
+    def kmap_idlen(self, value):
+        self._kmap_id_len = value
 
-# class FieldAnalysisFromFieldmap(Tools):
-    # def __init__(self):
-    #     """."""
-    #     # fmap attributes
-    #     self._fmaps = None
-    #     self._fmaps_names = None
-    #     self.data = dict()
+    @beam_energy.setter
+    def beam_energy(self, value):
+        self._beam_energy = value
 
-    #     # Trajectory attributes
-    #     self._idkickmap = None
-    #     self.beam_energy = utils.BEAM_ENERGY  # [Gev]
-    #     self.rk_s_step = utils.DEF_RK_S_STEP  # [mm]
-    #     self.traj_init_rz = None  # [mm]
-    #     self.traj_max_rz = None  # [mm]
-    #     self.kmap_idlen = None  # [m]
-    #     self.gridx = None
-    #     self.gridy = None
+    @fieldsource.setter
+    def fieldsource(self, value):
+        self._fieldsource = value
 
-    #     self.FOLDER_DATA = "./results/measurements/data/"
+    @kmap_fname.setter
+    def kmap_fname(self, value):
+        self._kmap_fname = value
 
+    def _is_fiedsource_fieldmap(self):
+        typ = str(self._fieldsource.__class__)
+        if "imaids" in typ:
+            return False
+        elif "fieldmap" in typ:
+            return True
+        else:
+            raise ValueError("Field source must be RADIA model or fieldmap.")
 
-
-    # @idkickmap.setter
-    # def idkickmap(self, fmap_fname):
-    #     """Set idkickmap config for trajectory."""
-    #     self._idkickmap = _IDKickMap()
-    #     self._idkickmap.fmap_fname = fmap_fname
-    #     self._idkickmap.beam_energy = self.beam_energy
-    #     self._idkickmap.rk_s_step = self.rk_s_step
-    #     self._idkickmap.kmap_idlen = self.kmap_idlen
-
-
-    # def _generate_kickmap(self, fmap_fname, **kwargs):
-    #     self.idkickmap = fmap_fname
-    #     self.idkickmap.fmap_calc_kickmap(posx=self.gridx, posy=self.gridy)
-    #     fname = self.get_kmap_filename(
-    #         folder_data=utils.FOLDER_DATA, meas_flag=True, **kwargs
-    #     )
-    #     self.idkickmap.save_kickmap_file(kickmap_filename=fname)
-
-    # def run_generate_kickmap(self):
-    #     kwargs = dict()
-    #     self._get_fmaps()
-    #     param_names = self.fmaps_names["params"]
-    #     for configs, value in self.fmaps_names["configs"].items():
-    #         stg = "calc kickmap for "
-    #         for i, config in enumerate(configs):
-    #             stg += param_names[i]
-    #             stg += f" {config}, "
-    #             kwargs[param_names[i]] = config
-    #         print(stg)
-    #         self._generate_kickmap(fmap_fname=value, **kwargs)
-
-    # def _get_field_on_trajectory(self):
-    #     print("Calculating field on trajectory...")
-    #     for config, fmap_name in self.fmaps_names["configs"].items():
-    #         # create IDKickMap and calc trajectory
-    #         self.idkickmap = fmap_name
-    #         self.idkickmap.fmap_calc_trajectory(
-    #             traj_init_rx=0, traj_init_ry=0, traj_init_px=0, traj_init_py=0
-    #         )
-    #         traj = self.idkickmap.traj
-
-    #         self.data[config].update({"ontraj_bx": traj.bx})
-    #         self.data[config].update({"ontraj_by": traj.by})
-    #         self.data[config].update({"ontraj_bz": traj.bz})
-    #         self.data[config].update({"ontraj_rx": traj.rx})
-    #         self.data[config].update({"ontraj_ry": traj.ry})
-    #         self.data[config].update({"ontraj_rz": traj.rz})
-    #         self.data[config].update({"ontraj_px": traj.px})
-    #         self.data[config].update({"ontraj_py": traj.py})
-    #         self.data[config].update({"ontraj_pz": traj.pz})
-    #         self.data[config].update({"ontraj_s": traj.s})
-
-
-class FieldAnalysisFromRadia(Tools):
-    def __init__(self):
-        # Model attributes
-        self.rt_field_max = None  # [mm]
-        self.rt_field_nrpts = None
-        self.rz_field_max = None  # [mm]
-        self.rz_field_nrpts = None
-        self.roll_off_rt = utils.ROLL_OFF_POS  # [mm]
-        self.data = dict()
-        self._models = dict()
-
-        # Trajectory attributes
-        self._idkickmap = None
-        self.beam_energy = utils.BEAM_ENERGY  # [Gev]
-        self.rk_s_step = utils.DEF_RK_S_STEP  # [mm]
-        self.traj_init_rz = None  # [mm]
-        self.traj_max_rz = None  # [mm]
-        self.kmap_idlen = None  # [m]
-        self.gridx = None
-        self.gridy = None
-
-        # fmap attributes
-        self.roff_deltas = _np.linspace(1, 1, 1)
-
-        self.FOLDER_DATA = "./results/model/data/"
-
-    @property
-    def idkickmap(self):
-        """Return an object of IDKickMap class.
-
-        Returns:
-            IDKickMap object:
-        """
-        return self._idkickmap
-
-    @property
-    def models(self):
-        """Return a dictionary with all ID models.
-
-        Returns:
-            Dictionary: A dictionary in which keys are
-                the variable parameters and the values are the models.
-                example: {(2, 40): model1, (2, 45): model2}, the keys could be
-                gap and width for example.
-        """
-        return self._models
-
-    @models.setter
-    def models(self, ids):
-        """Set models attribute.
-
-        Args:
-            models (dictionary): A dictionary in which keys are
-                the variable parameters and the values are the models.
-                example: {(2, 40): model1, (2, 45): model2}, the keys could be
-                gap and width for example.
-        """
-        self._models = ids
-
-    @idkickmap.setter
-    def idkickmap(self, id):
-        """Set idkickmap config for trajectory."""
+    def set_traj_configs(self):
+        """Set trajectory configurations."""
         self._idkickmap = _IDKickMap()
-        self._idkickmap.radia_model = id
+
+        if self._is_fiedsource_fieldmap():
+            print("Fieldmap setted as fieldsource")
+            self._idkickmap.fmap_fname = self.fieldsource.filename
+        else:
+            print("RADIA model setted as fieldsource")
+            self._idkickmap.radia_model = self.fieldsource
+
         self._idkickmap.beam_energy = self.beam_energy
         self._idkickmap.rk_s_step = self.rk_s_step
-        self._idkickmap.traj_init_rz = self.traj_init_rz
-        self._idkickmap.traj_rk_min_rz = self.traj_max_rz
         self._idkickmap.kmap_idlen = self.kmap_idlen
 
-    def _create_models(self, **kwargs):
-        models_ = {"params": list(kwargs.keys()), "configs": dict()}
-        param_names = models_["params"]
-        config_list = list()
-        for values in kwargs.values():
-            config_list.append(_np.array(values))
-        config_grid = _np.meshgrid(*config_list)
-        flat_grid = list()
-        for grid in config_grid:
-            flat_list = list(_np.concatenate(grid).flat)
-            flat_grid.append(flat_list)
-        matrix = _np.array(flat_grid)
-        configs = list()
-        for j in _np.arange(_np.shape(matrix)[1]):
-            configs.append(tuple(matrix[:, j]))
-        for config in configs:
-            stg = "Generating model for: \n"
-            for j, param in enumerate(config):
-                stg += param_names[j]
-                stg += f" = {param} \n"
-                kwargs[param_names[j]] = param
-            print(stg)
-            id = utils.generate_radia_model(solve=utils.SOLVE_FLAG, **kwargs)
-            models_["configs"][config] = id
-        self.models = models_
+    def calculate_traj(self):
+        """Calculate RK-4 trajectory.
 
-    def _get_field_roll_off(
-        self, rt, peak_idx=0, field_component="by", plane="x"
-    ):
-        """Calculate the roll-off of a field component.
+        Returns:
+            Fieldmaptrack object: Trajectory object
+        """
+        print("Calculating trajectory...")
+        self._idkickmap.fmap_calc_trajectory(
+            traj_init_rx=self.traj_init_rx,
+            traj_init_ry=self.traj_init_ry,
+            traj_init_px=self.traj_init_px,
+            traj_init_py=self.traj_init_py,
+            traj_init_rz=self.traj_init_rz,
+            traj_rk_min_rz=self.traj_max_rz,
+        )
+        self.traj = self._idkickmap.traj
+        return self.traj
+
+    def generate_kickmap(self, gridx, gridy):
+        """Generate kickmap.
 
         Args:
-            rt (numpy 1D array): array with positions where the field will be
-                calculated
-            peak_idx (int): Peak index where the roll-off will be calculated.
-                Defaults to 0.
+            gridx (1D numpy array): Values to calculate kickmap
+            gridy (1D numpy array): Values to calculate kickmap
         """
-        roff_pos = utils.ROLL_OFF_POS
-        print("Calculating field roll off...")
-        for config, model in self.models["configs"].items():
-            b, roff, _ = self.calc_radia_roll_off(
-                field_component, model, rt, roff_pos, plane=plane, peak_idx=0
-            )
-            self.data[config] = dict()
-            self.data[config].update({"rolloff_rt": rt})
-            self.data[config].update({"rolloff_{}".format(field_component): b})
-            self.data[config].update({"rolloff_value": roff})
-
-    def _get_field_on_axis(self, rz):
-        """Get the field along z axis.
-
-        Args:
-            rz (numpy 1D array): array with longitudinal positions where the
-                field will be calculated
-        """
-        print("Calculating field on axis...")
-        for config, model in self.models["configs"].items():
-            field = model.get_field(0, 0, rz)
-            bx = field[:, 0]
-            by = field[:, 1]
-            bz = field[:, 2]
-            self.data[config].update({"onaxis_bx": bx})
-            self.data[config].update({"onaxis_by": by})
-            self.data[config].update({"onaxis_bz": bz})
-            self.data[config].update({"onaxis_rz": rz})
+        self._idkickmap.fmap_calc_kickmap(posx=gridx, posy=gridy)
+        self._idkickmap.save_kickmap_file(kickmap_filename=self._kmap_fname)
 
 
+class KickmapAnalysis(Tools):
+    """Kickmap analysis class."""
 
+    def __init__(self, kmap_fname):
+        """Class constructor."""
+        self.kmap_fname = kmap_fname
+        self._idkickmap = _IDKickMap(kmap_fname=self.kmap_fname)
 
-
-
-
-    def run_plot_data(self, sulfix=None, **kwargs):
-        data_plot = self.get_data_plot(**kwargs)
-        self._plot_field_on_axis(data=data_plot, sulfix=sulfix)
-        self._plot_rk_traj(data=data_plot, sulfix=sulfix)
-        self._plot_field_roll_off(data=data_plot, sulfix=sulfix)
-
-    def _plot_field_on_axis(self, data, sulfix=None):
-        colors = ["C0", "b", "g", "y", "C1", "r", "k"]
-        fig, axs = _plt.subplots(3, 1, sharex=True, figsize=(12, 8))
-        output_dir = self.FOLDER_DATA + "general"
-        filename = output_dir + "/field-profile"
-        if sulfix is not None:
-            filename += sulfix
-        self.mkdir_function(output_dir)
-        var_parameter_name = list(data.keys())[0]
-        for i, value in enumerate(data[var_parameter_name].keys()):
-            label = var_parameter_name + " {}".format(value)
-            bx = data[var_parameter_name][value]["onaxis_bx"]
-            by = data[var_parameter_name][value]["onaxis_by"]
-            bz = data[var_parameter_name][value]["onaxis_bz"]
-            rz = data[var_parameter_name][value]["onaxis_rz"]
-            axs[0].plot(rz, bx, label=label, color=colors[i])
-            axs[0].set_ylabel("bx [T]")
-            axs[1].plot(rz, by, label=label, color=colors[i])
-            axs[1].set_ylabel("by [T]")
-            axs[2].plot(rz, bz, label=label, color=colors[i])
-            axs[2].set_ylabel("bz [T]")
-        for j in _np.arange(3):
-            axs[j].set_xlabel("z [mm]")
-            axs[j].legend()
-            axs[j].grid()
-        _plt.savefig(filename, dpi=300)
-        _plt.show()
-
-    def _plot_rk_traj(self, data, sulfix=None):
-        colors = ["C0", "b", "g", "y", "C1", "r", "k"]
-        output_dir = self.FOLDER_DATA + "general"
-        var_parameter_name = list(data.keys())[0]
-        for i, value in enumerate(data[var_parameter_name].keys()):
-            s = data[var_parameter_name][value]["ontraj_s"]
-            rx = data[var_parameter_name][value]["ontraj_rx"]
-            ry = data[var_parameter_name][value]["ontraj_ry"]
-            px = 1e6 * data[var_parameter_name][value]["ontraj_px"]
-            py = 1e6 * data[var_parameter_name][value]["ontraj_py"]
-            label = var_parameter_name + " {}".format(value)
-
-            _plt.figure(1)
-            _plt.plot(s, 1e3 * rx, color=colors[i], label=label)
-            _plt.xlabel("s [mm]")
-            _plt.ylabel("x [um]")
-
-            _plt.figure(2)
-            _plt.plot(s, 1e3 * ry, color=colors[i], label=label)
-            _plt.xlabel("s [mm]")
-            _plt.ylabel("y [um]")
-            _plt.legend()
-
-            _plt.figure(3)
-            _plt.plot(s, px, color=colors[i], label=label)
-            _plt.xlabel("s [mm]")
-            _plt.ylabel("px [urad]")
-
-            _plt.figure(4)
-            _plt.plot(s, py, color=colors[i], label=label)
-            _plt.xlabel("s [mm]")
-            _plt.ylabel("py [urad]")
-        sulfix_ = ["/traj-rx", "/traj-ry", "/traj-px", "/traj-py"]
-        for i in [1, 2, 3, 4]:
-            _plt.figure(i)
-            _plt.legend()
-            _plt.grid()
-            filename = output_dir + sulfix_[i - 1]
-            if sulfix is not None:
-                filename += sulfix
-            _plt.savefig(filename, dpi=300)
-        _plt.show()
-
-    def _read_data_roll_off(self, data, value, field_component="by"):
-        if "rolloff_{}".format(field_component) in data[value]:
-            b = data[value]["rolloff_{}".format(field_component)]
-            if "rolloff_rt" in data[value]:
-                rt = data[value]["rolloff_rt"]
-            elif "rolloff_rx" in data[value]:
-                rt = data[value]["rolloff_rx"]
-            elif "rolloff_ry" in data[value]:
-                rt = data[value]["rolloff_ry"]
-            rtp_idx = _np.argmin(_np.abs(rt - utils.ROLL_OFF_POS))
-            rt0_idx = _np.argmin(_np.abs(rt))
-            roff = _np.abs(b[rtp_idx] / b[rt0_idx] - 1)
-            b0 = b[rt0_idx]
-            roll_off = 100 * (b / b0 - 1)
-            return rt, b, roll_off, roff
-
-    def _plot_field_roll_off(self, data, sulfix=None, field_component="by"):
-        _plt.figure(1)
-        output_dir = self.FOLDER_DATA + "general"
-        filename = output_dir + "/field-rolloff"
-        if sulfix is not None:
-            filename += sulfix
-        colors = ["C0", "b", "g", "y", "C1", "r", "k"]
-        var_parameter_name = list(data.keys())[0]
-        for i, value in enumerate(data[var_parameter_name].keys()):
-            roff_data = self._read_data_roll_off(
-                data[var_parameter_name], value
-            )
-            if roff_data is None:
-                continue
-            else:
-                rt, b, roll_off, roff = roff_data
-            label = var_parameter_name + " {} mm, roll-off = {:.2f} %".format(
-                value, 100 * roff
-            )
-            _plt.plot(rt, roll_off, ".-", label=label, color=colors[i])
-        if field_component == "by":
-            _plt.xlabel("x [mm]")
-        else:
-            _plt.xlabel("y [mm]")
-        _plt.ylabel("Field roll off [%]")
-        _plt.xlim(-utils.ROLL_OFF_POS, utils.ROLL_OFF_POS)
-        _plt.ylim(-101 * roff, 20 * roff)
-        if field_component == "by":
-            _plt.title(
-                "Field roll-off at x = {} mm".format(utils.ROLL_OFF_POS)
-            )
-        elif field_component == "bx":
-            _plt.title(
-                "Field roll-off at y = {} mm".format(utils.ROLL_OFF_POS)
-            )
-        _plt.legend()
-        _plt.grid()
-        _plt.savefig(filename, dpi=300)
-        _plt.show()
-
-    def _generate_kickmap(self, model, **kwargs):
-        self.idkickmap = model
-        self.idkickmap.fmap_calc_kickmap(posx=self.gridx, posy=self.gridy)
-        fname = self.get_kmap_filename(
-            folder_data=utils.FOLDER_DATA, meas_flag=True, **kwargs
-        )
-        self.idkickmap.save_kickmap_file(kickmap_filename=fname)
-
-    def run_generate_kickmap(self, **kwargs):
-        if self.models:
-            print("models ready")
-        else:
-            self._create_models(**kwargs)
-            print("models ready")
-
-        param_names = self.models["params"]
-        for configs, value in self.models["configs"].items():
-            stg = "calc kickmap for "
-            for i, config in enumerate(configs):
-                stg += param_names[i]
-                stg += f" = {config} \n, "
-                kwargs[param_names[i]] = config
-            print(stg)
-            self._generate_kickmap(model=value, **kwargs)
-
-    def _get_planar_id_features(
-        self, id_period, plot_flag=False, field_component="by", **kwargs
-    ):
-        def cos(x, b0, kx):
-            b = b0 * _np.cos(kx * x)
-            return b
-
-        data = self.get_data_plot(**kwargs)
-        var_parameter_name = list(data.keys())[0]
-
-        rt, b, *_ = self._read_data_roll_off(
-            data[var_parameter_name], kwargs[var_parameter_name]
-        )
-
-        idxi = _np.argmin(_np.abs(rt + 1))
-        idxf = _np.argmin(_np.abs(rt - 1))
-        rt = rt[idxi:idxf]
-        b = b[idxi:idxf]
-        opt = _curve_fit(cos, rt, b)[0]
-        k = opt[1]
-        b0 = opt[0]
-        print("field amplitude = {:.3f} T".format(b0))
-        if plot_flag:
-            _plt.plot(rt, b, label="model")
-            b_fitted = cos(rt, opt[0], opt[1])
-            _plt.plot(rt, b_fitted, label="fitting")
-            if field_component == "by":
-                _plt.xlabel("x [mm]")
-            elif field_component == "bx":
-                _plt.xlabel("y [mm]")
-            _plt.ylabel("B [T]")
-            _plt.title("Field Roll-off fitting")
-            _plt.grid()
-            _plt.legend()
-            _plt.show()
-
-        kz = 2 * _np.pi / (id_period * 1e-3)
-        kx = k * 1e3
-        ky = _np.sqrt(kx**2 + kz**2)
-        if field_component == "by":
-            print("kx = {:.2f}".format(kx))
-            print("ky = {:.2f}".format(ky))
-        elif field_component == "bx":
-            print("kx = {:.2f}".format(ky))
-            print("ky = {:.2f}".format(kx))
-        print("kz = {:.2f}".format(kz))
-
-        return b0, kx, ky, kz
-
-    def _get_id_quad_coef(
-        self, id_period, plot_flag=False, field_component="by", **kwargs
-    ):
-        id_len = utils.SIMODEL_ID_LEN
-        b0, kx, ky, kz = self._get_planar_id_features(
-            plot_flag=plot_flag, id_period=id_period, **kwargs
-        )
-        beam = Beam(energy=3)
-        brho = beam.brho
-        phase = phase * 1e-3
-        factor = 1 + _np.cos(kz * phase)
-        factor -= (kx**2) / (kz**2 + kx**2) * (1 - _np.cos(kz * phase))
-        a = (1 / (kz**2)) * id_len * (b0**2) / (4 * brho**2)
-        if field_component == "by":
-            coefx = a * factor * kx**2
-            coefy = -a * 2 * ky**2
-        elif field_component == "bx":
-            coefx = -a * factor * ky**2
-            coefy = a * 2 * kx**2
-
-        return coefx, coefy
-
-    def get_id_estimated_focusing(
-        self,
-        betax,
-        betay,
-        id_period,
-        plot_flag=False,
-        field_component="by",
-        **kwargs,
-    ):
-        coefx, coefy = self._get_id_quad_coef(
-            plot_flag=plot_flag,
-            id_period=id_period,
-            field_component=field_component,
-            **kwargs,
-        )
-        dtunex = -coefx * betax / (4 * _np.pi)
-        dtuney = -coefy * betay / (4 * _np.pi)
-
-        print("horizontal quadrupolar term KL: {:.5f}".format(coefx))
-        print("vertical quadrupolar term KL: {:.5f}".format(coefy))
-        print("horizontal delta tune: {:.5f}".format(dtunex))
-        print("vertical delta tune: {:.5f}".format(dtuney))
-
-        return coefx, coefy, dtunex, dtuney
-
-    def generate_linear_kickmap(self, cxy=0, cyx=0, **kwargs):
-        beam = Beam(energy=3)
-        brho = beam.brho
-        idkickmap = _IDKickMap()
-        cxx, cyy = self._get_id_quad_coef(**kwargs)
-
-        idkickmap.generate_linear_kickmap(
-            brho=brho,
-            posx=self.gridx,
-            posy=self.gridy,
-            cxx=cxx,
-            cyy=cyy,
-            cxy=cxy,
-            cyx=cyx,
-        )
-        fname = self.get_kmap_filename(folder_data=utils.FOLDER_DATA, **kwargs)
-        fname = fname.replace(".txt", "-linear.txt")
-        idkickmap.kmap_idlen = utils.ID_KMAP_LEN
-        idkickmap.save_kickmap_file(kickmap_filename=fname)
-
-
-class AnalysisKickmap(Tools):
-    def __init__(self):
-        self._idkickmap = None
-        self.save_flag = False
-        self.plot_flag = False
-        self.filter_flag = False
-        self.shift_flag = False
-        self.linear = False
-        self.meas_flag = False
-        self.FOLDER_DATA = utils.FOLDER_DATA
-
-    def _get_figname_plane(
-        self, kick_plane, var_param_name, var="X", **kwargs
-    ):
-        fpath = utils.FOLDER_DATA
-        if self.meas_flag:
-            fpath = fpath.replace("model/", "measurements/")
-        fpath = fpath.replace("data/", "data/general/")
-
-        fname = fpath + "kick{}-vs-{}".format(kick_plane, var.lower())
-        forbidden_list = [var_param_name]
-        items = list(kwargs.items())
-        items_ = [elem for elem in items if elem[0] not in forbidden_list]
-        for key, value in items_:
-            fname += "_{}{}".format(key, value)
-        fname += ".png"
-
-        if self.linear:
-            fname = fname.replace(".png", "-linear.png")
-
-        return fname
-
-    def _get_figname_allplanes(self, kick_plane, var="X", **kwargs):
-        fname = utils.FOLDER_DATA
-        if self.meas_flag:
-            fname = fname.replace("model/", "measurements/")
-        sulfix = "kick{}-vs-{}-all-planes".format(
-            kick_plane.lower(), var.lower()
-        )
-
-        if "width" in kwargs.keys():
-            fname += "widths/width_{}/".format(kwargs.get("width"))
-        if "phase" in kwargs.keys():
-            phase_str = Tools.get_phase_str(kwargs.get("phase"))
-            fname += "phases/phase_{}/".format(phase_str)
-        if "gap" in kwargs.keys():
-            gap_str = Tools.get_gap_str(kwargs.get("gap"))
-            fname += "gap_{}/".format(gap_str)
-
-        forbidden_list = ["width", "phase", "gap"]
-        items = list(kwargs.items())
-        items_ = [elem for elem in items if elem[0] not in forbidden_list]
-        for key, value in items_:
-            fname += "{}{}/".format(key, value)
-
-        Tools.mkdir_function(fname)
-        fname += sulfix
-        if self.linear:
-            fname += "-linear"
-
-        return fname
-
-    def run_shift_kickmap(self, **kwargs):
-        fname = self.get_kmap_filename(
-            folder_data=utils.FOLDER_DATA, meas_flag=self.meas_flag, **kwargs
-        )
-        self._idkickmap = _IDKickMap(kmap_fname=fname, shift_on_axis=True)
+    def run_shift_kickmap(self):
+        """Generate kickmap without dipolar term."""
+        fname = self.kmap_fname
         fname = fname.replace(".txt", "-shifted_on_axis.txt")
         self._idkickmap.save_kickmap_file(fname)
 
-    def run_filter_kickmap(
-        self, rx, ry, filter_order=5, is_shifted=True, **kwargs
-    ):
-        fname = self.get_kmap_filename(
-            folder_data=utils.FOLDER_DATA,
-            shift_flag=is_shifted,
-            meas_flag=self.meas_flag,
-            **kwargs,
-        )
-        self._idkickmap = _IDKickMap(fname)
-        self._idkickmap.filter_kmap(
-            posx=rx, posy=ry, order=filter_order, plot_flag=True
-        )
-        self._idkickmap.kmap_idlen = utils.ID_KMAP_LEN
-        fname = fname.replace(".txt", "-filtered.txt")
-        self._idkickmap.save_kickmap_file(fname)
-
-    def _calc_idkmap_kicks(self, plane_idx=0, var="X"):
+    def _calc_idkmap_kicks(self, plane_idx=0, indep_var="X"):
         beam = Beam(energy=3)
         brho = beam.brho
         rx0 = self._idkickmap.posx
@@ -906,12 +503,12 @@ class AnalysisKickmap(Tools):
         fposy = self._idkickmap.fposy
         kickx = self._idkickmap.kickx
         kicky = self._idkickmap.kicky
-        if var.lower() == "x":
+        if indep_var.lower() == "x":
             rxf = fposx[plane_idx, :]
             ryf = fposy[plane_idx, :]
             pxf = kickx[plane_idx, :] / brho**2
             pyf = kicky[plane_idx, :] / brho**2
-        elif var.lower() == "y":
+        elif indep_var.lower() == "y":
             rxf = fposx[:, plane_idx]
             ryf = fposy[:, plane_idx]
             pxf = kickx[:, plane_idx] / brho**2
@@ -919,304 +516,250 @@ class AnalysisKickmap(Tools):
 
         return rx0, ry0, pxf, pyf, rxf, ryf
 
-    def check_kick_at_plane(
-        self, planes=["X", "Y"], kick_planes=["X", "Y"], **kwargs
-    ):
-        var_param = [item for item in kwargs.items() if type(item[1]) == list]
-        var_param = var_param[0]
-        var_param_name = var_param[0]
-        var_param_values = var_param[1]
+    def get_kicks_at_plane(self, indep_var="X", plane=0):
+        """Get kicks at plane.
 
-        for var in planes:
-            for kick_plane in kick_planes:
-                for i, var_param_value in enumerate(var_param_values):
-                    kwargs[var_param_name] = var_param_value
+        Args:
+            indep_var (str, optional): Variable to get kicks as a function of
+            (it can be "x" or "y"). Defaults to "X".
+            plane (float, optional): Value of the chosen plane
+        Returns:
+            1D numpy array: rx positions of kickmap
+            1D numpy array: ry positions of kickmap
+            1D numpy array: px kicks of kickmap
+            1D numpy array: py kicks of kickmap
+            1D numpy array: rx final positions of kickmap
+            1D numpy array: ry final positions of kickmap
+        """
+        if indep_var.lower() == "x":
+            pos_zero_idx = list(self._idkickmap.posy).index(plane)
+        elif indep_var.lower() == "y":
+            pos_zero_idx = list(self._idkickmap.posx).index(plane)
 
-                    fname = self.get_kmap_filename(
-                        folder_data=utils.FOLDER_DATA,
-                        shift_flag=self.shift_flag,
-                        filter_flag=self.filter_flag,
-                        linear=self.linear,
-                        meas_flag=self.meas_flag,
-                        **kwargs,
-                    )
-                    fname_fig = self._get_figname_plane(
-                        kick_plane=kick_plane,
-                        var=var,
-                        var_param_name=var_param_name,
-                        **kwargs,
-                    )
-
-                    self._idkickmap = _IDKickMap(fname)
-                    if var.lower() == "x":
-                        pos_zero_idx = list(self._idkickmap.posy).index(0)
-                    elif var.lower() == "y":
-                        pos_zero_idx = list(self._idkickmap.posx).index(0)
-                    rx0, ry0, pxf, pyf, *_ = self._calc_idkmap_kicks(
-                        plane_idx=pos_zero_idx, var=var
-                    )
-                    if not self.linear:
-                        pxf *= utils.RESCALE_KICKS
-                        pyf *= utils.RESCALE_KICKS
-
-                    pf, klabel = (
-                        (pxf, "px")
-                        if kick_plane.lower() == "x"
-                        else (pyf, "py")
-                    )
-
-                    if var.lower() == "x":
-                        r0, xlabel, rvar = (rx0, "x0 [mm]", "y")
-                        pfit = _np.polyfit(r0, pf, len(r0) - 1)
-                    else:
-                        r0, xlabel, rvar = (ry0, "y0 [mm]", "x")
-                        pfit = _np.polyfit(r0, pf, len(r0) - 1)
-                    pf_fit = _np.polyval(pfit, r0)
-
-                    label = var_param_name + " = {} mm".format(var_param_value)
-                    _plt.figure(1)
-                    _plt.plot(
-                        1e3 * r0,
-                        1e6 * pf,
-                        ".-",
-                        color=_plt.cm.jet(i / len(var_param_values)),
-                        label=label,
-                    )
-                    _plt.plot(
-                        1e3 * r0,
-                        1e6 * pf_fit,
-                        "-",
-                        color=_plt.cm.jet(i / len(var_param_values)),
-                        alpha=0.6,
-                    )
-                    print("kick plane: ", kick_plane)
-                    print("plane: ", var)
-                    print("Fitting:")
-                    print(pfit[::-1])
-
-                _plt.figure(1)
-                _plt.xlabel(xlabel)
-                _plt.ylabel("final {} [urad]".format(klabel))
-                _plt.title(
-                    "Kick{}, at pos{} {:+.3f} mm".format(
-                        kick_plane.upper(), rvar, 0
-                    )
-                )
-                _plt.legend()
-                _plt.grid()
-                _plt.tight_layout()
-                if self.save_flag:
-                    _plt.savefig(fname_fig, dpi=300)
-                if self.plot_flag:
-                    _plt.show()
-                _plt.close()
-
-    def check_kick_all_planes(
-        self, planes=["X", "Y"], kick_planes=["X", "Y"], **kwargs
-    ):
-        for var in planes:
-            for kick_plane in kick_planes:
-                fname = self.get_kmap_filename(
-                    folder_data=utils.FOLDER_DATA,
-                    linear=self.linear,
-                    meas_flag=self.meas_flag,
-                    shift_flag=self.shift_flag,
-                    filter_flag=self.filter_flag,
-                    **kwargs,
-                )
-                self._idkickmap = _IDKickMap(fname)
-                fname_fig = self._get_figname_allplanes(
-                    var=var, kick_plane=kick_plane, **kwargs
-                )
-
-                if var.lower() == "x":
-                    kmappos = self._idkickmap.posy
-                else:
-                    kmappos = self._idkickmap.posx
-
-                for plane_idx, pos in enumerate(kmappos):
-                    # if pos > 0:
-                    # continue
-                    rx0, ry0, pxf, pyf, *_ = self._calc_idkmap_kicks(
-                        var=var, plane_idx=plane_idx
-                    )
-                    if not self.linear:
-                        pxf *= utils.RESCALE_KICKS
-                        pyf *= utils.RESCALE_KICKS
-                    pf, klabel = (
-                        (pxf, "px")
-                        if kick_plane.lower() == "x"
-                        else (pyf, "py")
-                    )
-                    if var.lower() == "x":
-                        r0, xlabel, rvar = (rx0, "x0 [mm]", "y")
-                    else:
-                        r0, xlabel, rvar = (ry0, "y0 [mm]", "x")
-                    rvar = "y" if var.lower() == "x" else "x"
-                    label = "pos{} = {:+.3f} mm".format(rvar, 1e3 * pos)
-                    _plt.plot(
-                        1e3 * r0,
-                        1e6 * pf,
-                        ".-",
-                        color=_plt.cm.jet(plane_idx / len(kmappos)),
-                        label=label,
-                    )
-                    _plt.xlabel(xlabel)
-                    _plt.ylabel("final {} [urad]".format(klabel))
-                    # _plt.title(
-                    #     'Kicks for gap {} mm, width {} mm'.format(gap, width))
-                _plt.legend()
-                _plt.grid()
-                _plt.tight_layout()
-                if self.save_flag:
-                    _plt.savefig(fname_fig, dpi=300)
-                if self.plot_flag:
-                    _plt.show()
-                _plt.close()
-
-    def check_kick_at_plane_trk(self, **kwargs):
-        fname = self.get_kmap_filename(
-            folder_data=utils.FOLDER_DATA,
-            linear=self.linear,
-            meas_flag=self.meas_flag,
-            shift_flag=self.shift_flag,
-            filter_flag=self.filter_flag,
-            **kwargs,
+        rx0, ry0, pxf, pyf, rxf, ryf = self._calc_idkmap_kicks(
+            plane_idx=pos_zero_idx, indep_var=indep_var
         )
-        self._idkickmap = _IDKickMap(fname)
-        plane_idx = list(self._idkickmap.posy).index(0)
-        out = self._calc_idkmap_kicks(plane_idx=plane_idx)
-        rx0, ry0 = out[0], out[1]
-        pxf, pyf = out[2], out[3]
-        rxf, ryf = out[4], out[5]
-        if not self.linear:
-            pxf *= utils.RESCALE_KICKS
-            pyf *= utils.RESCALE_KICKS
 
-        # lattice with IDs
-        model, _ = self.create_model_ids(
-            fname=fname,
-            linear=self.linear,
-            create_ids=utils.create_ids,
-            rescale_kicks=utils.RESCALE_KICKS,
-            rescale_length=utils.RESCALE_LENGTH,
-            fitted_model=False,
-            fit_path=utils.FIT_PATH,
+        return rx0, ry0, pxf, pyf, rxf, ryf
+
+    def get_kicks_all_planes(self, indep_var="X"):
+        """Get kicks at all planes.
+
+        Args:
+            indep_var (str, optional): Variable to get kicks as a function of
+            (it can be "x" or "y"). Defaults to "X".
+
+        Returns:
+            1D numpy array: rx positions of kickmap
+            1D numpy array: ry positions of kickmap
+            1D numpy array: px kicks of kickmap
+            1D numpy array: py kicks of kickmap
+            1D numpy array: rx final positions of kickmap
+            1D numpy array: ry final positions of kickmap
+        """
+        if indep_var.lower() == "x":
+            kmappos = self._idkickmap.posy
+        elif indep_var.lower() == "y":
+            kmappos = self._idkickmap.posx
+
+        pxf, pyf, rxf, ryf = _np.zeros((len(kmappos)))
+        for plane_idx, pos in enumerate(kmappos):
+            rx0, ry0, pxf_, pyf_, rxf_, ryf_ = self._calc_idkmap_kicks(
+                indep_var, pos
+            )
+            pxf[plane_idx] = pxf_
+            pyf[plane_idx] = pyf_
+            rxf[plane_idx] = rxf_
+            ryf[plane_idx] = ryf_
+
+        return rx0, ry0, pxf, pyf, rxf, ryf
+
+    def check_tracking_at_plane(
+        self,
+        kmap_fname,
+        subsec,
+        fam_name,
+        nr_steps=40,
+        rescale_kicks=1,
+        rescale_length=1,
+        indep_var="X",
+        plane=0,
+    ):
+        """Check kicks using tracking.
+
+        Args:
+            kmap_fname (str): file name of kickmap
+            subsec (str): String with ID's subsection location
+            fam_name (str): ID's family name on SIRIUS model
+            nr_steps (int, optional): nr of kickmap segments. Defaults to 40.
+            rescale_kicks (float, optional): multiplicative factor for kicks.
+            Defaults to 1.
+            rescale_length (float, optional): multiplicative factor for
+            id's length. Defaults to 1.
+            indep_var (str, optional): Variable to get kicks as a function of
+            (it can be "x" or "y"). Defaults to "X".
+            plane (float, optional): Value of the chosen plane
+
+        Returns:
+            1D numpy array: px kicks of tracking
+            1D numpy array: py kicks of tracking
+            1D numpy array: rx final positions of tracking
+            1D numpy array: ry final positions of tracking
+        """
+        ids = self.create_si_idmodel(
+            kmap_fname,
+            subsec,
+            fam_name,
+            nr_steps,
+            rescale_kicks,
+            rescale_length,
         )
+        model = self.create_model_with_ids(ids)
 
         famdata = pymodels.si.get_family_data(model)
-
-        # shift model
-        idx = famdata[utils.ID_FAMNAME]["index"]
+        mia = pyaccel.lattice.find_indices(model, "fam_name", "mia")
+        mib = pyaccel.lattice.find_indices(model, "fam_name", "mib")
+        mip = pyaccel.lattice.find_indices(model, "fam_name", "mip")
+        mid_subsections = _np.sort(_np.array(mia + mib + mip))
+        idx = mid_subsections[int(subsec[2:4]) - 1]
+        idcs = _np.array(famdata[fam_name]["index"])
+        idcs = idcs[_np.isclose(idcs.mean(axis=1), idx)].ravel()
         idx_begin = idx[0][0]
         idx_end = idx[0][-1]
         idx_dif = idx_end - idx_begin
 
         model = pyaccel.lattice.shift(model, start=idx_begin)
 
-        rxf_trk, ryf_trk = _np.ones(len(rx0)), _np.ones(len(rx0))
-        pxf_trk, pyf_trk = _np.ones(len(rx0)), _np.ones(len(rx0))
-        for i, x0 in enumerate(rx0):
-            coord_ini = _np.array([x0, 0, 0, 0, 0, 0])
+        out = self.get_kicks_at_plane(indep_var=indep_var, plane=plane)
+        rx0, ry0 = out[0], out[1]
+        r0 = rx0 if indep_var.lower() == "x" else ry0
+        rxf_trk, ryf_trk = _np.ones(len(r0)), _np.ones(len(r0))
+        pxf_trk, pyf_trk = _np.ones(len(r0)), _np.ones(len(r0))
+        for i, pos0 in enumerate(r0):
+            coord_ini = (
+                _np.array([pos0, 0, 0, 0, 0, 0])
+                if indep_var.lower() == "x"
+                else _np.array([0, 0, pos0, 0, 0, 0])
+            )
             coord_fin, *_ = pyaccel.tracking.line_pass(
                 model, coord_ini, indices="open"
             )
-
             rxf_trk[i] = coord_fin[0, idx_dif + 1]
             ryf_trk[i] = coord_fin[2, idx_dif + 1]
             pxf_trk[i] = coord_fin[1, idx_dif + 1]
             pyf_trk[i] = coord_fin[3, idx_dif + 1]
 
-        _plt.plot(
-            1e3 * rx0,
-            1e6 * (rxf - rx0),
-            ".-",
-            color="C1",
-            label="Pos X  kickmap",
-        )
-        _plt.plot(
-            1e3 * rx0, 1e6 * ryf, ".-", color="b", label="Pos Y  kickmap"
-        )
-        _plt.plot(
-            1e3 * rx0,
-            1e6 * (rxf_trk - rx0),
-            "o",
-            color="C1",
-            label="Pos X  tracking",
-        )
-        _plt.plot(
-            1e3 * rx0, 1e6 * ryf_trk, "o", color="b", label="Pos Y  tracking"
-        )
-        _plt.xlabel("x0 [mm]")
-        _plt.ylabel("final dpos [um]")
-        _plt.title("dPos")
-        _plt.legend()
-        _plt.grid()
-        _plt.show()
-
-        _plt.plot(
-            1e3 * rx0, 1e6 * pxf, ".-", color="C1", label="Kick X  kickmap"
-        )
-        _plt.plot(
-            1e3 * rx0, 1e6 * pyf, ".-", color="b", label="Kick Y  kickmap"
-        )
-        _plt.plot(
-            1e3 * rx0, 1e6 * pxf_trk, "o", color="C1", label="Kick X  tracking"
-        )
-        _plt.plot(
-            1e3 * rx0, 1e6 * pyf_trk, "o", color="b", label="Kick Y  tracking"
-        )
-        _plt.xlabel("x0 [mm]")
-        _plt.ylabel("final px [urad]")
-        _plt.title("Kicks")
-        _plt.legend()
-        _plt.grid()
-        _plt.show()
+        return rxf_trk, ryf_trk, pxf_trk, pyf_trk
 
 
-class AnalysisEffects(Tools):
+class StorageRingAnalysis(Tools):
+    """Class to insert IDs on SI model and do analysis."""
+
+    class CalcTypes:
+        """Sub class to define which analysis will be done."""
+
+        nominal = 0
+        symmetrized = 1
+        nonsymmetrized = 2
+
     def __init__(self):
-        self._idkickmap = None
-        self._model_id = None
-        self._ids = None
-        self._twiss0 = None
-        self._twiss1 = None
-        self._twiss2 = None
-        self._twiss3 = None
-        self._beta_flag = None
-        self._stg = None
-        self.id_famname = utils.ID_FAMNAME
-        self.fitted_model = False
-        self.calc_type = 0
-        self.corr_system = "SOFB"
-        self.filter_flag = False
-        self.shift_flag = True
-        self.orbcorr_plot_flag = False
-        self.bb_plot_flag = False
-        self.meas_flag = False
-        self.linear = False
+        """Class constructor."""
+        self.ids = []
+        self.model_ids = None
+        self.nom_model = None
+
+        self.orbcorr_system = "SOFB"
+        self.plot_orb_corr = False
+        self.calc_type = self.CalcTypes.symmetrized
+        self._figs_fpath = None
+
+    def add_id_to_model(
+        self,
+        kmap_fname,
+        subsec,
+        fam_name,
+        nr_steps=40,
+        rescale_kicks=1,
+        rescale_length=1,
+    ):
+        """Check kicks using tracking.
+
+        Args:
+            kmap_fname (str): file name of kickmap
+            subsec (str): String with ID's subsection location
+            fam_name (str): ID's family name on SIRIUS model
+            nr_steps (int, optional): nr of kickmap segments. Defaults to 40.
+            rescale_kicks (float, optional): multiplicative factor for kicks.
+            Defaults to 1.
+            rescale_length (float, optional): multiplicative factor for
+            id's length. Defaults to 1.
+
+        Returns:
+            Bool: True
+        """
+        idmodel = self.create_si_idmodel(
+            kmap_fname,
+            subsec,
+            fam_name,
+            nr_steps,
+            rescale_kicks,
+            rescale_length,
+        )
+        self.ids.extend(idmodel)
+        return True
+
+    def set_model_ids(self):
+        """Set model with IDS.
+
+        Returns:
+            Accelerator_: SI model with ids
+        """
+        model = self.create_model_with_ids(self.ids)
+        self.model_ids = model
+        return model
 
     def _create_model_nominal(self):
         model0 = pymodels.si.create_accelerator()
-        if self.fitted_model:
-            famdata0 = pymodels.si.families.get_family_data(model0)
-            idcs_qn0 = _np.array(famdata0["QN"]["index"]).ravel()
-            idcs_qs0 = _np.array(famdata0["QS"]["index"]).ravel()
-            data = _load_pickle(utils.FIT_PATH)
-            kl = data["KL"]
-            ksl = data["KsL"]
-            pyaccel.lattice.set_attribute(model0, "KL", idcs_qn0, kl)
-            pyaccel.lattice.set_attribute(model0, "KsL", idcs_qs0, ksl)
-
         model0.cavity_on = False
         model0.radiation_on = 0
         return model0
 
-    def _get_knobs_locs(self):
+    def do_orbit_correction(self, corr_system, plot_flag):
+        """Do orbit correction using feedback systems.
+
+        Args:
+            corr_system (str): "SOFB" or "FOFB"
+            plot_flag (Bool): True to plot orbit correction results.
+
+        Returns:
+            1D numpy arrays: calculated kicks
+            1D numpy arrays: position of bpms
+            1D numpy arrays: Horizontal orbit distortion after correction
+            1D numpy arrays: Vertical orbit distortion after correction
+            1D numpy arrays: Horizontal orbit distortion before correction
+            1D numpy arrays: Vertical orbit distortion before correction
+            1D numpy arrays: BPMS indices
+        """
+        results = orbcorr.correct_orbit_fb(
+            self.nom_model,
+            self.model_ids,
+            corr_system=corr_system,
+            plot_flag=plot_flag,
+        )
+        return results
+
+    def get_symm_knobs_locs(self):
+        """Get symmetrization knobs.
+
+        Returns:
+            list: Indices of knobs
+            list: Indices of beta
+            list: straight section numbers
+        """
         straight_nr = dict()
         knobs = dict()
         locs_beta = dict()
-        for id_ in self._ids:
+        for id_ in self.ids:
             straight_nr_ = int(id_.subsec[2:4])
 
             # get knobs and beta locations
@@ -1234,7 +777,16 @@ class AnalysisEffects(Tools):
 
         return knobs, locs_beta, straight_nr
 
-    def _calc_action_ratio(self, x0, nturns=1000):
+    def calc_action_ratio(self, x0, nturns=1000):
+        """Calc action ratio.
+
+        Args:
+            x0 (float): Initial position of particle
+            nturns (int, optional): Number of turns. Defaults to 1000.
+
+        Returns:
+            float: Ratio of action
+        """
         coord_ini = _np.array([x0, 0, 0, 0, 0, 0])
         coord_fin, *_ = pyaccel.tracking.ring_pass(
             self._model_id,
@@ -1245,37 +797,79 @@ class AnalysisEffects(Tools):
         )
         rx = coord_fin[0, :]
         ry = coord_fin[2, :]
-        twiss, *_ = pyaccel.optics.calc_twiss(self._model_id)
+        twiss, *_ = pyaccel.optics.calc_twiss(self.model_id)
         betax, betay = twiss.betax, twiss.betay  # Beta functions
         jx = 1 / (betax[0] * nturns) * (_np.sum(rx**2))
         jy = 1 / (betay[0] * nturns) * (_np.sum(ry**2))
 
-        print("action ratio = {:.3f}".format(jy / jx))
         return jy / jx
 
-    def _calc_coupling(self):
-        ed_tang, *_ = pyaccel.optics.calc_edwards_teng(self._model_id)
-        min_tunesep, ratio = pyaccel.optics.estimate_coupling_parameters(
-            ed_tang
-        )
-        print("Minimum tune separation = {:.3f}".format(min_tunesep))
+    def calc_coupling(self):
+        """Calc coupling using Edwards-Teng.
 
+        Returns:
+            float: Minimum tune separation
+        """
+        ed_tang, *_ = pyaccel.optics.calc_edwards_teng(self.model_id)
+        min_tunesep, _ = pyaccel.optics.estimate_coupling_parameters(ed_tang)
         return min_tunesep
 
-    def _calc_dtune_betabeat(self, twiss1):
-        dtunex = (twiss1.mux[-1] - self._twiss0.mux[-1]) / 2 / _np.pi
-        dtuney = (twiss1.muy[-1] - self._twiss0.muy[-1]) / 2 / _np.pi
-        bbeatx = (twiss1.betax - self._twiss0.betax) / self._twiss0.betax
-        bbeaty = (twiss1.betay - self._twiss0.betay) / self._twiss0.betay
-        bbeatx *= 100
-        bbeaty *= 100
+    def calc_dtune(self, twiss=None, twiss_nom=None):
+        """Calc detune.
+
+        Args:
+            twiss (twiss, optional): twiss parameters of perturbed model.
+            Defaults to None.
+            twiss_nom (twiss, optional): twiss parameters of nominal model.
+
+        Returns:
+            float: horizontal detune
+            float: vertical detune
+        """
+        if twiss is None:
+            twiss, *_ = pyaccel.optics.calc_twiss(
+                self.model_ids, indices="closed"
+            )
+        if twiss_nom is None:
+            twiss, *_ = pyaccel.optics.calc_twiss(
+                self.nom_model, indices="closed"
+            )
+        dtunex = (twiss.mux[-1] - twiss_nom.mux[-1]) / 2 / _np.pi
+        dtuney = (twiss.muy[-1] - twiss_nom.muy[-1]) / 2 / _np.pi
+        return (dtunex, dtuney)
+
+    def calc_beta_beating(self, twiss=None, twiss_nom=None):
+        """Calc beta beating.
+
+        Args:
+            twiss (twiss, optional): twiss parameters of perturbed model.
+            Defaults to None.
+            twiss_nom (twiss, optional): twiss parameters of nominal model.
+            Defaults to None.
+
+        Returns:
+            1D numpy array: Horizontal beta beating
+            1D numpy array: Vertical beta beating
+            float: Horizontal beta beating rms
+            float: Vertical beta beating rms
+            float: Horizontal beta beating absolute maximum
+            float: Vertical beta beating absolute maximum
+        """
+        if twiss is None:
+            twiss, *_ = pyaccel.optics.calc_twiss(
+                self.model_ids, indices="closed"
+            )
+        if twiss_nom is None:
+            twiss, *_ = pyaccel.optics.calc_twiss(
+                self.nom_model, indices="closed"
+            )
+        bbeatx = 100 * (twiss.betax - twiss_nom.betax) / twiss_nom.betax
+        bbeaty = 100 * (twiss.betay - twiss_nom.betay) / twiss_nom.betay
         bbeatx_rms = _np.std(bbeatx)
         bbeaty_rms = _np.std(bbeaty)
         bbeatx_absmax = _np.max(_np.abs(bbeatx))
         bbeaty_absmax = _np.max(_np.abs(bbeaty))
         return (
-            dtunex,
-            dtuney,
             bbeatx,
             bbeaty,
             bbeatx_rms,
@@ -1284,53 +878,194 @@ class AnalysisEffects(Tools):
             bbeaty_absmax,
         )
 
-    def _analysis_uncorrected_perturbation(self, plot_flag=True):
-        self._twiss1, *_ = pyaccel.optics.calc_twiss(
-            self._model_id, indices="closed"
-        )
+    def correct_beta(
+        self, straight_nr, knobs, goal_beta, goal_alpha, verbose=True
+    ):
+        """Correct beta functions.
 
-        results = self._calc_dtune_betabeat(twiss1=self._twiss1)
-        dtunex, dtuney = results[0], results[1]
-        bbeatx, bbeaty = results[2], results[3]
-        bbeatx_rms, bbeaty_rms = results[4], results[5]
-        bbeatx_absmax, bbeaty_absmax = results[6], results[7]
+        Args:
+            straight_nr (int): Straight section number
+            knobs (list): Knobs indices used in correction.
+            goal_beta (list): List of goal betas
+            goal_alpha (list): List f goal alphas
+            verbose (bool, optional): If True prints will be executed.
+            Defaults to True.
 
-        if plot_flag:
-            print(f"dtunex: {dtunex:+.6f}")
-            print(f"dtunex: {dtuney:+.6f}")
-            txt = f"bbetax: {bbeatx_rms:04.1f} % rms, "
-            txt += f"{bbeatx_absmax:04.1f} % absmax"
-            print(txt)
-            txt = f"bbetay: {bbeaty_rms:04.1f} % rms, "
-            txt += f"{bbeaty_absmax:04.1f} % absmax"
-            print(txt)
-
-            labelx = f"X ({bbeatx_rms:.1f} % rms)"
-            labely = f"Y ({bbeaty_rms:.1f} % rms)"
-            _plt.plot(
-                self._twiss1.spos, bbeatx, color="b", alpha=1, label=labelx
+        Returns:
+            twiss: Twiss after beta correction
+            string: String containing information about correction
+        """
+        dk_tot = _np.zeros(len(knobs))
+        for i in range(7):
+            dk, k = optics.correct_symmetry_withbeta(
+                self.model_ids, straight_nr, goal_beta, goal_alpha
             )
-            _plt.plot(
-                self._twiss1.spos, bbeaty, color="r", alpha=0.8, label=labely
-            )
-            _plt.xlabel("spos [m]")
-            _plt.ylabel("Beta Beat [%]")
-            _plt.title("Beta Beating from " + self.id_famname)
-            _plt.legend()
-            _plt.grid()
-            _plt.show()
-            _plt.clf()
+            if i == 0:
+                k0 = k
+            if verbose:
+                print("iteration #{}, \u0394K: {}".format(i + 1, dk))
+            dk_tot += dk
+        delta = dk_tot / k0
+        stg = str()
+        for i, fam in enumerate(knobs):
+            stg += "{:<9s} \u0394K: {:+9.3f} % \n".format(fam, 100 * delta[i])
+        twiss, *_ = pyaccel.optics.calc_twiss(self.model_ids, indices="closed")
+        if verbose:
+            print(stg)
+            print()
+        return twiss, stg
 
-    def _plot_beta_beating(self, xlim=None, **kwargs):
-        fpath = self.get_data_path(
-            folder_data=utils.FOLDER_DATA, meas_flag=self.meas_flag, **kwargs
+    def correct_tunes(self, goal_tunes, verbose=True, nr_iter=2):
+        """Correct tunes.
+
+        Args:
+            goal_tunes (list): Goal tunes.
+            verbose (bool, optional): If True prints will be executed.
+            Defaults to True.
+            nr_iter (int, optional): Number of iteractions. Defaults to 2.
+
+        Returns:
+            Twiss: Twiss after tunes corretion
+        """
+        twiss, *_ = pyaccel.optics.calc_twiss(self.model_ids, "closed")
+        tunes = (
+            twiss.mux[-1] / _np.pi / 2,
+            twiss.muy[-1] / _np.pi / 2,
         )
+        if verbose:
+            print("init    tunes: {:.9f} {:.9f}".format(tunes[0], tunes[1]))
+        for i in range(nr_iter):
+            optics.correct_tunes_twoknobs(self.model_ids, goal_tunes)
+            twiss, *_ = pyaccel.optics.calc_twiss(self.model_ids, "closed")
+            tunes = twiss.mux[-1] / _np.pi / 2, twiss.muy[-1] / _np.pi / 2
+            if verbose:
+                print(
+                    "iter #{} tunes: {:.9f} {:.9f}".format(
+                        i + 1, tunes[0], tunes[1]
+                    )
+                )
+        if verbose:
+            print(
+                "goal    tunes: {:.9f} {:.9f}".format(
+                    goal_tunes[0], goal_tunes[1]
+                )
+            )
+            print()
+        return twiss
+
+    def do_optics_corrections(self):
+        """Do optics correction.
+
+        Returns:
+            Twiss: Twiss without any correction
+            Twiss: Twiss after beta correction
+            Twiss: Twiss after tune corretion
+            string: String containg informations about beta correction.
+        """
+        twiss_no_corr, *_ = pyaccel.optics.calc_twiss(self.model_ids, "closed")
+        knobs, locs_beta, straight_nr = self.get_symm_knobs_locs()
+
+        print("element indices for straight section begin and end:")
+        for idsubsec, locs_beta_ in locs_beta.items():
+            print(idsubsec, locs_beta_)
+
+        print("local quadrupole fams: ")
+        for idsubsec, knobs_ in knobs.items():
+            print(idsubsec, knobs_)
+
+        # get list of ID model indices and set rescale_kicks to zero
+        ids_ind_all = orbcorr.get_ids_indices(self.model_ids)
+        rescale_kicks_orig = list()
+        for idx in range(len(ids_ind_all) // 2):
+            ind_id = ids_ind_all[2 * idx : 2 * (idx + 1)]
+            rescale_kicks_orig.append(self.model_ids[ind_id[0]].rescale_kicks)
+            self.model_ids[ind_id[0]].rescale_kicks = 0
+            self.model_ids[ind_id[1]].rescale_kicks = 0
+
+        # loop over IDs turning rescale_kicks on, one by one.
+        for idx in range(len(ids_ind_all) // 2):
+            # turn rescale_kicks on for ID index idx
+            ind_id = ids_ind_all[2 * idx : 2 * (idx + 1)]
+            self.model_ids[ind_id[0]].rescale_kicks = rescale_kicks_orig[idx]
+            self.model_ids[ind_id[1]].rescale_kicks = rescale_kicks_orig[idx]
+            fam_name = self.model_ids[ind_id[0]].fam_name
+
+            # search knob and straight_nr for ID index idx
+            for subsec in knobs:
+                straight_nr_ = straight_nr[subsec]
+                knobs_ = knobs[subsec]
+                locs_beta_ = locs_beta[subsec]
+                if min(locs_beta_) < ind_id[0] and ind_id[1] < max(locs_beta_):
+                    break
+            print("symmetrizing ID {} in subsec {}".format(fam_name, subsec))
+
+            # calculate nominal twiss
+            twiss0, *_ = pyaccel.optics.calc_twiss(self.nom_model)
+            goal_tunes = _np.array(
+                [
+                    twiss0.mux[-1] / 2 / _np.pi,
+                    twiss0.muy[-1] / 2 / _np.pi,
+                ]
+            )
+            goal_beta = _np.array(
+                [
+                    twiss0.betax[locs_beta_],
+                    twiss0.betay[locs_beta_],
+                ]
+            )
+            goal_alpha = _np.array(
+                [
+                    twiss0.alphax[locs_beta_],
+                    twiss0.alphay[locs_beta_],
+                ]
+            )
+
+            # Symmetrize optics (local quad fam knobs)
+            twiss_beta_corr, stg = self.correct_beta(
+                straight_nr_, knobs_, goal_beta, goal_alpha
+            )
+
+            # Correct tunes
+            twiss_tune_corr = self.correct_tunes(goal_tunes)
+
+        return twiss_no_corr, twiss_beta_corr, twiss_tune_corr, stg
+
+    def plot_optics_corr_results(
+        self,
+        twiss_nom,
+        twiss_no_corr,
+        twiss_beta_corr,
+        twiss_tune_corr,
+        stg_beta=None,
+        fpath=None,
+    ):
+        """Plot optics correction results.
+
+        Args:
+            twiss_nom (Twiss): Twiss of nominal model
+            twiss_no_corr (Twiss): Twiss without any correction
+            twiss_beta_corr (Twiss): Twiss after beta correction
+            twiss_tune_corr (Twiss): Twiss after tune corretion
+            stg_beta (string, optional): String containg informations about
+             beta correction. Defaults to None.
+            fpath (string, optional): _description_. Defaults to None.
+
+        Returns:
+            Bool: True
+        """
         # Compare optics between nominal value and uncorrect optics due ID
-        results = self._calc_dtune_betabeat(twiss1=self._twiss1)
-        dtunex, dtuney = results[0], results[1]
-        bbeatx, bbeaty = results[2], results[3]
-        bbeatx_rms, bbeaty_rms = results[4], results[5]
-        bbeatx_absmax, bbeaty_absmax = results[6], results[7]
+        dtunex, dtuney = self.calc_dtune(
+            twiss=twiss_no_corr, twiss_nom=twiss_nom
+        )
+        bbeats = self.calc_beta_beating(
+            twiss=twiss_no_corr, twiss_nom=twiss_nom
+        )
+        bbeatx, bbeaty = bbeats[0], bbeats[1]
+        bbeatx_rms, bbeaty_rms = bbeats[2], bbeats[3]
+        bbeatx_absmax, bbeaty_absmax = bbeats[4], bbeats[5]
+        bbmax = _np.max(_np.concatenate((bbeatx, bbeaty)))
+        bbmin = _np.min(_np.concatenate((bbeatx, bbeaty)))
+        ylim = (1.1 * bbmin, 1.1 * bbmax)
         print("Not symmetrized optics :")
         print(f"dtunex: {dtunex:+.2e}")
         print(f"dtuney: {dtuney:+.2e}")
@@ -1344,51 +1079,41 @@ class AnalysisEffects(Tools):
         )
         print()
 
-        _plt.clf()
-
-        label1 = {False: "-nominal", True: "-fittedmodel"}[self.fitted_model]
-
-        _plt.figure(1)
         stg_tune = f"\u0394\u03BDx: {dtunex:+0.04f}\n"
         stg_tune += f"\u0394\u03BDy: {dtuney:+0.04f}"
         labelx = f"X ({bbeatx_rms:.3f} % rms)"
         labely = f"Y ({bbeaty_rms:.3f} % rms)"
-        figname = fpath + "opt{}-ids-nonsymm".format(label1)
-        Tools.mkdir_function(fpath)
-        if self.linear:
-            figname += "-linear"
-        _plt.plot(
-            self._twiss0.spos, bbeatx, color="b", alpha=1.0, label=labelx
-        )
-        _plt.plot(
-            self._twiss0.spos, bbeaty, color="r", alpha=0.8, label=labely
-        )
-        bbmax = _np.max(_np.concatenate((bbeatx, bbeaty)))
-        bbmin = _np.min(_np.concatenate((bbeatx, bbeaty)))
-        ylim = (1.1 * bbmin, 1.1 * bbmax)
-        if xlim is None:
-            xlim = (0, self._twiss0.spos[-1])
+
+        _plt.figure()
+        _plt.plot(twiss_nom.spos, bbeatx, color="b", alpha=1.0, label=labelx)
+        _plt.plot(twiss_nom.spos, bbeaty, color="r", alpha=0.8, label=labely)
         pyaccel.graphics.draw_lattice(
-            self._model_id, offset=bbmin, height=bbmax / 8, gca=True
+            self.model_ids, offset=bbmin, height=bbmax / 8, gca=True
         )
-        _plt.xlim(xlim)
         _plt.ylim(ylim)
         _plt.xlabel("spos [m]")
         _plt.ylabel("Beta Beating [%]")
         _plt.title("Tune shift:" + "\n" + stg_tune)
-        _plt.suptitle(self.id_famname + " - Non-symmetrized optics")
+        _plt.suptitle("Non-symmetrized optics")
         _plt.tight_layout()
         _plt.legend()
         _plt.grid()
-        _plt.savefig(figname, dpi=300)
-        _plt.clf()
+        if fpath is not None:
+            _plt.savefig(fpath + "Non-symmetrized", dpi=300, format="png")
 
         # Compare optics between nominal value and symmetrized optics
-        results = self._calc_dtune_betabeat(twiss1=self._twiss2)
-        dtunex, dtuney = results[0], results[1]
-        bbeatx, bbeaty = results[2], results[3]
-        bbeatx_rms, bbeaty_rms = results[4], results[5]
-        bbeatx_absmax, bbeaty_absmax = results[6], results[7]
+        dtunex, dtuney = self.calc_dtune(
+            twiss=twiss_beta_corr, twiss_nom=twiss_nom
+        )
+        bbeats = self.calc_beta_beating(
+            twiss=twiss_beta_corr, twiss_nom=twiss_nom
+        )
+        bbeatx, bbeaty = bbeats[0], bbeats[1]
+        bbeatx_rms, bbeaty_rms = bbeats[2], bbeats[3]
+        bbeatx_absmax, bbeaty_absmax = bbeats[4], bbeats[5]
+        bbmax = _np.max(_np.concatenate((bbeatx, bbeaty)))
+        bbmin = _np.min(_np.concatenate((bbeatx, bbeaty)))
+        ylim = (1.1 * bbmin, 1.1 * bbmax)
         print("symmetrized optics but uncorrect tunes:")
         print(f"dtunex: {dtunex:+.0e}")
         print(f"dtuney: {dtuney:+.0e}")
@@ -1402,45 +1127,41 @@ class AnalysisEffects(Tools):
         )
         print()
 
-        _plt.figure(2)
         labelx = f"X ({bbeatx_rms:.3f} % rms)"
         labely = f"Y ({bbeaty_rms:.3f} % rms)"
-        figname = fpath + "opt{}-ids-symm".format(label1)
-        if self.linear:
-            figname += "-linear"
-        _plt.plot(
-            self._twiss0.spos, bbeatx, color="b", alpha=1.0, label=labelx
-        )
-        _plt.plot(
-            self._twiss0.spos, bbeaty, color="r", alpha=0.8, label=labely
-        )
-        bbmax = _np.max(_np.concatenate((bbeatx, bbeaty)))
-        bbmin = _np.min(_np.concatenate((bbeatx, bbeaty)))
-        ylim = (1.1 * bbmin, 1.1 * bbmax)
-        _plt.xlim(xlim)
+
+        _plt.figure()
+        _plt.plot(twiss_nom.spos, bbeatx, color="b", alpha=1.0, label=labelx)
+        _plt.plot(twiss_nom.spos, bbeaty, color="r", alpha=0.8, label=labely)
         _plt.ylim(ylim)
         # bbmax = _np.max(_np.concatenate((bbeatx, bbeaty)))
         pyaccel.graphics.draw_lattice(
-            self._model_id, offset=bbmin, height=bbmax / 8, gca=True
+            self.model_ids, offset=bbmin, height=bbmax / 8, gca=True
         )
         _plt.xlabel("spos [m]")
         _plt.ylabel("Beta Beating [%]")
         _plt.title("Beta Beating")
-        _plt.suptitle(
-            self.id_famname + "- Symmetrized optics and uncorrected tunes"
-        )
+        _plt.suptitle("Symmetrized optics and uncorrected tunes")
         _plt.legend()
         _plt.grid()
         _plt.tight_layout()
-        _plt.savefig(figname, dpi=300)
-        _plt.clf()
+        if fpath is not None:
+            _plt.savefig(fpath + "Symmetrized", dpi=300, format="png")
 
         # Compare optics between nominal value and all corrected
-        results = self._calc_dtune_betabeat(twiss1=self._twiss3)
-        dtunex, dtuney = results[0], results[1]
-        bbeatx, bbeaty = results[2], results[3]
-        bbeatx_rms, bbeaty_rms = results[4], results[5]
-        bbeatx_absmax, bbeaty_absmax = results[6], results[7]
+        dtunex, dtuney = self.calc_dtune(
+            twiss=twiss_tune_corr, twiss_nom=twiss_nom
+        )
+        bbeats = self.calc_beta_beating(
+            twiss=twiss_tune_corr, twiss_nom=twiss_nom
+        )
+        bbeatx, bbeaty = bbeats[0], bbeats[1]
+        bbeatx_rms, bbeaty_rms = bbeats[2], bbeats[3]
+        bbeatx_absmax, bbeaty_absmax = bbeats[4], bbeats[5]
+        bbmax = _np.max(_np.concatenate((bbeatx, bbeaty)))
+        bbmin = _np.min(_np.concatenate((bbeatx, bbeaty)))
+        ylim = (1.1 * bbmin, 1.1 * bbmax)
+
         print("symmetrized optics and corrected tunes:")
         print(f"dtunex: {dtunex:+.0e}")
         print(f"dtuney: {dtuney:+.0e}")
@@ -1453,249 +1174,108 @@ class AnalysisEffects(Tools):
             + f" {bbeaty_absmax:04.3f} % absmax"
         )
 
-        _plt.figure(3)
         labelx = f"X ({bbeatx_rms:.3f} % rms)"
         labely = f"Y ({bbeaty_rms:.3f} % rms)"
-        figname = fpath + "opt{}-ids-symm-tunes".format(label1)
-        if self.linear:
-            figname += "-linear"
-        _plt.plot(
-            self._twiss0.spos, bbeatx, color="b", alpha=1.0, label=labelx
-        )
-        _plt.plot(
-            self._twiss0.spos, bbeaty, color="r", alpha=0.8, label=labely
-        )
-        bbmax = _np.max(_np.concatenate((bbeatx, bbeaty)))
-        bbmin = _np.min(_np.concatenate((bbeatx, bbeaty)))
-        ylim = (1.1 * bbmin, 1.1 * bbmax)
-        _plt.xlim(xlim)
+
+        _plt.figure()
+        _plt.plot(twiss_nom.spos, bbeatx, color="b", alpha=1.0, label=labelx)
+        _plt.plot(twiss_nom.spos, bbeaty, color="r", alpha=0.8, label=labely)
+
         _plt.ylim(ylim)
         # bbmax = _np.max(_np.concatenate((bbeatx, bbeaty)))
         pyaccel.graphics.draw_lattice(
-            self._model_id, offset=bbmin, height=bbmax / 8, gca=True
+            self.model_ids, offset=bbmin, height=bbmax / 8, gca=True
         )
         _plt.xlabel("spos [m]")
         _plt.ylabel("Beta Beating [%]")
-        _plt.title("Corrections:" + "\n" + self._stg)
-        _plt.suptitle(
-            self.id_famname + "- Symmetrized optics and corrected tunes"
-        )
+        _plt.title("Corrections: {}".format(stg_beta))
+        _plt.suptitle("Symmetrized optics and corrected tunes")
         _plt.legend()
         _plt.grid()
         _plt.tight_layout()
-        _plt.savefig(figname, dpi=300)
-        # _plt.show()
-        _plt.clf()
+        if fpath is not None:
+            _plt.savefig(fpath + "Symmetrized_TuneCorr", dpi=300, format="png")
+        else:
+            _plt.show()
+        return True
 
-    def _correct_beta(self, straight_nr, knobs, goal_beta, goal_alpha):
-        dk_tot = _np.zeros(len(knobs))
-        for i in range(7):
-            dk, k = optics.correct_symmetry_withbeta(
-                self._model_id, straight_nr, goal_beta, goal_alpha
-            )
-            if i == 0:
-                k0 = k
-            print("iteration #{}, \u0394K: {}".format(i + 1, dk))
-            dk_tot += dk
-        delta = dk_tot / k0
-        self._stg = str()
-        for i, fam in enumerate(knobs):
-            self._stg += "{:<9s} \u0394K: {:+9.3f} % \n".format(
-                fam, 100 * delta[i]
-            )
-        print(self._stg)
-        self._twiss2, *_ = pyaccel.optics.calc_twiss(
-            self._model_id, indices="closed"
-        )
-        print()
+    def run_correction_algorithms(self):
+        """Run correction algorithms.
 
-    def _correct_tunes(self, goal_tunes, knobs_out=None):
-        tunes = (
-            self._twiss1.mux[-1] / _np.pi / 2,
-            self._twiss1.muy[-1] / _np.pi / 2,
-        )
-        print("init    tunes: {:.9f} {:.9f}".format(tunes[0], tunes[1]))
-        for i in range(2):
-            optics.correct_tunes_twoknobs(
-                self._model_id, goal_tunes, knobs_out
+        Raises:
+            ValueError: Error if calc type is invalid.
+
+        Returns:
+            Bool: True
+        """
+        self.nom_model = self._create_model_nominal()
+        if self.calc_type == self.CalcTypes.nominal:
+            self.model_ids = self._create_model_nominal()
+        elif self.calc_type in (
+            self.CalcTypes.symmetrized,
+            self.CalcTypes.nonsymmetrized,
+        ):
+            self.set_model_ids()
+            _ = self.do_orbit_correction(
+                self.orbcorr_system, self.plot_orb_corr
             )
-            twiss, *_ = pyaccel.optics.calc_twiss(self._model_id)
-            tunes = twiss.mux[-1] / _np.pi / 2, twiss.muy[-1] / _np.pi / 2
-            print(
-                "iter #{} tunes: {:.9f} {:.9f}".format(
-                    i + 1, tunes[0], tunes[1]
+            if self.calc_type == self.CalcTypes.symmetrized:
+                opt_corr = self.do_optics_corrections()
+                twiss_no_corr, twiss_beta_corr, twiss_tune_corr, stg = opt_corr
+                twiss_nom, *_ = pyaccel.optics.calc_twiss(self.nom_model)
+                self.plot_optics_corr_results(
+                    twiss_nom,
+                    twiss_no_corr,
+                    twiss_beta_corr,
+                    twiss_tune_corr,
+                    stg,
+                    self._figs_fpath,
                 )
-            )
-        print(
-            "goal    tunes: {:.9f} {:.9f}".format(goal_tunes[0], goal_tunes[1])
-        )
-        self._twiss3, *_ = pyaccel.optics.calc_twiss(
-            self._model_id, indices="closed"
-        )
-        print()
+        else:
+            raise ValueError("Invalid calc_type")
+        return True
 
-    def _execute_correction_algorithm(self, **kwargs):
-        # create unperturbed model for reference
-        model0 = self._create_model_nominal()
-        self._twiss0, *_ = pyaccel.optics.calc_twiss(model0, indices="closed")
-        print("Model without ID:")
-        print("length : {:.4f} m".format(model0.length))
-        print("tunex  : {:.6f}".format(self._twiss0.mux[-1] / 2 / _np.pi))
-        print("tuney  : {:.6f}".format(self._twiss0.muy[-1] / 2 / _np.pi))
-        # create model with ID
-        fname = self.get_kmap_filename(
-            folder_data=utils.FOLDER_DATA,
-            shift_flag=self.shift_flag,
-            filter_flag=self.filter_flag,
-            linear=self.linear,
-            meas_flag=self.meas_flag,
-            **kwargs,
-        )
-        self._model_id, self._ids = self.create_model_ids(
-            fname=fname,
-            linear=self.linear,
-            create_ids=utils.create_ids,
-            rescale_kicks=utils.RESCALE_KICKS,
-            rescale_length=utils.RESCALE_LENGTH,
-            fitted_model=self.fitted_model,
-            fit_path=utils.FIT_PATH,
-        )
-        knobs, locs_beta, straight_nr = self._get_knobs_locs()
+    def analysis_dynapt(
+        self,
+        x_nrpts=40,
+        y_nrpts=20,
+        nr_turns=2048,
+        nux_bounds=(49.05, 49.50),
+        nuy_bounds=(14.12, 14.45),
+        fpath=None,
+        sufix=None,
+    ):
+        """Analysis dynamic aperture.
 
-        print("element indices for straight section begin and end:")
-        for idsubsec, locs_beta_ in locs_beta.items():
-            print(idsubsec, locs_beta_)
+        Args:
+            x_nrpts (int, optional): Horizontal nr of points. Defaults to 40.
+            y_nrpts (int, optional): Vertical nr of points. Defaults to 20.
+            nr_turns (int, optional): Number of turns. Defaults to 2048.
+            nux_bounds (tuple, optional): Tune x bounds on plot.
+            Defaults to (49.05, 49.50).
+            nuy_bounds (tuple, optional): Tune y bounds on plot.
+            Defaults to (14.12, 14.45).
+            fpath (Str, optional): Figure path. Defaults to None.
+            sufix (Str, optional): Figure name's sufix. Defaults to None.
+        """
+        self.model_ids.radiation_on = 0
+        self.model_ids.cavity_on = False
+        self.model_ids.vchamber_on = True
 
-        print("local quadrupole fams: ")
-        for idsubsec, knobs_ in knobs.items():
-            print(idsubsec, knobs_)
-
-        # correct orbit
-        (
-            kicks,
-            spos_bpms,
-            codx_c,
-            cody_c,
-            codx_u,
-            cody_u,
-            bpms,
-        ) = orbcorr.correct_orbit_fb(
-            model0,
-            self._model_id,
-            corr_system=self.corr_system,
-            nr_steps=1,
-            plot_flag=self.orbcorr_plot_flag,
-        )
-
-        # calculate beta beating and delta tunes
-        self._analysis_uncorrected_perturbation(plot_flag=False)
-
-        # get list of ID model indices and set rescale_kicks to zero
-        ids_ind_all = orbcorr.get_ids_indices(self._model_id)
-        rescale_kicks_orig = list()
-        for idx in range(len(ids_ind_all) // 2):
-            ind_id = ids_ind_all[2 * idx : 2 * (idx + 1)]
-            rescale_kicks_orig.append(self._model_id[ind_id[0]].rescale_kicks)
-            self._model_id[ind_id[0]].rescale_kicks = 0
-            self._model_id[ind_id[1]].rescale_kicks = 0
-
-        # loop over IDs turning rescale_kicks on, one by one.
-        for idx in range(len(ids_ind_all) // 2):
-            # turn rescale_kicks on for ID index idx
-            ind_id = ids_ind_all[2 * idx : 2 * (idx + 1)]
-            self._model_id[ind_id[0]].rescale_kicks = rescale_kicks_orig[idx]
-            self._model_id[ind_id[1]].rescale_kicks = rescale_kicks_orig[idx]
-            fam_name = self._model_id[ind_id[0]].fam_name
-            # print(idx, ind_id)
-            # continue
-
-            # search knob and straight_nr for ID index idx
-            for subsec in knobs:
-                straight_nr_ = straight_nr[subsec]
-                knobs_ = knobs[subsec]
-                locs_beta_ = locs_beta[subsec]
-                if min(locs_beta_) < ind_id[0] and ind_id[1] < max(locs_beta_):
-                    break
-            k = self._calc_coupling()
-            print()
-            print("symmetrizing ID {} in subsec {}".format(fam_name, subsec))
-
-            # calculate nominal twiss
-            goal_tunes = _np.array(
-                [
-                    self._twiss0.mux[-1] / 2 / _np.pi,
-                    self._twiss0.muy[-1] / 2 / _np.pi,
-                ]
-            )
-            goal_beta = _np.array(
-                [
-                    self._twiss0.betax[locs_beta_],
-                    self._twiss0.betay[locs_beta_],
-                ]
-            )
-            goal_alpha = _np.array(
-                [
-                    self._twiss0.alphax[locs_beta_],
-                    self._twiss0.alphay[locs_beta_],
-                ]
-            )
-            print("goal_beta:")
-            print(goal_beta)
-
-            # symmetrize optics (local quad fam knobs)
-            if self._beta_flag:
-                self._correct_beta(straight_nr_, knobs_, goal_beta, goal_alpha)
-
-                self._correct_tunes(goal_tunes)
-
-                if self.bb_plot_flag:
-                    # plot results
-                    self._plot_beta_beating(**kwargs)
-
-        return self._model_id
-
-    def _analysis_dynapt(self, model, **kwargs):
-        model.radiation_on = 0
-        model.cavity_on = False
-        model.vchamber_on = True
-
-        dynapxy = DynapXY(model)
-        dynapxy.params.x_nrpts = 40
-        dynapxy.params.y_nrpts = 20
-        dynapxy.params.nrturns = 2 * 1024
+        dynapxy = DynapXY(self.model_ids)
+        dynapxy.params.x_nrpts = x_nrpts
+        dynapxy.params.y_nrpts = y_nrpts
+        dynapxy.params.nrturns = nr_turns
         print(dynapxy)
         dynapxy.do_tracking()
         dynapxy.process_data()
-        fig, axx, ayy = dynapxy.make_figure_diffusion(
+        fig, _, _ = dynapxy.make_figure_diffusion(
             orders=(1, 2, 3, 4),
-            nuy_bounds=(14.12, 14.45),
-            nux_bounds=(49.05, 49.50),
+            nuy_bounds=nuy_bounds,
+            nux_bounds=nux_bounds,
         )
 
-        fpath = self.get_data_path(
-            folder_data=utils.FOLDER_DATA, meas_flag=self.meas_flag, **kwargs
-        )
-        Tools.mkdir_function(fpath)
-        print(fpath)
-        label1 = ["", "-ids-nonsymm", "-ids-symm"][self.calc_type]
-        label2 = {False: "-nominal", True: "-fittedmodel"}[self.fitted_model]
-        fig_name = fpath + "dynapt{}{}.png".format(label2, label1)
-        if self.linear:
-            fig_name = fig_name.replace(".png", "-linear.png")
-        fig.savefig(fig_name, dpi=300, format="png")
-        # fig.clf()
-        # _plt.show()
-
-    def run_analysis_dynapt(self, **kwargs):
-        if self.calc_type == self.CALC_TYPES.nominal:
-            model = self._create_model_nominal()
-        elif self.calc_type in (
-            self.CALC_TYPES.symmetrized,
-            self.CALC_TYPES.nonsymmetrized,
-        ):
-            self._beta_flag = self.calc_type == self.CALC_TYPES.symmetrized
-            model = self._execute_correction_algorithm(**kwargs)
-        else:
-            raise ValueError("Invalid calc_type")
-
-        self._analysis_dynapt(model=model, **kwargs)
+        if fpath is not None:
+            figname = fpath + "Dynapt" + sufix
+            fig.savefig(figname, dpi=300, format="png")
+        _plt.show()

@@ -128,7 +128,7 @@ class EPU50(RadiaModelAnalysis):
         return epu
 
 
-class KYMA22(RadiaModelAnalysis):
+class APU22(RadiaModelAnalysis):
     """KYMA22 RADIA model creation and manipulation."""
 
     def __init__(self):
@@ -162,7 +162,7 @@ class KYMA22(RadiaModelAnalysis):
         return kyma
 
 
-class KYMA58(RadiaModelAnalysis):
+class APU58(RadiaModelAnalysis):
     """KYMA58 RADIA model creation and manipulation."""
 
     def __init__(self):
