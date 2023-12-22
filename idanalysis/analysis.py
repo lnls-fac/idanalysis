@@ -48,7 +48,9 @@ class Tools:
             rescale_kicks=rescale_kicks,
             rescale_length=rescale_length,
         )
-        return [si_idmodel]
+        return [
+            si_idmodel,
+        ]
 
     @staticmethod
     def create_model_with_ids(ids):
@@ -559,18 +561,25 @@ class KickmapAnalysis(Tools):
         """
         if indep_var.lower() == "x":
             kmappos = self._idkickmap.posy
+            nr_pts = len(self._idkickmap.posx)
         elif indep_var.lower() == "y":
             kmappos = self._idkickmap.posx
+            nr_pts = len(self._idkickmap.posy)
 
-        pxf, pyf, rxf, ryf = _np.zeros((len(kmappos)))
+        pxf, pyf, rxf, ryf = (
+            _np.zeros((len(kmappos), nr_pts)),
+            _np.zeros((len(kmappos), nr_pts)),
+            _np.zeros((len(kmappos), nr_pts)),
+            _np.zeros((len(kmappos), nr_pts)),
+        )
         for plane_idx, pos in enumerate(kmappos):
-            rx0, ry0, pxf_, pyf_, rxf_, ryf_ = self._calc_idkmap_kicks(
+            rx0, ry0, pxf_, pyf_, rxf_, ryf_ = self.get_kicks_at_plane(
                 indep_var, pos
             )
-            pxf[plane_idx] = pxf_
-            pyf[plane_idx] = pyf_
-            rxf[plane_idx] = rxf_
-            ryf[plane_idx] = ryf_
+            pxf[plane_idx, :] = pxf_
+            pyf[plane_idx, :] = pyf_
+            rxf[plane_idx, :] = rxf_
+            ryf[plane_idx, :] = ryf_
 
         return rx0, ry0, pxf, pyf, rxf, ryf
 
@@ -624,8 +633,8 @@ class KickmapAnalysis(Tools):
         idx = mid_subsections[int(subsec[2:4]) - 1]
         idcs = _np.array(famdata[fam_name]["index"])
         idcs = idcs[_np.isclose(idcs.mean(axis=1), idx)].ravel()
-        idx_begin = idx[0][0]
-        idx_end = idx[0][-1]
+        idx_begin = idcs[0]
+        idx_end = idcs[-1]
         idx_dif = idx_end - idx_begin
 
         model = pyaccel.lattice.shift(model, start=idx_begin)
@@ -649,7 +658,7 @@ class KickmapAnalysis(Tools):
             pxf_trk[i] = coord_fin[1, idx_dif + 1]
             pyf_trk[i] = coord_fin[3, idx_dif + 1]
 
-        return rxf_trk, ryf_trk, pxf_trk, pyf_trk
+        return pxf_trk, pyf_trk, rxf_trk, ryf_trk
 
 
 class StorageRingAnalysis(Tools):
@@ -668,10 +677,62 @@ class StorageRingAnalysis(Tools):
         self.model_ids = None
         self.nom_model = None
 
-        self.orbcorr_system = "SOFB"
-        self.plot_orb_corr = False
-        self.calc_type = self.CalcTypes.symmetrized
+        self._orbcorr_system = "SOFB"
+        self._plot_orbcorr = False
+        self._calc_type = self.CalcTypes.symmetrized
         self._figs_fpath = None
+
+    @property
+    def orbcorr_system(self):
+        """Orbit correction system.
+
+        Returns:
+            string: Orbit correction system chosen.
+        """
+        return self._orbcorr_system
+
+    @property
+    def plot_orbcorr(self):
+        """Plot orbit correction results.
+
+        Returns:
+            Bool: If True orbit correction results will be ploted.
+        """
+        return self._plot_orbcorr
+
+    @property
+    def calc_type(self):
+        """Calculation type.
+
+        Returns:
+            CalcTypes options: It can be symmetrized, nominal or nonsymmetrized
+        """
+        return self._calc_type
+
+    @property
+    def figures_path(self):
+        """Path to save figures.
+
+        Returns:
+            str: File path to save figures.
+        """
+        return self._figs_path
+
+    @orbcorr_system.setter
+    def orbcorr_system(self, value):
+        self._orbcorr_system = value
+
+    @plot_orbcorr.setter
+    def plot_orbcorr(self, value):
+        self._plot_orbcorr = value
+
+    @calc_type.setter
+    def calc_type(self, value):
+        self._calc_type = value
+
+    @figures_path.setter
+    def figures_path(self, value):
+        self._figs_fpath = value
 
     def add_id_to_model(
         self,
@@ -765,7 +826,7 @@ class StorageRingAnalysis(Tools):
             # get knobs and beta locations
             if straight_nr_ is not None:
                 _, knobs_, _ = optics.symm_get_knobs(
-                    self._model_id, straight_nr_
+                    self.model_ids, straight_nr_
                 )
                 locs_beta_ = optics.symm_get_locs_beta(knobs_)
             else:
@@ -789,7 +850,7 @@ class StorageRingAnalysis(Tools):
         """
         coord_ini = _np.array([x0, 0, 0, 0, 0, 0])
         coord_fin, *_ = pyaccel.tracking.ring_pass(
-            self._model_id,
+            self.model_ids,
             coord_ini,
             nr_turns=nturns,
             turn_by_turn=True,
@@ -797,7 +858,7 @@ class StorageRingAnalysis(Tools):
         )
         rx = coord_fin[0, :]
         ry = coord_fin[2, :]
-        twiss, *_ = pyaccel.optics.calc_twiss(self.model_id)
+        twiss, *_ = pyaccel.optics.calc_twiss(self.model_ids)
         betax, betay = twiss.betax, twiss.betay  # Beta functions
         jx = 1 / (betax[0] * nturns) * (_np.sum(rx**2))
         jy = 1 / (betay[0] * nturns) * (_np.sum(ry**2))
@@ -810,7 +871,7 @@ class StorageRingAnalysis(Tools):
         Returns:
             float: Minimum tune separation
         """
-        ed_tang, *_ = pyaccel.optics.calc_edwards_teng(self.model_id)
+        ed_tang, *_ = pyaccel.optics.calc_edwards_teng(self.model_ids)
         min_tunesep, _ = pyaccel.optics.estimate_coupling_parameters(ed_tang)
         return min_tunesep
 
@@ -860,7 +921,7 @@ class StorageRingAnalysis(Tools):
                 self.model_ids, indices="closed"
             )
         if twiss_nom is None:
-            twiss, *_ = pyaccel.optics.calc_twiss(
+            twiss_nom, *_ = pyaccel.optics.calc_twiss(
                 self.nom_model, indices="closed"
             )
         bbeatx = 100 * (twiss.betax - twiss_nom.betax) / twiss_nom.betax
@@ -927,7 +988,7 @@ class StorageRingAnalysis(Tools):
         Returns:
             Twiss: Twiss after tunes corretion
         """
-        twiss, *_ = pyaccel.optics.calc_twiss(self.model_ids, "closed")
+        twiss, *_ = pyaccel.optics.calc_twiss(self.model_ids, indices="closed")
         tunes = (
             twiss.mux[-1] / _np.pi / 2,
             twiss.muy[-1] / _np.pi / 2,
@@ -936,7 +997,9 @@ class StorageRingAnalysis(Tools):
             print("init    tunes: {:.9f} {:.9f}".format(tunes[0], tunes[1]))
         for i in range(nr_iter):
             optics.correct_tunes_twoknobs(self.model_ids, goal_tunes)
-            twiss, *_ = pyaccel.optics.calc_twiss(self.model_ids, "closed")
+            twiss, *_ = pyaccel.optics.calc_twiss(
+                self.model_ids, indices="closed"
+            )
             tunes = twiss.mux[-1] / _np.pi / 2, twiss.muy[-1] / _np.pi / 2
             if verbose:
                 print(
@@ -962,7 +1025,9 @@ class StorageRingAnalysis(Tools):
             Twiss: Twiss after tune corretion
             string: String containg informations about beta correction.
         """
-        twiss_no_corr, *_ = pyaccel.optics.calc_twiss(self.model_ids, "closed")
+        twiss_no_corr, *_ = pyaccel.optics.calc_twiss(
+            self.model_ids, indices="closed"
+        )
         knobs, locs_beta, straight_nr = self.get_symm_knobs_locs()
 
         print("element indices for straight section begin and end:")
@@ -1217,12 +1282,14 @@ class StorageRingAnalysis(Tools):
         ):
             self.set_model_ids()
             _ = self.do_orbit_correction(
-                self.orbcorr_system, self.plot_orb_corr
+                self.orbcorr_system, self._plot_orbcorr
             )
             if self.calc_type == self.CalcTypes.symmetrized:
                 opt_corr = self.do_optics_corrections()
                 twiss_no_corr, twiss_beta_corr, twiss_tune_corr, stg = opt_corr
-                twiss_nom, *_ = pyaccel.optics.calc_twiss(self.nom_model)
+                twiss_nom, *_ = pyaccel.optics.calc_twiss(
+                    self.nom_model, indices="closed"
+                )
                 self.plot_optics_corr_results(
                     twiss_nom,
                     twiss_no_corr,

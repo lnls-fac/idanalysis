@@ -1,9 +1,9 @@
 """IDs data."""
 
 from idanalysis import IDKickMap as _IDKickMap
-import pymodels
 
-REPOS_PATH = "/media/gabriel/Dados/"  # Put your repository path here
+DATA_REPOS_PATH = "/media/gabriel/Dados/"  # Put your data repository path here
+REPOS_PATH = "/home/gabriel/repos/idanalysis/"  # Put your repository path here
 
 
 class Tools:
@@ -75,7 +75,7 @@ class Tools:
         else:
             fpath += "model/"
         fname = self._get_kmap_config_name(**kwargs)
-        fname = fpath + fname
+        fname = fpath + fname + ".txt"
 
         return fname
 
@@ -248,6 +248,15 @@ class Tools:
         return self._params.ID_FAMNAME
 
     @property
+    def subsecs(self):
+        """ID's subsection on SIRIUS model.
+
+        Returns:
+            list of str: ID's subsections.
+        """
+        return self._params.SUBSECS
+
+    @property
     def folder_base_output(self):
         """Base folder for output data.
 
@@ -307,12 +316,12 @@ class DELTA52Data(Tools):
     PARAMS.ID_FAMNAME = "DELTA52"
     PARAMS.SUBSECS = ["ID10SB"]
 
-    PARAMS.KICKMAPS_DATA_PATH = "../scripts/delta52/kickmaps/"
+    PARAMS.KICKMAPS_DATA_PATH = REPOS_PATH + "scripts/delta52/kickmaps/"
     PARAMS.FIELDMAPS_DATA_PATH = (
-        REPOS_PATH
+        DATA_REPOS_PATH
         + "lnls-ima/delta52/id-sabia/model-03/measurement/magnetic/hallprobe/"
     )  # noqa: E501
-    PARAMS.FOLDER_BASE_OUTPUT = "../scripts/delta52/results/data/"
+    PARAMS.FOLDER_BASE_OUTPUT = REPOS_PATH + "scripts/delta52/results/data/"
 
     FIELMAPS_CONFIGS = {
         # dp = 0 mm
@@ -468,12 +477,13 @@ class APU22Data(Tools):
     PARAMS.ID_FAMNAME = "APU22"
     PARAMS.SUBSECS = ["ID06SB", "ID07SP", "ID08SB", "ID09SA"]
 
-    PARAMS.KICKMAPS_DATA_PATH = "../scripts/apu22/kickmaps/"
+    PARAMS.KICKMAPS_DATA_PATH = REPOS_PATH + "scripts/apu22/kickmaps/"
     PARAMS.FIELDMAPS_DATA_PATH = (
-        REPOS_PATH
-        + "lnls-ima/kyma22/id-manaca/commissioning_id/measurement/magnetic/lnls/hallprobe/vertical_position_0mm/"
+        DATA_REPOS_PATH
+        + "lnls-ima/kyma22/id-manaca/commissioning_id/measurement/magnetic/"
+        + "lnls/hallprobe/vertical_position_0mm/"
     )  # noqa: E501
-    PARAMS.FOLDER_BASE_OUTPUT = "../scripts/apu22/results/data/"
+    PARAMS.FOLDER_BASE_OUTPUT = REPOS_PATH + "scripts/apu22/results/data/"
 
     FIELMAPS_CONFIGS = {
         "ID2828": "2020-05-26_1991b_Fieldmap_X=-12_12mm_Z=-740_740mm_"
@@ -563,12 +573,13 @@ class APU58Data(Tools):
     PARAMS.ID_FAMNAME = "APU58"
     PARAMS.SUBSECS = ["ID11SP"]
 
-    PARAMS.KICKMAPS_DATA_PATH = "../scripts/apu58/kickmaps/"
+    PARAMS.KICKMAPS_DATA_PATH = REPOS_PATH + "scripts/apu58/kickmaps/"
     PARAMS.FIELDMAPS_DATA_PATH = (
-        REPOS_PATH
-        + "lnls-ima/kyma58/id-ipe/commissioning_id/measurement/magnetic/lnls/hallprobe/vertical_position_0mm/"
+        DATA_REPOS_PATH
+        + "lnls-ima/kyma58/id-ipe/commissioning_id/measurement/magnetic/lnls/"
+        + "hallprobe/vertical_position_0mm/"
     )  # noqa: E501
-    PARAMS.FOLDER_BASE_OUTPUT = "../scripts/apu58/results/data/"
+    PARAMS.FOLDER_BASE_OUTPUT = REPOS_PATH + "scripts/apu58/results/data/"
 
     FIELMAPS_CONFIGS = {
         "ID2945": "2020-10-23_1995_Fieldmap_X=-10_10mm_Z=-750_750mm_"
@@ -673,12 +684,12 @@ class PAPU50Data(Tools):
     PARAMS.ID_FAMNAME = "PAPU50"
     PARAMS.SUBSECS = ["ID09SA"]
 
-    PARAMS.KICKMAPS_DATA_PATH = "../scripts/papu50/kickmaps/"
+    PARAMS.KICKMAPS_DATA_PATH = REPOS_PATH + "scripts/papu50/kickmaps/"
     PARAMS.FIELDMAPS_DATA_PATH = (
-        REPOS_PATH
+        DATA_REPOS_PATH
         + "lnls-ima/papu50/id-papu/model-01/measurement/magnetic/hallprobe/"
     )  # noqa: E501
-    PARAMS.FOLDER_BASE_OUTPUT = "../scripts/papu50/results/data/"
+    PARAMS.FOLDER_BASE_OUTPUT = REPOS_PATH + "scripts/papu50/results/data/"
 
     FIELMAPS_CONFIGS = {
         "ID4647": "2023-05-30_PAPU_Fieldmap_Corrected_X=-10_10mm_"
@@ -759,12 +770,13 @@ class WIG180Data(Tools):
     PARAMS.ID_FAMNAME = "WIG180"
     PARAMS.SUBSECS = ["ID14SB"]
 
-    PARAMS.KICKMAPS_DATA_PATH = "../scripts/wig180/kickmaps/"
+    PARAMS.KICKMAPS_DATA_PATH = REPOS_PATH + "scripts/wig180/kickmaps/"
     PARAMS.FIELDMAPS_DATA_PATH = (
-        REPOS_PATH
-        + "lnls-ima/wig180/wiggler-2T-STI/commissioning_id/measurement/magnetic/lnls/hallprobe/vertical_position_0mm/"
+        DATA_REPOS_PATH
+        + "lnls-ima/wig180/wiggler-2T-STI/commissioning_id/measurement/"
+        + "magnetic/lnls/hallprobe/vertical_position_0mm/"
     )  # noqa: E501
-    PARAMS.FOLDER_BASE_OUTPUT = "../scripts/wig180/results/data/"
+    PARAMS.FOLDER_BASE_OUTPUT = REPOS_PATH + "scripts/wig180/results/data/"
 
     FIELMAPS_CONFIGS = {
         # wiggler with correctors - gap 022.00mm
@@ -871,12 +883,12 @@ class EPU50Data(Tools):
     PARAMS.ID_FAMNAME = "EPU50"
     PARAMS.SUBSECS = ["ID10SB"]
 
-    PARAMS.KICKMAPS_DATA_PATH = "../scripts/epu50/kickmaps/"
+    PARAMS.KICKMAPS_DATA_PATH = REPOS_PATH + "scripts/epu50/kickmaps/"
     PARAMS.FIELDMAPS_DATA_PATH = (
-        REPOS_PATH
+        DATA_REPOS_PATH
         + "lnls-ima/epu-uvx/measurement/magnetic/hallprobe/probes 133-14/"
     )  # noqa: E501
-    PARAMS.FOLDER_BASE_OUTPUT = "../scripts/epu50/results/data/"
+    PARAMS.FOLDER_BASE_OUTPUT = REPOS_PATH + "scripts/epu50/results/data/"
 
     FIELMAPS_CONFIGS = {
         # sensor 133-14 (without crosstalk) - gap 22.0 mm
@@ -1031,19 +1043,13 @@ class IVU18Data(Tools):
     PARAMS.ID_FAMNAME = "IVU18"
     PARAMS.SUBSECS = ["ID08SB", "ID14SB"]
 
-    PARAMS.KICKMAPS_DATA_PATH = "../scripts/ivu18/kickmaps/"
-    PARAMS.FIELDMAPS_DATA_PATH = (
-        None
-    )  # noqa: E501
-    PARAMS.FOLDER_BASE_OUTPUT = "../scripts/ivu18/results/data/"
+    PARAMS.KICKMAPS_DATA_PATH = REPOS_PATH + "scripts/ivu18/kickmaps/"
+    PARAMS.FIELDMAPS_DATA_PATH = None  # noqa: E501
+    PARAMS.FOLDER_BASE_OUTPUT = REPOS_PATH + "scripts/ivu18/results/data/"
 
-    FIELMAPS_CONFIGS = {
-        None
-    }
+    FIELMAPS_CONFIGS = {None}
 
-    gap_dict = {
-        None
-    }
+    gap_dict = {None}
 
     def __init__(self):
         """Class constructor."""
@@ -1091,19 +1097,13 @@ class VPU29Data(Tools):
     PARAMS.ID_FAMNAME = "VPU29"
     PARAMS.SUBSECS = ["ID06SB", "ID07SP"]
 
-    PARAMS.KICKMAPS_DATA_PATH = "../scripts/vpu29/kickmaps/"
-    PARAMS.FIELDMAPS_DATA_PATH = (
-        None
-    )  # noqa: E501
-    PARAMS.FOLDER_BASE_OUTPUT = "../scripts/vpu29/results/data/"
+    PARAMS.KICKMAPS_DATA_PATH = REPOS_PATH + "scripts/vpu29/kickmaps/"
+    PARAMS.FIELDMAPS_DATA_PATH = None  # noqa: E501
+    PARAMS.FOLDER_BASE_OUTPUT = REPOS_PATH + "scripts/vpu29/results/data/"
 
-    FIELMAPS_CONFIGS = {
-        None
-    }
+    FIELMAPS_CONFIGS = {None}
 
-    gap_dict = {
-        None
-    }
+    gap_dict = {None}
 
     def __init__(self):
         """Class constructor."""

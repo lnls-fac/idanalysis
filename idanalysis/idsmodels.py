@@ -3,6 +3,7 @@
 import numpy as np
 from imaids.models import AppleIISabia, DeltaSabia, HybridPlanar, Kyma22, \
     Kyma58, MiniPlanarSabia, PAPU
+
 from idanalysis.analysis import RadiaModelAnalysis
 
 
