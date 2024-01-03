@@ -2,8 +2,8 @@
 
 from idanalysis import IDKickMap as _IDKickMap
 
-DATA_REPOS_PATH = "/media/gabriel/Dados/"  # Put your data repository path here
-REPOS_PATH = "/home/gabriel/repos/idanalysis/"  # Put your repository path here
+DATA_REPOS_PATH = "/Dados/"  # Put your data repository path here
+REPOS_PATH = "/repos/idanalysis/"  # Put your repository path here
 
 
 class Tools:

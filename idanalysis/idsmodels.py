@@ -19,7 +19,7 @@ class DELTA52(RadiaModelAnalysis):
         self.longitudinal_distance = 0.125
         self.model = None
 
-    def generate_radia_model(self, solve=False, dp=0, dgv=0):
+    def generate_radia_model(self, solve=False, dp=0, dgv=0, nr_periods=None):
         """Generate DELTA52 RADIA model.
 
         Args:
@@ -27,11 +27,12 @@ class DELTA52(RadiaModelAnalysis):
             Defaults to False.
             dp (float, optional): ID Pparam. Defaults to 0.
             dgv (float, optional): ID Kparam. Defaults to 0.
+            nr_periods (int, optional): nr_periods. Defaults to None.
 
         Returns:
             _RADIA object_: DELTA52 RADIA model
         """
-        nr_periods = self.nr_periods
+        nr_periods = nr_periods if nr_periods is not None else self.nr_periods
         period_length = self.period_length
         gap = self.gap
         mr = self.mr
@@ -67,7 +68,9 @@ class EPU50(RadiaModelAnalysis):
         self.cassettes_gap = 0.1
         self.model = None
 
-    def generate_radia_model(self, solve=False, phase=0, gap=None):
+    def generate_radia_model(
+        self, solve=False, phase=0, gap=None, nr_periods=None
+    ):
         """Generate EPU50 RADIA model.
 
         Args:
@@ -75,12 +78,13 @@ class EPU50(RadiaModelAnalysis):
             Defaults to False.
             phase (float, optional): ID Pparam. Defaults to 0.
             gap (float, optional): ID Kparam. Defaults to None.
+            nr_periods (int, optional): nr_periods. Defaults to None.
 
         Returns:
             _RADIA object_: EPU50 RADIA model
         """
         gap = gap if gap is not None else self.gap
-        nr_periods = self.nr_periods
+        nr_periods = nr_periods if nr_periods is not None else self.nr_periods
         period_length = self.period_length
         cassettes_gap = self.cassettes_gap
         width = self.block_width
@@ -141,18 +145,19 @@ class APU22(RadiaModelAnalysis):
         self.longitudinal_distance = 0.1
         self.model = None
 
-    def generate_radia_model(self, solve=False, phase=0):
+    def generate_radia_model(self, solve=False, phase=0, nr_periods=None):
         """Generate Kyma22 RADIA model.
 
         Args:
             solve (bool, optional): Solve ID using relaxation method.
             Defaults to False.
             phase (float, optional): ID Kparam. Defaults to 0.
+            nr_periods (int, optional): nr_periods. Defaults to None.
 
         Returns:
             _RADIA object_: KYMA22 RADIA model
         """
-        nr_periods = self.nr_periods
+        nr_periods = nr_periods if nr_periods is not None else self.nr_periods
         kyma = Kyma22(nr_periods=nr_periods)
         kyma.dg = phase
 
@@ -175,18 +180,19 @@ class APU58(RadiaModelAnalysis):
         self.longitudinal_distance = 0.1
         self.model = None
 
-    def generate_radia_model(self, solve=False, phase=0):
+    def generate_radia_model(self, solve=False, phase=0, nr_periods=None):
         """Generate Kyma58 RADIA model.
 
         Args:
             solve (bool, optional): Solve ID using relaxation method.
             Defaults to False.
             phase (float, optional): ID Kparam. Defaults to 0.
+            nr_periods (int, optional): nr_periods. Defaults to None.
 
         Returns:
             _RADIA object_: KYMA58 RADIA model
         """
-        nr_periods = self.nr_periods
+        nr_periods = nr_periods if nr_periods is not None else self.nr_periods
         kyma = Kyma58(nr_periods=nr_periods)
         kyma.dg = phase
 
@@ -209,18 +215,19 @@ class PAPU50(RadiaModelAnalysis):
         self.longitudinal_distance = 0.2
         self.model = None
 
-    def generate_radia_model(self, solve=False, phase=0):
+    def generate_radia_model(self, solve=False, phase=0, nr_periods=None):
         """Generate PAPU50 RADIA model.
 
         Args:
             solve (bool, optional): Solve ID using relaxation method.
             Defaults to False.
             phase (float, optional): ID Kparam. Defaults to 0.
+            nr_periods (int, optional): nr_periods. Defaults to None.
 
         Returns:
             _RADIA object_: PAPU50 RADIA model
         """
-        nr_periods = self.nr_periods
+        nr_periods = nr_periods if nr_periods is not None else self.nr_periods
         papu = PAPU(nr_periods=nr_periods)
         papu.dg = phase
 
@@ -245,18 +252,20 @@ class WIG180(RadiaModelAnalysis):
         self.block_width = 80
         self.model = None
 
-    def generate_radia_model(self, solve=False, gap=None):
+    def generate_radia_model(self, solve=False, gap=None, nr_periods=None):
         """Generate Wiggler 180 RADIA model.
 
         Args:
             solve (bool, optional): Solve ID using relaxation method.
             Defaults to False.
             gap (float, optional): ID Kparam. Defaults to None.
+            nr_periods (int, optional): nr_periods. Defaults to None.
 
         Returns:
             _RADIA object_: Wiggler180 RADIA model
         """
         gap = gap if gap is not None else self.gap
+        nr_periods = nr_periods if nr_periods is not None else self.nr_periods
         nr_periods = self.nr_periods
         period_length = self.period_length
         longitudinal_distance = self.longitudinal_distance
@@ -326,18 +335,20 @@ class IVU18(RadiaModelAnalysis):
         self.pole_chamfer = 3
         self.model = None
 
-    def generate_radia_model(self, solve=False, gap=None):
+    def generate_radia_model(self, solve=False, gap=None, nr_periods=None):
         """Generate IVU18 RADIA model.
 
         Args:
             solve (bool, optional): Solve ID using relaxation method.
             Defaults to False.
             gap (float, optional): ID Kparam. Defaults to None.
+            nr_periods (int, optional): nr_periods. Defaults to None.
 
         Returns:
             _RADIA object_: IVU18 RADIA model
         """
         gap = gap if gap is not None else self.gap
+        nr_periods = nr_periods if nr_periods is not None else self.nr_periods
         nr_periods = self.nr_periods
         period_length = self.period_length
         mr = self.mr
@@ -469,19 +480,20 @@ class VPU29(RadiaModelAnalysis):
         self.pole_chamfer = 4
         self.model = None
 
-    def generate_radia_model(self, solve=False, gap=None):
+    def generate_radia_model(self, solve=False, gap=None, nr_periods=None):
         """Generate VPU29 RADIA model.
 
         Args:
             solve (bool, optional): Solve ID using relaxation method.
             Defaults to False.
             gap (float, optional): ID Kparam. Defaults to None.
+            nr_periods (int, optional): nr_periods. Defaults to None.
 
         Returns:
             _RADIA object_: VPU29 RADIA model
         """
         gap = gap if gap is not None else self.gap
-        nr_periods = self.nr_periods
+        nr_periods = nr_periods if nr_periods is not None else self.nr_periods
         period_length = self.period_length
         mr = self.mr
 

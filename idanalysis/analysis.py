@@ -174,7 +174,7 @@ class FieldMapAnalysis:
         Returns:
             _1D numpy array_: Transverse positions
             _1D numpy array_: Field values on transverse positions
-            _1D numpy array_: Roll-off on transverse positions
+            _1D numpy array_: Roll-off on transverse positions [%]
         """
         r_transverse, b_transverse = self.get_fmap_transverse_dependence(
             field_component, peak_search, plane
@@ -262,14 +262,14 @@ class RadiaModelAnalysis:
         Returns:
             _1D numpy array_: Transverse positions
             _1D numpy array_: Field values on transverse positions
-            _1D numpy array_: Roll-off on transverse positions
+            _1D numpy array_: Roll-off on transverse positions [%]
         """
         _, b_transverse = self.calc_radia_transverse_dependence(
             field_component, r_transverse, plane
         )
 
         r0_idx = _np.argmin(_np.abs(r_transverse))
-        roff = b_transverse / b_transverse[r0_idx] - 1
+        roff = 100*(b_transverse / b_transverse[r0_idx] - 1)
         return r_transverse, b_transverse, roff
 
 
@@ -277,7 +277,11 @@ class TrajectoryAnalysis:
     """Electron Trajectory analysis class."""
 
     def __init__(self, fieldsource):
-        """Class constructor."""
+        """Class constructor.
+
+        Args:
+            fieldsource: RADIA object or Fieldmap object
+        """
         self._fieldsource = fieldsource
         self._beam_energy = Beam(3).energy  # [GeV]
         self._idkickmap = None  # Radia model or fieldmap
@@ -412,6 +416,22 @@ class TrajectoryAnalysis:
     @traj_max_rz.setter
     def traj_max_rz(self, value):
         self._traj_max_rz = value
+
+    @traj_init_rx.setter
+    def traj_init_rx(self, value):
+        self._traj_init_rx = value
+
+    @traj_init_ry.setter
+    def traj_init_ry(self, value):
+        self._traj_init_ry = value
+
+    @traj_init_px.setter
+    def traj_init_px(self, value):
+        self._traj_init_px = value
+
+    @traj_init_py.setter
+    def traj_init_py(self, value):
+        self._traj_init_py = value
 
     @kmap_idlen.setter
     def kmap_idlen(self, value):
@@ -1152,9 +1172,6 @@ class StorageRingAnalysis(Tools):
         _plt.figure()
         _plt.plot(twiss_nom.spos, bbeatx, color="b", alpha=1.0, label=labelx)
         _plt.plot(twiss_nom.spos, bbeaty, color="r", alpha=0.8, label=labely)
-        pyaccel.graphics.draw_lattice(
-            self.model_ids, offset=bbmin, height=bbmax / 8, gca=True
-        )
         _plt.ylim(ylim)
         _plt.xlabel("spos [m]")
         _plt.ylabel("Beta Beating [%]")
@@ -1163,6 +1180,9 @@ class StorageRingAnalysis(Tools):
         _plt.tight_layout()
         _plt.legend()
         _plt.grid()
+        pyaccel.graphics.draw_lattice(
+            self.model_ids, offset=bbmin, height=bbmax / 8, gca=True
+        )
         if fpath is not None:
             _plt.savefig(fpath + "Non-symmetrized", dpi=300, format="png")
 
@@ -1200,9 +1220,6 @@ class StorageRingAnalysis(Tools):
         _plt.plot(twiss_nom.spos, bbeaty, color="r", alpha=0.8, label=labely)
         _plt.ylim(ylim)
         # bbmax = _np.max(_np.concatenate((bbeatx, bbeaty)))
-        pyaccel.graphics.draw_lattice(
-            self.model_ids, offset=bbmin, height=bbmax / 8, gca=True
-        )
         _plt.xlabel("spos [m]")
         _plt.ylabel("Beta Beating [%]")
         _plt.title("Beta Beating")
@@ -1210,6 +1227,9 @@ class StorageRingAnalysis(Tools):
         _plt.legend()
         _plt.grid()
         _plt.tight_layout()
+        pyaccel.graphics.draw_lattice(
+            self.model_ids, offset=bbmin, height=bbmax / 8, gca=True
+        )
         if fpath is not None:
             _plt.savefig(fpath + "Symmetrized", dpi=300, format="png")
 
@@ -1248,9 +1268,6 @@ class StorageRingAnalysis(Tools):
 
         _plt.ylim(ylim)
         # bbmax = _np.max(_np.concatenate((bbeatx, bbeaty)))
-        pyaccel.graphics.draw_lattice(
-            self.model_ids, offset=bbmin, height=bbmax / 8, gca=True
-        )
         _plt.xlabel("spos [m]")
         _plt.ylabel("Beta Beating [%]")
         _plt.title("Corrections: {}".format(stg_beta))
@@ -1258,6 +1275,9 @@ class StorageRingAnalysis(Tools):
         _plt.legend()
         _plt.grid()
         _plt.tight_layout()
+        pyaccel.graphics.draw_lattice(
+            self.model_ids, offset=bbmin, height=bbmax / 8, gca=True
+        )
         if fpath is not None:
             _plt.savefig(fpath + "Symmetrized_TuneCorr", dpi=300, format="png")
         else:

@@ -2,11 +2,10 @@
 """IDKickMap class."""
 
 
-import numpy as _np
-import matplotlib.pyplot as _plt
-from scipy.optimize import curve_fit as _curve_fit
-
 import fieldmaptrack as _fmaptrack
+import matplotlib.pyplot as _plt
+import numpy as _np
+from scipy.optimize import curve_fit as _curve_fit
 
 from . import utils as _utils
 
@@ -473,16 +472,6 @@ class IDKickMap:
             ksl_ = self.calc_KsL_kicky_at_y(iy, False)
             ksl.append(ksl_)
         return posy, _np.array(ksl)
-
-    def model_rz_field_center(self):
-        """Return rz pos of field center."""
-        model = self.radia_model
-        # rz = fmap.rz
-        # bx = radia_model.get_field[fmap.ry_zero][fmap.rx_zero][:]
-        # by = radia_model.get_field[fmap.ry_zero][fmap.rx_zero][:]
-        # bz = radia_model.get_field[fmap.ry_zero][fmap.rx_zero][:]
-        # rz_center = _utils.calc_rz_of_field_center(rz, bx, by, bz)
-        # return rz_center
 
     def fmap_rz_field_center(self):
         """Return rz pos of field center."""
