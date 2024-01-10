@@ -2,11 +2,10 @@
 """IDKickMap class."""
 
 
-import numpy as _np
-import matplotlib.pyplot as _plt
-from scipy.optimize import curve_fit as _curve_fit
-
 import fieldmaptrack as _fmaptrack
+import matplotlib.pyplot as _plt
+import numpy as _np
+from scipy.optimize import curve_fit as _curve_fit
 
 from . import utils as _utils
 
@@ -14,11 +13,11 @@ from . import utils as _utils
 class IDKickMap:
     """ID KickMap and FieldMap."""
 
-    DEF_AUTHOR = '# Author: FAC idanalysis.IDKickMap'
+    DEF_AUTHOR = "# Author: FAC idanalysis.IDKickMap"
     DEF_BEAM_ENERGY = 3  # [GeV]
     DEF_RK_S_STEP = 0.2  # [mm]
 
-    def __init__(self, kmap_fname=None, author=None, shift_on_axis=False):
+    def __init__(self, kmap_fname=None, author=None):
         """."""
         self._kmap_fname = kmap_fname
         self.fmap_idlen = None  # [m]
@@ -32,7 +31,7 @@ class IDKickMap:
         self.period_len = None  # [mm]
         self._fmap_config = None
         self.author = author or IDKickMap.DEF_AUTHOR
-        self.shift_on_axis = shift_on_axis
+        self.shift_on_axis = False
         self.kickx_upstream = None
         self.kicky_upstream = None
         self.kickx_downstream = None
@@ -69,7 +68,9 @@ class IDKickMap:
         """Set fieldmap filename and load file."""
         self._fmap_config = IDKickMap._create_fmap_config(
             fmap_fname=value,
-            beam_energy=self.beam_energy, rk_s_step=self.rk_s_step)
+            beam_energy=self.beam_energy,
+            rk_s_step=self.rk_s_step,
+        )
 
     @property
     def radia_model(self):
@@ -83,8 +84,8 @@ class IDKickMap:
     def radia_model(self, value):
         """Set fieldmap filename and load file."""
         self._radia_model_config = IDKickMap._create_radia_model_config(
-            radia_model=value,
-            rk_s_step=self.rk_s_step)
+            radia_model=value, rk_s_step=self.rk_s_step
+        )
 
     @property
     def beam_energy(self):
@@ -100,12 +101,13 @@ class IDKickMap:
     def beam_energy(self, value):
         """."""
         if not self._fmap_config and not self._radia_model_config:
-            raise AttributeError('Undefined configuration!')
+            raise AttributeError("Undefined configuration!")
         elif not self._radia_model_config:
             IDKickMap._update_fmap_energy(self._fmap_config, value)
         else:
             IDKickMap._update_radia_model_energy(
-                self._radia_model_config, value)
+                self._radia_model_config, value
+            )
 
     @property
     def brho(self):
@@ -131,7 +133,7 @@ class IDKickMap:
     def rk_s_step(self, value):
         """."""
         if not self._fmap_config and not self._radia_model_config:
-            raise AttributeError('Undefined fieldmap configuration!')
+            raise AttributeError("Undefined fieldmap configuration!")
         elif not self._radia_model_config:
             self._fmap_config.traj_rk_s_step = value
         else:
@@ -151,7 +153,7 @@ class IDKickMap:
     def traj_init_rz(self, value):
         """."""
         if not self._fmap_config and not self._radia_model_config:
-            raise AttributeError('Undefined configuration!')
+            raise AttributeError("Undefined configuration!")
         elif not self._radia_model_config:
             self._fmap_config.traj_init_rz = value
         else:
@@ -171,7 +173,7 @@ class IDKickMap:
     def traj_rk_min_rz(self, value):
         """."""
         if not self._fmap_config and not self._radia_model_config:
-            raise AttributeError('Undefined configuration!')
+            raise AttributeError("Undefined configuration!")
         elif not self._radia_model_config:
             self._fmap_config.traj_rk_min_rz = value
         else:
@@ -199,10 +201,16 @@ class IDKickMap:
         return config.traj
 
     def fmap_calc_trajectory(
-            self, traj_init_rx, traj_init_ry,
-            traj_init_px=0, traj_init_py=0,
-            traj_init_rz=None, traj_rk_min_rz=None,
-            rk_s_step=None, **kwargs):
+        self,
+        traj_init_rx,
+        traj_init_ry,
+        traj_init_px=0,
+        traj_init_py=0,
+        traj_init_rz=None,
+        traj_rk_min_rz=None,
+        rk_s_step=None,
+        **kwargs,
+    ):
         """."""
         if rk_s_step is not None:
             self.rk_s_step = rk_s_step
@@ -222,7 +230,8 @@ class IDKickMap:
         return config
 
     def generate_linear_kickmap(
-            self, brho, posx, posy, cxx, cyy, cxy=0, cyx=0):
+        self, brho, posx, posy, cxx, cyy, cxy=0, cyx=0
+    ):
         """Generate a linear kickmap based on Ellaume formalism"""
         self.posx = _np.array(posx)  # [m]
         self.posy = _np.array(posy)  # [m]
@@ -232,18 +241,19 @@ class IDKickMap:
         self.fposy = _np.full((len(self.posy), len(self.posx)), _np.inf)
         for i, ryi in enumerate(self.posy):
             for j, rxi in enumerate(self.posx):
-                pxf = cxx*rxi + cxy*ryi
-                pyf = cyx*rxi + cyy*ryi
-                stg = 'rx = {:.01f} mm, ry = {:.01f}: '.format(
-                    rxi*1e3, ryi*1e3)
-                stg += 'px = {:.01f} urad, py = {:.01f} urad'.format(
-                    pxf*1e6, pyf*1e6)
+                pxf = cxx * rxi + cxy * ryi
+                pyf = cyx * rxi + cyy * ryi
+                stg = "rx = {:.01f} mm, ry = {:.01f}: ".format(
+                    rxi * 1e3, ryi * 1e3
+                )
+                stg += "px = {:.01f} urad, py = {:.01f} urad".format(
+                    pxf * 1e6, pyf * 1e6
+                )
                 print(stg)
-                self.kickx[i, j] = pxf*brho**2
-                self.kicky[i, j] = pyf*brho**2
+                self.kickx[i, j] = pxf * brho**2
+                self.kicky[i, j] = pyf * brho**2
 
-    def fmap_calc_kickmap(
-            self, posx, posy, beam_energy=None, rk_s_step=None):
+    def fmap_calc_kickmap(self, posx, posy, beam_energy=None, rk_s_step=None):
         """."""
         self.posx = _np.array(posx)  # [m]
         self.posy = _np.array(posy)  # [m]
@@ -268,22 +278,19 @@ class IDKickMap:
                 pyf = self._config.traj.py[-1]
                 rxf = self._config.traj.rx[-1]
                 ryf = self._config.traj.ry[-1]
-                stg = 'rx = {:.01f} mm, ry = {:.01f}: '.format(
-                    rxi*1e3, ryi*1e3)
-                stg += 'px = {:.01f} urad, py = {:.01f} urad'.format(
-                    pxf*1e6, pyf*1e6)
+                stg = "rx = {:.01f} mm, ry = {:.01f}: ".format(
+                    rxi * 1e3, ryi * 1e3
+                )
+                stg += "px = {:.01f} urad, py = {:.01f} urad".format(
+                    pxf * 1e6, pyf * 1e6
+                )
                 print(stg)
                 self.kickx[i, j] = pxf * brho**2
                 self.kicky[i, j] = pyf * brho**2
                 self.fposx[i, j] = rxf / 1e3
                 self.fposy[i, j] = ryf / 1e3
 
-    def find_fit_plateau(self, p):
-        """."""
-        opt = _curve_fit(self._plateau_function, self.posx, p)[0]
-        return opt
-
-    def filter_kmap(self, posx=None, posy=None, order=4, plot_flag=False):
+    def filter_kmap(self, posx=None, posy=None, order=5, plot_flag=False):
         self._load_kmap()
         if posx is not None:
             kickx = _np.zeros((len(self.posy), len(posx)))
@@ -295,14 +302,18 @@ class IDKickMap:
                 xf = _np.polyval(xfit, posx)
                 kickx[i, :] = pxf
                 fposx[i, :] = xf
-                label = 'y = {:.2f} mm'.format(1e3*ryi)
+                label = "y = {:.2f} mm".format(1e3 * ryi)
                 if plot_flag:
-                    _plt.plot(1e3*self.posx, 1e6*self.kickx[i, :],
-                              '.-', label=label)
-                    _plt.plot(1e3*posx, 1e6*kickx[i, :])
+                    _plt.plot(
+                        1e3 * self.posx,
+                        1e6 * self.kickx[i, :],
+                        ".",
+                        label=label,
+                    )
+                    _plt.plot(1e3 * posx, 1e6 * kickx[i, :])
             if plot_flag:
-                _plt.xlabel('x pos [mm]')
-                _plt.ylabel('kicks [Tm²]')
+                _plt.xlabel("x pos [mm]")
+                _plt.ylabel("kicks x [Tm²]")
                 _plt.legend()
                 _plt.show()
 
@@ -315,14 +326,18 @@ class IDKickMap:
                 yf = _np.polyval(yfit, posx)
                 kicky[i, :] = pyf
                 fposy[i, :] = yf
-                label = 'y = {:.2f} mm'.format(1e3*ryi)
+                label = "y = {:.2f} mm".format(1e3 * ryi)
                 if plot_flag:
-                    _plt.plot(1e3*self.posx, 1e6*self.kicky[i, :],
-                              '.-', label=label)
-                    _plt.plot(1e3*posx, 1e6*kicky[i, :])
+                    _plt.plot(
+                        1e3 * self.posx,
+                        1e6 * self.kicky[i, :],
+                        ".",
+                        label=label,
+                    )
+                    _plt.plot(1e3 * posx, 1e6 * kicky[i, :])
             if plot_flag:
-                _plt.xlabel('x pos [mm]')
-                _plt.ylabel('kicks [Tm²]')
+                _plt.xlabel("x pos [mm]")
+                _plt.ylabel("kicks y [Tm²]")
                 _plt.legend()
                 _plt.show()
 
@@ -344,14 +359,18 @@ class IDKickMap:
                 xf = _np.polyval(xfit, posy)
                 kickx[:, i] = pxf
                 fposx[:, i] = xf
-                label = 'x = {:.2f} mm'.format(1e3*rxi)
+                label = "x = {:.2f} mm".format(1e3 * rxi)
                 if plot_flag:
-                    _plt.plot(1e3*self.posy, 1e6*self.kickx[:, i],
-                              '.-', label=label)
-                    _plt.plot(1e3*posy, 1e6*kickx[:, i])
+                    _plt.plot(
+                        1e3 * self.posy,
+                        1e6 * self.kickx[:, i],
+                        ".",
+                        label=label,
+                    )
+                    _plt.plot(1e3 * posy, 1e6 * kickx[:, i])
             if plot_flag:
-                _plt.xlabel('y pos [mm]')
-                _plt.ylabel('kicks [Tm²]')
+                _plt.xlabel("y pos [mm]")
+                _plt.ylabel("kicks x [Tm²]")
                 _plt.legend()
                 _plt.show()
 
@@ -364,14 +383,18 @@ class IDKickMap:
                 yf = _np.polyval(yfit, posy)
                 kicky[:, i] = pyf
                 fposy[:, i] = yf
-                label = 'x = {:.2f} mm'.format(1e3*rxi)
+                label = "x = {:.2f} mm".format(1e3 * rxi)
                 if plot_flag:
-                    _plt.plot(1e3*self.posy, 1e6*self.kicky[:, i],
-                              '.-', label=label)
-                    _plt.plot(1e3*posy, 1e6*kicky[:, i])
+                    _plt.plot(
+                        1e3 * self.posy,
+                        1e6 * self.kicky[:, i],
+                        ".",
+                        label=label,
+                    )
+                    _plt.plot(1e3 * posy, 1e6 * kicky[:, i])
             if plot_flag:
-                _plt.xlabel('y pos [mm]')
-                _plt.ylabel('kicks [Tm²]')
+                _plt.xlabel("y pos [mm]")
+                _plt.ylabel("kicks y [Tm²]")
                 _plt.legend()
                 _plt.show()
 
@@ -395,18 +418,18 @@ class IDKickMap:
         posy = self.posy  # [m]
         posx = self.posx[ix]
         kickx = self.kickx[:, ix] / self.brho**2  # [rad]
-        poly = _np.polyfit(posy, kickx, len(posy)-5)
+        poly = _np.polyfit(posy, kickx, len(posy) - 5)
         if plot:
             kickx_fit = _np.polyval(poly, posy)
             _plt.clf()
-            _plt.plot(1e3*posy, 1e6*kickx, 'o', label='data')
-            _plt.plot(1e3*posy, 1e6*kickx_fit, label='fit')
-            _plt.xlabel('posy [mm]')
-            _plt.ylabel('kickx [urad]')
-            _plt.title('Kickx @ x = {:.1f} mm'.format(1e3*posx))
+            _plt.plot(1e3 * posy, 1e6 * kickx, "o", label="data")
+            _plt.plot(1e3 * posy, 1e6 * kickx_fit, label="fit")
+            _plt.xlabel("posy [mm]")
+            _plt.ylabel("kickx [urad]")
+            _plt.title("Kickx @ x = {:.1f} mm".format(1e3 * posx))
             _plt.legend()
             _plt.grid()
-            _plt.savefig('kickx_ix_{}.png'.format(ix))
+            _plt.savefig("kickx_ix_{}.png".format(ix))
             # plt.show()
         KsL = poly[-2] * self.brho
         return KsL
@@ -416,18 +439,18 @@ class IDKickMap:
         posx = self.posx  # [m]
         posy = self.posy[iy]
         kicky = self.kicky[iy, :] / self.brho**2  # [rad]
-        poly = _np.polyfit(posx, kicky, len(posx)-5)
+        poly = _np.polyfit(posx, kicky, len(posx) - 5)
         if plot:
             kicky_fit = _np.polyval(poly, posx)
             _plt.clf()
-            _plt.plot(1e3*posx, 1e6*kicky, 'o', label='data')
-            _plt.plot(1e3*posx, 1e6*kicky_fit, label='fit')
-            _plt.xlabel('posx [mm]')
-            _plt.ylabel('kicky [urad]')
-            _plt.title('Kicky @ y = {:.1f} mm'.format(1e3*posy))
+            _plt.plot(1e3 * posx, 1e6 * kicky, "o", label="data")
+            _plt.plot(1e3 * posx, 1e6 * kicky_fit, label="fit")
+            _plt.xlabel("posx [mm]")
+            _plt.ylabel("kicky [urad]")
+            _plt.title("Kicky @ y = {:.1f} mm".format(1e3 * posy))
             _plt.legend()
             _plt.grid()
-            _plt.savefig('kicky_iy_{}.png'.format(iy))
+            _plt.savefig("kicky_iy_{}.png".format(iy))
             # plt.show()
         KsL = poly[-2] * self.brho
         return KsL
@@ -450,16 +473,6 @@ class IDKickMap:
             ksl.append(ksl_)
         return posy, _np.array(ksl)
 
-    def model_rz_field_center(self):
-        """Return rz pos of field center."""
-        model = self.radia_model
-        # rz = fmap.rz
-        # bx = radia_model.get_field[fmap.ry_zero][fmap.rx_zero][:]
-        # by = radia_model.get_field[fmap.ry_zero][fmap.rx_zero][:]
-        # bz = radia_model.get_field[fmap.ry_zero][fmap.rx_zero][:]
-        # rz_center = _utils.calc_rz_of_field_center(rz, bx, by, bz)
-        # return rz_center
-
     def fmap_rz_field_center(self):
         """Return rz pos of field center."""
         fmap = self.fmap_config.fmap
@@ -471,14 +484,15 @@ class IDKickMap:
         return rz_center
 
     def calc_id_termination_kicks(
-            self, period_len=None, kmap_idlen=None, plot_flag=False):
+        self, period_len=None, kmap_idlen=None, plot_flag=False
+    ):
         """."""
         # get parameters
         kmap_idlen = kmap_idlen or self.kmap_idlen
         self.kmap_idlen = kmap_idlen
         period_len = period_len or self.period_len
         self.period_len = period_len
-        nr_central_periods = int(kmap_idlen*1e3/period_len) - 4
+        nr_central_periods = int(kmap_idlen * 1e3 / period_len) - 4
 
         config = self.fmap_calc_trajectory(traj_init_rx=0, traj_init_ry=0)
         self._config = config
@@ -492,41 +506,55 @@ class IDKickMap:
         px = self._config.traj.px
         py = self._config.traj.py
         idx_begin_fit = self._find_value_idx(
-            rz, rz_center - period_len*nr_central_periods/2)
+            rz, rz_center - period_len * nr_central_periods / 2
+        )
         idx_end_fit = self._find_value_idx(
-            rz, rz_center + period_len*nr_central_periods/2)
+            rz, rz_center + period_len * nr_central_periods / 2
+        )
 
         for idx, pxy in enumerate([px, py]):
             rz_sample = rz[idx_begin_fit:idx_end_fit]
             p_sample = pxy[idx_begin_fit:idx_end_fit]
             opt = self.find_fit(rz_sample, p_sample)
-            idx_begin_ID = self._find_value_idx(rz, -kmap_idlen * 1e3/2)
-            idx_end_ID = self._find_value_idx(rz, +kmap_idlen * 1e3/2)
+            idx_begin_ID = self._find_value_idx(rz, -kmap_idlen * 1e3 / 2)
+            idx_end_ID = self._find_value_idx(rz, +kmap_idlen * 1e3 / 2)
             linefit = self._linear_function(rz, opt[2], opt[3])
             kick_begin = linefit[idx_begin_ID] - pxy[0]
             kick_end = pxy[-1] - linefit[idx_end_ID]
             if plot_flag:
                 _plt.plot(rz, pxy)
-                _plt.plot(rz_sample, p_sample, '.')
+                _plt.plot(rz_sample, p_sample, ".")
                 _plt.plot(rz, linefit)
                 _plt.show()
             if idx == 0:
-                self.kickx_upstream = kick_begin*self.brho**2
-                self.kickx_downstream = kick_end*self.brho**2
-                print('ID length: {:.3f} m'.format(kmap_idlen))
-                print("kickx_upstream: {:11.4e}  T2m2".format(
-                    self.kickx_upstream))
-                print("kickx_downstream: {:11.4e}  T2m2".format(
-                    self.kickx_downstream))
+                self.kickx_upstream = kick_begin * self.brho**2
+                self.kickx_downstream = kick_end * self.brho**2
+                print("ID length: {:.3f} m".format(kmap_idlen))
+                print(
+                    "kickx_upstream: {:11.4e}  T2m2".format(
+                        self.kickx_upstream
+                    )
+                )
+                print(
+                    "kickx_downstream: {:11.4e}  T2m2".format(
+                        self.kickx_downstream
+                    )
+                )
             elif idx == 1:
-                self.kicky_upstream = kick_begin*self.brho**2
-                self.kicky_downstream = kick_end*self.brho**2
-                print("kicky_upstream: {:11.4e}  T2m2".format(
-                    self.kicky_upstream))
-                print("kicky_downstream: {:11.4e}  T2m2".format(
-                    self.kicky_downstream))
+                self.kicky_upstream = kick_begin * self.brho**2
+                self.kicky_downstream = kick_end * self.brho**2
+                print(
+                    "kicky_upstream: {:11.4e}  T2m2".format(
+                        self.kicky_upstream
+                    )
+                )
+                print(
+                    "kicky_downstream: {:11.4e}  T2m2".format(
+                        self.kicky_downstream
+                    )
+                )
 
-    def plot_kickx_vs_posy(self, indx, title=''):
+    def plot_kickx_vs_posy(self, indx, title=""):
         """."""
         posx = self.posx
         posy = self.posy
@@ -535,20 +563,23 @@ class IDKickMap:
         _plt.figure(figsize=(8, 6))
         for c, ix in enumerate(indx):
             x = posx[ix]
+            _plt.plot(1e3 * posy, 1e6 * kickx[:, ix], "-", color=colors[c])
             _plt.plot(
-                1e3*posy, 1e6*kickx[:, ix], '-', color=colors[c])
-            _plt.plot(
-                1e3*posy, 1e6*kickx[:, ix], 'o', color=colors[c],
-                label='posx = {:+.1f} mm'.format(1e3*x))
-        _plt.xlabel('posy [mm]')
-        _plt.ylabel('kickx [urad]')
+                1e3 * posy,
+                1e6 * kickx[:, ix],
+                "o",
+                color=colors[c],
+                label="posx = {:+.1f} mm".format(1e3 * x),
+            )
+        _plt.xlabel("posy [mm]")
+        _plt.ylabel("kickx [urad]")
         _plt.title(title)
         _plt.grid()
-        _plt.legend(loc='upper left', bbox_to_anchor=(1.1, 1.05))
+        _plt.legend(loc="upper left", bbox_to_anchor=(1.1, 1.05))
         _plt.tight_layout(True)
         _plt.show()
 
-    def plot_kicky_vs_posx(self, indy, title=''):
+    def plot_kicky_vs_posx(self, indy, title=""):
         """."""
         posx = self.posx
         posy = self.posy
@@ -557,15 +588,19 @@ class IDKickMap:
         _plt.figure(figsize=(8, 6))
         for c, iy in enumerate(indy):
             y = posy[iy]
-            _plt.plot(1e3*posx, 1e6*kicky[iy, :], '-', color=colors[c])
+            _plt.plot(1e3 * posx, 1e6 * kicky[iy, :], "-", color=colors[c])
             _plt.plot(
-                1e3*posx, 1e6*kicky[iy, :], 'o', color=colors[c],
-                label='posy = {:+.1f} mm'.format(1e3*y))
-        _plt.xlabel('posx [mm]')
-        _plt.ylabel('kicky [urad]')
+                1e3 * posx,
+                1e6 * kicky[iy, :],
+                "o",
+                color=colors[c],
+                label="posy = {:+.1f} mm".format(1e3 * y),
+            )
+        _plt.xlabel("posx [mm]")
+        _plt.ylabel("kicky [urad]")
         _plt.title(title)
         _plt.grid()
-        _plt.legend(loc='upper left', bbox_to_anchor=(1.1, 1.05))
+        _plt.legend(loc="upper left", bbox_to_anchor=(1.1, 1.05))
         _plt.tight_layout(True)
         _plt.show()
 
@@ -577,7 +612,7 @@ class IDKickMap:
 
     def fit_function(self, rz, amp1, phi1, a, b):
         """."""
-        f = amp1 * _np.sin(2*_np.pi/self.period_len * rz + phi1)
+        f = amp1 * _np.sin(2 * _np.pi / self.period_len * rz + phi1)
         f += a * rz + b
         return f
 
@@ -597,14 +632,14 @@ class IDKickMap:
         if not self.kmap_fname:
             return
         info = IDKickMap._load_kmap_info(self.kmap_fname)
-        self.fmap_idlen = info['id_length']
-        self.posx, self.posy = info['posx'], info['posy']
-        self.kickx, self.kicky = info['kickx'], info['kicky']
-        self.fposx, self.fposy = info['fposx'], info['fposy']
-        self.kickx_upstream = info['kickx_upstream']
-        self.kicky_upstream = info['kicky_upstream']
-        self.kickx_downstream = info['kickx_downstream']
-        self.kicky_downstream = info['kicky_downstream']
+        self.fmap_idlen = info["id_length"]
+        self.posx, self.posy = info["posx"], info["posy"]
+        self.kickx, self.kicky = info["kickx"], info["kicky"]
+        self.fposx, self.fposy = info["fposx"], info["fposy"]
+        self.kickx_upstream = info["kickx_upstream"]
+        self.kicky_upstream = info["kicky_upstream"]
+        self.kickx_downstream = info["kickx_downstream"]
+        self.kicky_downstream = info["kicky_downstream"]
 
         if self.shift_on_axis:
             # find indices of central line
@@ -612,7 +647,9 @@ class IDKickMap:
                 indx = list(self.posx).index(0)
                 indy = list(self.posy).index(0)
             except ValueError:
-                raise ValueError('Kickmap does not have central transverse line!')
+                raise ValueError(
+                    "Kickmap does not have central transverse line!"
+                )
             # shift kicks on axis
             kickx0 = self.kickx[indy][indx]
             kicky0 = self.kicky[indy][indx]
@@ -621,89 +658,92 @@ class IDKickMap:
 
     def __str__(self):
         """."""
-        rst = ''
+        rst = ""
         # header
         rst += self.author
         if self.kickx_upstream is not None:
             flag = True
             if flag:
                 fmt = (
-                    '\n# Termination_kicks [T2m2]: '
-                    '{:+11.4e} {:+11.4e} {:+11.4e} {:+11.4e} '
-                    )
+                    "\n# Termination_kicks [T2m2]: "
+                    "{:+11.4e} {:+11.4e} {:+11.4e} {:+11.4e} "
+                )
                 rst += fmt.format(
-                    self.kickx_upstream, self.kicky_upstream,
-                    self.kickx_downstream, self.kicky_downstream)
+                    self.kickx_upstream,
+                    self.kicky_upstream,
+                    self.kickx_downstream,
+                    self.kicky_downstream,
+                )
         else:
-            rst += '\n# '
+            rst += "\n# "
 
         id_len = self.kmap_idlen or self.fmap_idlen
-        rst += '\n# Total Length of Longitudinal Interval [m]'
-        rst += '\n{}'.format(id_len)
-        rst += '\n# Number of Horizontal Points'
-        rst += '\n{}'.format(len(self.posx))
-        rst += '\n# Number of Vertical Points'
-        rst += '\n{}'.format(len(self.posy))
+        rst += "\n# Total Length of Longitudinal Interval [m]"
+        rst += "\n{}".format(id_len)
+        rst += "\n# Number of Horizontal Points"
+        rst += "\n{}".format(len(self.posx))
+        rst += "\n# Number of Vertical Points"
+        rst += "\n{}".format(len(self.posy))
 
         kickx_end = (self.kickx_upstream or 0) + (self.kickx_downstream or 0)
         kicky_end = (self.kicky_upstream or 0) + (self.kicky_downstream or 0)
 
-        rst += '\n# Total Horizontal 2nd Order Kick [T2m2]'
-        rst += '\nSTART'
+        rst += "\n# Total Horizontal 2nd Order Kick [T2m2]"
+        rst += "\nSTART"
         # first line
-        rst += '\n{:11s} '.format('')
+        rst += "\n{:11s} ".format("")
         for rxi in self.posx:
-            rst += '{:+011.5f} '.format(rxi)
+            rst += "{:+011.5f} ".format(rxi)
         # table
         for i, ryi in enumerate(self.posy[::-1]):
-            rst += '\n{:+011.5f} '.format(ryi)
+            rst += "\n{:+011.5f} ".format(ryi)
             for j, rxi in enumerate(self.posx):
-                rst += '{:+11.4e} '.format(self.kickx[-i-1, j] - kickx_end)
+                rst += "{:+11.4e} ".format(self.kickx[-i - 1, j] - kickx_end)
 
-        rst += '\n# Total Vertical 2nd Order Kick [T2m2]'
-        rst += '\nSTART'
+        rst += "\n# Total Vertical 2nd Order Kick [T2m2]"
+        rst += "\nSTART"
         # first line
-        rst += '\n{:11s} '.format('')
+        rst += "\n{:11s} ".format("")
         for rxi in self.posx:
-            rst += '{:+011.5f} '.format(rxi)
+            rst += "{:+011.5f} ".format(rxi)
         # table
         for i, ryi in enumerate(self.posy[::-1]):
-            rst += '\n{:+011.5f} '.format(ryi)
+            rst += "\n{:+011.5f} ".format(ryi)
             for j, rxi in enumerate(self.posx):
-                rst += '{:+11.4e} '.format(self.kicky[-i-1, j] - kicky_end)
+                rst += "{:+11.4e} ".format(self.kicky[-i - 1, j] - kicky_end)
 
-        rst += '\n# Horizontal Final Position [m]'
-        rst += '\nSTART'
+        rst += "\n# Horizontal Final Position [m]"
+        rst += "\nSTART"
         # first line
-        rst += '\n{:11s} '.format('')
+        rst += "\n{:11s} ".format("")
         for rxi in self.posx:
-            rst += '{:+011.5f} '.format(rxi)
+            rst += "{:+011.5f} ".format(rxi)
         # table
         for i, ryi in enumerate(self.posy[::-1]):
-            rst += '\n{:+011.5f} '.format(ryi)
+            rst += "\n{:+011.5f} ".format(ryi)
             for j, rxi in enumerate(self.posx):
-                rst += '{:+11.4e} '.format(self.fposx[-i-1, j])
+                rst += "{:+11.4e} ".format(self.fposx[-i - 1, j])
 
-        rst += '\n# Vertical Final Position [m]'
-        rst += '\nSTART'
+        rst += "\n# Vertical Final Position [m]"
+        rst += "\nSTART"
         # first line
-        rst += '\n{:11s} '.format('')
+        rst += "\n{:11s} ".format("")
         for rxi in self.posx:
-            rst += '{:+011.5f} '.format(rxi)
+            rst += "{:+011.5f} ".format(rxi)
         # table
         for i, ryi in enumerate(self.posy[::-1]):
-            rst += '\n{:+011.5f} '.format(ryi)
+            rst += "\n{:+011.5f} ".format(ryi)
             for j, rxi in enumerate(self.posx):
-                rst += '{:+11.4e} '.format(self.fposy[-i-1, j])
+                rst += "{:+11.4e} ".format(self.fposy[-i - 1, j])
         return rst
 
     @staticmethod
     def _linear_function(x, a, b):
-        return a*x + b
+        return a * x + b
 
     @staticmethod
     def _find_value_idx(data, value):
-        diff_array = _np.absolute(data-value)
+        diff_array = _np.absolute(data - value)
         index = diff_array.argmin()
         return index
 
@@ -720,12 +760,12 @@ class IDKickMap:
         params = []
         for line in lines:
             line = line.strip()
-            if line.startswith('START'):
+            if line.startswith("START"):
                 pass
-            elif line.startswith('#'):
-                if 'Termination_kicks' in line:
-                    *_, kicks = line.split('Termination_kicks')
-                    _, k1, k2, k3, k4 = kicks.strip().split(' ')
+            elif line.startswith("#"):
+                if "Termination_kicks" in line:
+                    *_, kicks = line.split("Termination_kicks")
+                    _, k1, k2, k3, k4 = kicks.strip().split(" ")
                     kickx_up = float(k1)
                     kicky_up = float(k2)
                     kickx_down = float(k3)
@@ -747,10 +787,10 @@ class IDKickMap:
         posy = tables[:nrpts_y, 0]
         tables = tables[:, 1:]
 
-        kickx = tables[0*nrpts_y:1*nrpts_y, :]
-        kicky = tables[1*nrpts_y:2*nrpts_y, :]
-        fposx = tables[2*nrpts_y:3*nrpts_y, :]
-        fposy = tables[3*nrpts_y:4*nrpts_y, :]
+        kickx = tables[0 * nrpts_y : 1 * nrpts_y, :]
+        kicky = tables[1 * nrpts_y : 2 * nrpts_y, :]
+        fposx = tables[2 * nrpts_y : 3 * nrpts_y, :]
+        fposy = tables[3 * nrpts_y : 4 * nrpts_y, :]
         if posy[-1] < posy[0]:
             posy = posy[::-1]
             kickx = kickx[::-1, :]
@@ -758,21 +798,21 @@ class IDKickMap:
             fposx = fposx[::-1, :]
             fposy = fposy[::-1, :]
         info = dict()
-        info['id_length'] = id_length
-        info['posx'], info['posy'] = posx, posy
-        info['kickx'], info['kicky'] = kickx, kicky
-        info['fposx'], info['fposy'] = fposx, fposy
-        info['kickx_upstream'] = kickx_up
-        info['kicky_upstream'] = kicky_up
-        info['kickx_downstream'] = kickx_down
-        info['kicky_downstream'] = kicky_down
+        info["id_length"] = id_length
+        info["posx"], info["posy"] = posx, posy
+        info["kickx"], info["kicky"] = kickx, kicky
+        info["fposx"], info["fposy"] = fposx, fposy
+        info["kickx_upstream"] = kickx_up
+        info["kicky_upstream"] = kicky_up
+        info["kickx_downstream"] = kickx_down
+        info["kicky_downstream"] = kicky_down
         return info
 
     @staticmethod
     def _create_fmap_config(fmap_fname, beam_energy, rk_s_step):
         config = _fmaptrack.common_analysis.Config()
-        config.config_label = 'id-3gev'
-        config.magnet_type = 'insertion-device'  # not necessary
+        config.config_label = "id-3gev"
+        config.magnet_type = "insertion-device"  # not necessary
         config.interactive_mode = True
         config.fmap_filename = fmap_fname
         config.fmap_extrapolation_flag = False
@@ -782,7 +822,8 @@ class IDKickMap:
         config.fmap = _fmaptrack.FieldMap(
             config.fmap_filename,
             transforms=transforms,
-            not_raise_range_exceptions=config.not_raise_range_exceptions)
+            not_raise_range_exceptions=config.not_raise_range_exceptions,
+        )
 
         config.radia_model = None
         config.traj_load_filename = None
@@ -799,8 +840,8 @@ class IDKickMap:
     @staticmethod
     def _create_radia_model_config(radia_model, rk_s_step):
         config = _fmaptrack.common_analysis.Config()
-        config.config_label = 'id-3gev'
-        config.magnet_type = 'insertion-device'  # not necessary
+        config.config_label = "id-3gev"
+        config.magnet_type = "insertion-device"  # not necessary
         config.interactive_mode = True
         config.radia_model = radia_model
         config.fmap_extrapolation_flag = False
@@ -825,44 +866,50 @@ class IDKickMap:
             beam=config.beam,
             fieldmap=config.fmap,
             radia_model=config.radia_model,
-            not_raise_range_exceptions=config.not_raise_range_exceptions)
+            not_raise_range_exceptions=config.not_raise_range_exceptions,
+        )
         if config.traj_init_rx is not None:
             init_rx = config.traj_init_rx
         else:
             init_rx = 0.0
-        if hasattr(config, 'traj_init_ry'):
+        if hasattr(config, "traj_init_ry"):
             init_ry = config.traj_init_ry
         else:
             config.traj_init_ry = init_ry = 0.0
-        if hasattr(config, 'traj_init_rz'):
+        if hasattr(config, "traj_init_rz"):
             init_rz = config.traj_init_rz
         else:
             config.traj_init_rz = init_rz = 0.0
-        if hasattr(config, 'traj_init_px'):
+        if hasattr(config, "traj_init_px"):
             init_px = config.traj_init_px  # * 180/_np.pi
         else:
             config.traj_init_px = init_px = 0.0
-        if hasattr(config, 'traj_init_py'):
+        if hasattr(config, "traj_init_py"):
             init_py = config.traj_init_py  # * 180/_np.pi
         else:
             config.traj_init_py = init_py = 0.0
         init_pz = _np.sqrt(1.0 - init_px**2 - init_py**2)
-        has_rk_min_rz = hasattr(config, 'traj_rk_min_rz')
+        has_rk_min_rz = hasattr(config, "traj_rk_min_rz")
         if has_rk_min_rz and config.traj_rk_min_rz is not None:
             rk_min_rz = config.traj_rk_min_rz
         elif config.traj_rk_s_step > 0.0:
-            rk_min_rz = -1*config.traj_init_rz
+            rk_min_rz = -1 * config.traj_init_rz
         else:
             rk_min_rz = config.traj_init_rz
         config.traj.calc_trajectory(
-            init_rx=init_rx, init_ry=init_ry, init_rz=init_rz,
-            init_px=init_px, init_py=init_py, init_pz=init_pz,
+            init_rx=init_rx,
+            init_ry=init_ry,
+            init_rz=init_rz,
+            init_px=init_px,
+            init_py=init_py,
+            init_pz=init_pz,
             s_step=config.traj_rk_s_step,
             s_length=config.traj_rk_length,
             s_nrpts=config.traj_rk_nrpts,
             min_rz=rk_min_rz,
             force_midplane=config.traj_force_midplane_flag,
-            **kwargs)
+            **kwargs,
+        )
 
         return config
 
@@ -878,14 +925,16 @@ class IDKickMap:
             trajectory=config.traj,
             perpendicular_grid=multi_perp,
             normal_field_fitting_monomials=multi_norm,
-            skew_field_fitting_monomials=multi_skew)
+            skew_field_fitting_monomials=multi_skew,
+        )
         config.multipoles.calc_multipoles(is_ref_trajectory_flag=False)
         config.multipoles.calc_multipoles_integrals()
         config.multipoles.calc_multipoles_integrals_relative(
             config.multipoles.normal_multipoles_integral,
             main_monomial=0,
             r0=config.multipoles_r0,
-            is_skew=False)
+            is_skew=False,
+        )
 
         # calcs effective length
 
@@ -900,30 +949,33 @@ class IDKickMap:
         monomials = config.multipoles.normal_field_fitting_monomials
         idx_n = monomials.index(main_monomial)
 
-        if hasattr(config, 'hardedge_half_region'):
+        if hasattr(config, "hardedge_half_region"):
             sel = config.traj.s < config.hardedge_half_region
             s = config.traj.s[sel]
             field = config.multipoles.normal_multipoles[idx_n, sel]
             integrated_field = _np.trapz(field, s)
             hardedge_field = integrated_field / config.hardedge_half_region
-            config.multipoles.effective_length = \
-                config.multipoles.normal_multipoles_integral[idx_n] / \
-                hardedge_field
+            config.multipoles.effective_length = (
+                config.multipoles.normal_multipoles_integral[idx_n]
+                / hardedge_field
+            )
         else:
             idx_z = list(config.traj.s).index(0.0)
-            main_multipole_center = \
-                config.multipoles.normal_multipoles[idx_n, idx_z]
-            config.multipoles.effective_length = \
-                config.multipoles.normal_multipoles_integral[idx_n] / \
-                main_multipole_center
+            main_multipole_center = config.multipoles.normal_multipoles[
+                idx_n, idx_z
+            ]
+            config.multipoles.effective_length = (
+                config.multipoles.normal_multipoles_integral[idx_n]
+                / main_multipole_center
+            )
 
         # saves multipoles to file
         if not config.interactive_mode:
-            config.multipoles.save('multipoles.txt')
+            config.multipoles.save("multipoles.txt")
 
         # prints basic information on multipoles
         # ======================================
-        print('--- multipoles on reference trajectory (rz > 0) ---')
+        print("--- multipoles on reference trajectory (rz > 0) ---")
         print(config.multipoles)
 
         if not config.interactive_mode:
@@ -948,7 +1000,8 @@ class IDKickMap:
         fmap_config.traj = _fmaptrack.Trajectory(
             beam=fmap_config.beam,
             fieldmap=fmap_config.fmap,
-            not_raise_range_exceptions=fmap_config.not_raise_range_exceptions)
+            not_raise_range_exceptions=fmap_config.not_raise_range_exceptions,
+        )
 
     @staticmethod
     def _update_radia_model_energy(radia_model_config, beam_energy):

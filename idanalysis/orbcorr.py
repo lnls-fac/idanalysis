@@ -9,7 +9,7 @@ from apsuite.orbcorr import OrbitCorr, CorrParams
 
 
 IDS_FAMNAMES = [
-    'PAPU50', 'APU22', 'IVU18', 'VPU29', 'WIG180', 'APU58', 'EPU50', 'DELTA52']
+    'PAPU50', 'APU22', 'IVU18', 'VPU29', 'WIG180', 'APU58', 'EPU50', 'DELTA52', 'WLS']
 
 
 def get_ids_indices(model):
@@ -334,7 +334,7 @@ def correct_orbit_fb(
     # create orbit corrector
     cparams = CorrParams()
     cparams.minsingval = minsingval
-    cparams.tolerance = 1e-8  # [m]
+    cparams.convergencetol = 1e-8  # [m]
     cparams.maxnriters = 20
 
     # get unperturbed orbit
@@ -361,8 +361,9 @@ def correct_orbit_fb(
         cody_u = cod_u[len(bpms):]
 
         # calc response matrix and correct orbit
-        if not ocorr.correct_orbit(goal_orbit=orb0):
-            print('Could not correct orbit!')
+        sts = ['Sucess', 'OrbRMSWarning', 'ConvergenceFail', 'SaturationFail']
+        res = ocorr.correct_orbit(goal_orbit=orb0)
+        print(sts[res])
 
         # get corrected orbit
         orb2 = ocorr.get_orbit()
