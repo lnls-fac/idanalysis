@@ -288,6 +288,7 @@ class _PARAMS:
     """."""
 
     # --- ID parameters ---
+    B_PEAK = None
     PERIOD_LEN = None
     ID_LEN = None
     NR_PERIODS = None
@@ -308,6 +309,7 @@ class DELTA52Data(Tools):
     """DELTA data access and manipulation class."""
 
     PARAMS = _PARAMS()
+    PARAMS.B_PEAK = 1.25  # [T]
     PARAMS.PERIOD_LEN = 52.5  # [mm]
     PARAMS.ID_LEN = 1.200  # [m]
     PARAMS.NR_PERIODS = 21
@@ -316,12 +318,12 @@ class DELTA52Data(Tools):
     PARAMS.ID_FAMNAME = "DELTA52"
     PARAMS.SUBSECS = ["ID10SB"]
 
-    PARAMS.KICKMAPS_DATA_PATH = REPOS_PATH + "scripts/delta52/kickmaps/"
+    PARAMS.KICKMAPS_DATA_PATH = REPOS_PATH + "delta52/kickmaps/"
     PARAMS.FIELDMAPS_DATA_PATH = (
         DATA_REPOS_PATH
         + "lnls-ima/delta52/id-sabia/model-03/measurement/magnetic/hallprobe/"
     )  # noqa: E501
-    PARAMS.FOLDER_BASE_OUTPUT = REPOS_PATH + "scripts/delta52/results/data/"
+    PARAMS.FOLDER_BASE_OUTPUT = REPOS_PATH + "delta52/results/data/"
 
     FIELMAPS_CONFIGS = {
         # dp = 0 mm
@@ -470,6 +472,7 @@ class APU22Data(Tools):
     """APU22 data access and manipulation class."""
 
     PARAMS = _PARAMS()
+    PARAMS.B_PEAK = 0.7  # [T]
     PARAMS.PERIOD_LEN = 22  # [mm]
     PARAMS.ID_LEN = 1.300  # [m]
     PARAMS.NR_PERIODS = 51
@@ -477,13 +480,13 @@ class APU22Data(Tools):
     PARAMS.ID_FAMNAME = "APU22"
     PARAMS.SUBSECS = ["ID06SB", "ID07SP", "ID08SB", "ID09SA"]
 
-    PARAMS.KICKMAPS_DATA_PATH = REPOS_PATH + "scripts/apu22/kickmaps/"
+    PARAMS.KICKMAPS_DATA_PATH = REPOS_PATH + "apu22/kickmaps/"
     PARAMS.FIELDMAPS_DATA_PATH = (
         DATA_REPOS_PATH
         + "lnls-ima/kyma22/id-manaca/commissioning_id/measurement/magnetic/"
         + "lnls/hallprobe/vertical_position_0mm/"
     )  # noqa: E501
-    PARAMS.FOLDER_BASE_OUTPUT = REPOS_PATH + "scripts/apu22/results/data/"
+    PARAMS.FOLDER_BASE_OUTPUT = REPOS_PATH + "apu22/results/data/"
 
     FIELMAPS_CONFIGS = {
         "ID2828": "2020-05-26_1991b_Fieldmap_X=-12_12mm_Z=-740_740mm_"
@@ -566,6 +569,7 @@ class APU58Data(Tools):
     """APU58 data access and manipulation class."""
 
     PARAMS = _PARAMS()
+    PARAMS.B_PEAK = 0.95  # [T]
     PARAMS.PERIOD_LEN = 58  # [mm]
     PARAMS.ID_LEN = 1.300  # [m]
     PARAMS.NR_PERIODS = 18
@@ -573,13 +577,13 @@ class APU58Data(Tools):
     PARAMS.ID_FAMNAME = "APU58"
     PARAMS.SUBSECS = ["ID11SP"]
 
-    PARAMS.KICKMAPS_DATA_PATH = REPOS_PATH + "scripts/apu58/kickmaps/"
+    PARAMS.KICKMAPS_DATA_PATH = REPOS_PATH + "apu58/kickmaps/"
     PARAMS.FIELDMAPS_DATA_PATH = (
         DATA_REPOS_PATH
         + "lnls-ima/kyma58/id-ipe/commissioning_id/measurement/magnetic/lnls/"
         + "hallprobe/vertical_position_0mm/"
     )  # noqa: E501
-    PARAMS.FOLDER_BASE_OUTPUT = REPOS_PATH + "scripts/apu58/results/data/"
+    PARAMS.FOLDER_BASE_OUTPUT = REPOS_PATH + "apu58/results/data/"
 
     FIELMAPS_CONFIGS = {
         "ID2945": "2020-10-23_1995_Fieldmap_X=-10_10mm_Z=-750_750mm_"
@@ -677,6 +681,7 @@ class PAPU50Data(Tools):
     """PAPU50 data access and manipulation class."""
 
     PARAMS = _PARAMS()
+    PARAMS.B_PEAK = 0.42  # [T]
     PARAMS.PERIOD_LEN = 50  # [mm]
     PARAMS.ID_LEN = 0.984  # [m]
     PARAMS.NR_PERIODS = 18
@@ -684,12 +689,12 @@ class PAPU50Data(Tools):
     PARAMS.ID_FAMNAME = "PAPU50"
     PARAMS.SUBSECS = ["ID09SA"]
 
-    PARAMS.KICKMAPS_DATA_PATH = REPOS_PATH + "scripts/papu50/kickmaps/"
+    PARAMS.KICKMAPS_DATA_PATH = REPOS_PATH + "papu50/kickmaps/"
     PARAMS.FIELDMAPS_DATA_PATH = (
         DATA_REPOS_PATH
         + "lnls-ima/papu50/id-papu/model-01/measurement/magnetic/hallprobe/"
     )  # noqa: E501
-    PARAMS.FOLDER_BASE_OUTPUT = REPOS_PATH + "scripts/papu50/results/data/"
+    PARAMS.FOLDER_BASE_OUTPUT = REPOS_PATH + "papu50/results/data/"
 
     FIELMAPS_CONFIGS = {
         "ID4647": "2023-05-30_PAPU_Fieldmap_Corrected_X=-10_10mm_"
@@ -763,6 +768,7 @@ class WIG180Data(Tools):
     """Wiggler data access and manipulation class."""
 
     PARAMS = _PARAMS()
+    PARAMS.B_PEAK = 1.0  # [T]
     PARAMS.PERIOD_LEN = 180  # [mm]
     PARAMS.ID_LEN = 2.654  # [m]
     PARAMS.NR_PERIODS = 13
@@ -770,13 +776,13 @@ class WIG180Data(Tools):
     PARAMS.ID_FAMNAME = "WIG180"
     PARAMS.SUBSECS = ["ID14SB"]
 
-    PARAMS.KICKMAPS_DATA_PATH = REPOS_PATH + "scripts/wig180/kickmaps/"
+    PARAMS.KICKMAPS_DATA_PATH = REPOS_PATH + "wig180/kickmaps/"
     PARAMS.FIELDMAPS_DATA_PATH = (
         DATA_REPOS_PATH
         + "lnls-ima/wig180/wiggler-2T-STI/commissioning_id/measurement/"
         + "magnetic/lnls/hallprobe/vertical_position_0mm/"
     )  # noqa: E501
-    PARAMS.FOLDER_BASE_OUTPUT = REPOS_PATH + "scripts/wig180/results/data/"
+    PARAMS.FOLDER_BASE_OUTPUT = REPOS_PATH + "wig180/results/data/"
 
     FIELMAPS_CONFIGS = {
         # wiggler with correctors - gap 022.00mm
@@ -875,6 +881,7 @@ class EPU50Data(Tools):
     """EPU50 data access and manipulation class."""
 
     PARAMS = _PARAMS()
+    PARAMS.B_PEAK = 0.47  # [T]
     PARAMS.PERIOD_LEN = 50  # [mm]
     PARAMS.ID_LEN = 2.770  # [m]
     PARAMS.NR_PERIODS = 54
@@ -883,12 +890,12 @@ class EPU50Data(Tools):
     PARAMS.ID_FAMNAME = "EPU50"
     PARAMS.SUBSECS = ["ID10SB"]
 
-    PARAMS.KICKMAPS_DATA_PATH = REPOS_PATH + "scripts/epu50/kickmaps/"
+    PARAMS.KICKMAPS_DATA_PATH = REPOS_PATH + "epu50/kickmaps/"
     PARAMS.FIELDMAPS_DATA_PATH = (
         DATA_REPOS_PATH
         + "lnls-ima/epu-uvx/measurement/magnetic/hallprobe/probes 133-14/"
     )  # noqa: E501
-    PARAMS.FOLDER_BASE_OUTPUT = REPOS_PATH + "scripts/epu50/results/data/"
+    PARAMS.FOLDER_BASE_OUTPUT = REPOS_PATH + "epu50/results/data/"
 
     FIELMAPS_CONFIGS = {
         # sensor 133-14 (without crosstalk) - gap 22.0 mm
@@ -1036,6 +1043,7 @@ class IVU18Data(Tools):
     """IVU18 data access and manipulation class."""
 
     PARAMS = _PARAMS()
+    PARAMS.B_PEAK = 1.32  # [T]
     PARAMS.PERIOD_LEN = 18.5  # [mm]
     PARAMS.ID_LEN = 2.500  # [m]
     PARAMS.NR_PERIODS = 108
@@ -1043,9 +1051,9 @@ class IVU18Data(Tools):
     PARAMS.ID_FAMNAME = "IVU18"
     PARAMS.SUBSECS = ["ID08SB", "ID14SB"]
 
-    PARAMS.KICKMAPS_DATA_PATH = REPOS_PATH + "scripts/ivu18/kickmaps/"
+    PARAMS.KICKMAPS_DATA_PATH = REPOS_PATH + "ivu18/kickmaps/"
     PARAMS.FIELDMAPS_DATA_PATH = None  # noqa: E501
-    PARAMS.FOLDER_BASE_OUTPUT = REPOS_PATH + "scripts/ivu18/results/data/"
+    PARAMS.FOLDER_BASE_OUTPUT = REPOS_PATH + "ivu18/results/data/"
 
     FIELMAPS_CONFIGS = {None}
 
@@ -1090,6 +1098,7 @@ class VPU29Data(Tools):
     """VPU29 data access and manipulation class."""
 
     PARAMS = _PARAMS()
+    PARAMS.B_PEAK = 0.82  # [T]
     PARAMS.PERIOD_LEN = 29  # [mm]
     PARAMS.ID_LEN = 1.700  # [m]
     PARAMS.NR_PERIODS = 51
@@ -1097,9 +1106,9 @@ class VPU29Data(Tools):
     PARAMS.ID_FAMNAME = "VPU29"
     PARAMS.SUBSECS = ["ID06SB", "ID07SP"]
 
-    PARAMS.KICKMAPS_DATA_PATH = REPOS_PATH + "scripts/vpu29/kickmaps/"
+    PARAMS.KICKMAPS_DATA_PATH = REPOS_PATH + "vpu29/kickmaps/"
     PARAMS.FIELDMAPS_DATA_PATH = None  # noqa: E501
-    PARAMS.FOLDER_BASE_OUTPUT = REPOS_PATH + "scripts/vpu29/results/data/"
+    PARAMS.FOLDER_BASE_OUTPUT = REPOS_PATH + "vpu29/results/data/"
 
     FIELMAPS_CONFIGS = {None}
 
