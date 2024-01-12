@@ -7,8 +7,11 @@ import pymodels
 from apsuite.dynap import DynapXY
 from fieldmaptrack import Beam
 
-from idanalysis import IDKickMap as _IDKickMap, optics as optics, \
-    orbcorr as orbcorr
+from idanalysis import (
+    IDKickMap as _IDKickMap,
+    optics as optics,
+    orbcorr as orbcorr,
+)
 
 
 class Tools:
@@ -269,7 +272,7 @@ class RadiaModelAnalysis:
         )
 
         r0_idx = _np.argmin(_np.abs(r_transverse))
-        roff = 100*(b_transverse / b_transverse[r0_idx] - 1)
+        roff = 100 * (b_transverse / b_transverse[r0_idx] - 1)
         return r_transverse, b_transverse, roff
 
 
@@ -1366,3 +1369,112 @@ class StorageRingAnalysis(Tools):
             figname = fpath + "Dynapt" + sufix
             fig.savefig(figname, dpi=300, format="png")
         _plt.show()
+
+
+class EqParamAnalysis:
+    """Class to calculate beam equilibrium parameters."""
+
+    class InsertionParams:
+        """Class to specify insertion parameters."""
+
+        def __init__(self):
+            """Class constructor."""
+            self._field_profile = None
+            self._peak_field = None
+            self._deflection_parameter = None
+            self._period = None
+            self._length = None
+            self._nr_periods = None
+            self._straight_section = None
+
+        @property
+        def field_profile(self):
+            """Field profile.
+
+            Returns:
+                numpy array: First column contains longitudinal
+                distance [mm] and second column contais field [T].
+            """
+            return self._field_profile
+
+        @field_profile.setter
+        def field_profile(self, value):
+            self._field_profile = value
+
+        @property
+        def peak_field(self):
+            """Insertion device peak field [T].
+
+            Returns:
+                float: Peak field [T]
+            """
+            return self._peak_field
+
+        @peak_field.setter
+        def peak_field(self, value):
+            self._peak_field = value
+
+        @property
+        def deflection_parameter(self):
+            """Deflection parameter (K).
+
+            Returns:
+                float: Deflection parameter
+            """
+            return self._deflection_parameter
+
+        @deflection_parameter.setter
+        def deflection_parameter(self, value):
+            self._deflection_parameter = value
+
+        @property
+        def period(self):
+            """Insertion device period [mm].
+
+            Returns:
+                float: ID's period [mm]
+            """
+            return self._period
+
+        @period.setter
+        def period(self, value):
+            self._period = value
+
+        @property
+        def length(self):
+            """Insertion device length [m].
+
+            Returns:
+                float: ID's length [m]
+            """
+            return self._length
+
+        @length.setter
+        def length(self, value):
+            self._length = value
+
+        @property
+        def nr_periods(self):
+            """Insertion device number of periods.
+
+            Returns:
+                int: Number of ID's periods.
+            """
+            return self._nr_periods
+
+        @nr_periods.setter
+        def nr_periods(self, value):
+            self._nr_periods = value
+
+        @property
+        def straight_section(self):
+            """Straight section where the ID will be inserted.
+
+            Returns:
+                int: Straight section number
+            """
+            return self._straight_section
+
+        @straight_section.setter
+        def straight_section(self, value):
+            self._straight_section = value
