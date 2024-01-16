@@ -219,7 +219,7 @@ class RadiaModelAnalysis:
         b = field[:, comp_idx]
         idxmax = _np.argmax(_np.abs(b))
         rzmax = rz[idxmax]
-        return idxmax, rzmax, b[idxmax]
+        return idxmax, rzmax, _np.abs(b[idxmax])
 
     def calc_radia_transverse_dependence(
         self, field_component, r_transverse, plane="x"
@@ -763,7 +763,7 @@ class StorageRingAnalysis(Tools):
         rescale_kicks=1,
         rescale_length=1,
     ):
-        """Check kicks using tracking.
+        """Add ID to SI model.
 
         Args:
             kmap_fname (str): file name of kickmap
