@@ -1383,27 +1383,41 @@ class EqParamAnalysis:
         def __init__(self):
             """Class constructor."""
             self._field_profile = None
-            self._peak_field = None
-            self._deflection_parameter = None
+            self._bx_peak = None
+            self._by_peak = None
+            self._kx = None
+            self._ky = None
             self._period = None
             self._length = None
             self._nr_periods = None
             self._straight_section = None
-            self._eta = None
-            self._etadot = None
-            self._delta_i1 = None
-            self._delta_i2 = None
-            self._delta_i3 = None
-            self._delta_i4 = None
-            self._delta_i5 = None
+            self._etax = None
+            self._etaxdot = None
+            self._etay = None
+            self._etaydot = None
+            self._delta_i1x = None
+            self._delta_i2x = None
+            self._delta_i3x = None
+            self._delta_i4x = None
+            self._delta_i5x = None
+            self._delta_i1y = None
+            self._delta_i2y = None
+            self._delta_i3y = None
+            self._delta_i4y = None
+            self._delta_i5y = None
+            self.brho = Beam(3).brho
+            self._e = mathphys.constants.elementary_charge
+            self._m = mathphys.constants.electron_mass
+            self._c = mathphys.constants.light_speed
 
         @property
         def field_profile(self):
             """Field profile.
 
             Returns:
-                numpy array: First column contains longitudinal
-                distance [mm] and second column contais field [T].
+                numpy array: First column contains longitudinalspatial
+                coordinate (z) [mm, second column contais vertical field
+                [T], and third column constais horizontal field [T].
             """
             return self._field_profile
 
@@ -1412,30 +1426,90 @@ class EqParamAnalysis:
             self._field_profile = value
 
         @property
-        def peak_field(self):
-            """Insertion device peak field [T].
+        def bx_peak(self):
+            """Insertion device horizontal peak field [T].
 
             Returns:
-                float: Peak field [T]
+                float: bx peak field [T]
             """
-            return self._peak_field
+            return self._bx_peak
 
-        @peak_field.setter
-        def peak_field(self, value):
-            self._peak_field = value
+        @bx_peak.setter
+        def bx_peak(self, value):
+            self._bx_peak = value
+            if self.period is not None:
+                self._kx = (
+                    1e-3
+                    * self._e
+                    / (2 * _np.pi * self._m * self._c)
+                    * self._bx_peak
+                    * self.period
+                )
 
         @property
-        def deflection_parameter(self):
-            """Deflection parameter (K).
+        def by_peak(self):
+            """Insertion device vertical peak field [T].
 
             Returns:
-                float: Deflection parameter
+                float: by peak field [T]
             """
-            return self._deflection_parameter
+            return self._by_peak
 
-        @deflection_parameter.setter
-        def deflection_parameter(self, value):
-            self._deflection_parameter = value
+        @by_peak.setter
+        def by_peak(self, value):
+            self._by_peak = value
+            if self.period is not None:
+                self._ky = (
+                    1e-3
+                    * self._e
+                    / (2 * _np.pi * self._m * self._c)
+                    * self._by_peak
+                    * self.period
+                )
+
+        @property
+        def kx(self):
+            """Horizontal deflection parameter (Kx).
+
+            Returns:
+                float: Horizontal deflection parameter
+            """
+            return self._kx
+
+        @kx.setter
+        def kx(self, value):
+            self._kx = value
+            if self.period is not None:
+                self._bx_peak = (
+                    2
+                    * _np.pi
+                    * self._m
+                    * self._c
+                    * self._kx
+                    / (self._e * 1e-3 * self.period)
+                )
+
+        @property
+        def ky(self):
+            """Vertical deflection parameter (Ky).
+
+            Returns:
+                float: Vertical deflection parameter
+            """
+            return self._ky
+
+        @ky.setter
+        def ky(self, value):
+            self._ky = value
+            if self.period is not None:
+                self._by_peak = (
+                    2
+                    * _np.pi
+                    * self._m
+                    * self._c
+                    * self._ky
+                    / (self._e * 1e-3 * self.period)
+                )
 
         @property
         def period(self):
@@ -1449,6 +1523,40 @@ class EqParamAnalysis:
         @period.setter
         def period(self, value):
             self._period = value
+            if self._bx_peak is not None:
+                self._kx = (
+                    1e-3
+                    * self._e
+                    / (2 * _np.pi * self._m * self._c)
+                    * self._bx_peak
+                    * self.period
+                )
+            if self._by_peak is not None:
+                self._ky = (
+                    1e-3
+                    * self._e
+                    / (2 * _np.pi * self._m * self._c)
+                    * self._by_peak
+                    * self.period
+                )
+            if self._kx is not None:
+                self._bx_peak = (
+                    2
+                    * _np.pi
+                    * self._m
+                    * self._c
+                    * self._kx
+                    / (self._e * 1e-3 * self.period)
+                )
+            if self._ky is not None:
+                self._by_peak = (
+                    2
+                    * _np.pi
+                    * self._m
+                    * self._c
+                    * self._ky
+                    / (self._e * 1e-3 * self.period)
+                )
 
         @property
         def length(self):
@@ -1462,6 +1570,8 @@ class EqParamAnalysis:
         @length.setter
         def length(self, value):
             self._length = value
+            if self.period is not None:
+                self._nr_periods = int(self._length / (1e-3 * self.period)) - 2
 
         @property
         def nr_periods(self):
@@ -1475,6 +1585,8 @@ class EqParamAnalysis:
         @nr_periods.setter
         def nr_periods(self, value):
             self._nr_periods = value
+            if self.period is not None:
+                self._length = 1e-3 * self.period * (self._nr_periods + 2)
 
         @property
         def straight_section(self):
@@ -1490,67 +1602,130 @@ class EqParamAnalysis:
             self._straight_section = value
 
         @property
-        def eta(self):
-            """Dispersion generated by ID.
+        def etax(self):
+            """Horizontal dispersion generated by ID.
 
             Returns:
-                Numpy 1d array: Dispersion function
+                Numpy 1d array: Horizontal dispersion function
             """
-            return self._eta
+            return self._etax
 
         @property
-        def etadot(self):
-            """d(eta)/ds generated by ID.
+        def etaxdot(self):
+            """d(etax)/ds generated by ID.
 
             Returns:
-                Numpy 1d array: Derivative of dispersion function
+                Numpy 1d array: Derivative of horizontal dispersion function
             """
-            return self._etadot
+            return self._etaxdot
 
         @property
-        def delta_i1(self):
+        def etay(self):
+            """Vertical dispersion generated by ID.
+
+            Returns:
+                Numpy 1d array: Vertical dispersion function
+            """
+            return self._etay
+
+        @property
+        def etaydot(self):
+            """d(etay)/ds generated by ID.
+
+            Returns:
+                Numpy 1d array: Derivative of vertical dispersion function
+            """
+            return self._etaydot
+
+        @property
+        def delta_i1x(self):
             """Contribution of ID to first rad integral.
 
             Returns:
-                Numpy 1d array: Delta i1
+                Numpy 1d array: Delta i1x
             """
-            return self._delta_i1
+            return self._delta_i1x
 
         @property
-        def delta_i2(self):
+        def delta_i2x(self):
             """Contribution of ID to second rad integral.
 
             Returns:
-                Numpy 1d array: Delta i2
+                Numpy 1d array: Delta i2x
             """
-            return self._delta_i2
+            return self._delta_i2x
 
         @property
-        def delta_i3(self):
+        def delta_i3x(self):
             """Contribution of ID to third rad integral.
 
             Returns:
-                Numpy 1d array: Delta i3
+                Numpy 1d array: Delta i3x
             """
-            return self._delta_i3
+            return self._delta_i3x
 
         @property
-        def delta_i4(self):
+        def delta_i4x(self):
             """Contribution of ID to fourth rad integral.
 
             Returns:
-                Numpy 1d array: Delta i4
+                Numpy 1d array: Delta i4x
             """
-            return self._delta_i4
+            return self._delta_i4x
 
         @property
-        def delta_i5(self):
+        def delta_i5x(self):
             """Contribution of ID to fifth rad integral.
 
             Returns:
-                Numpy 1d array: Delta i5
+                Numpy 1d array: Delta i5x
             """
-            return self._delta_i5
+            return self._delta_i5x
+
+        @property
+        def delta_i1y(self):
+            """Contribution of ID to first rad integral.
+
+            Returns:
+                Numpy 1d array: Delta i1y
+            """
+            return self._delta_i1y
+
+        @property
+        def delta_i2y(self):
+            """Contribution of ID to second rad integral.
+
+            Returns:
+                Numpy 1d array: Delta i2y
+            """
+            return self._delta_i2y
+
+        @property
+        def delta_i3y(self):
+            """Contribution of ID to third rad integral.
+
+            Returns:
+                Numpy 1d array: Delta i3y
+            """
+            return self._delta_i3y
+
+        @property
+        def delta_i4y(self):
+            """Contribution of ID to fourth rad integral.
+
+            Returns:
+                Numpy 1d array: Delta i4y
+            """
+            return self._delta_i4y
+
+        @property
+        def delta_i5y(self):
+            """Contribution of ID to fifth rad integral.
+
+            Returns:
+                Numpy 1d array: Delta i5y
+            """
+            return self._delta_i5y
 
     def __init__(self):
         """Class constructor."""
@@ -1600,44 +1775,111 @@ class EqParamAnalysis:
         return _np.abs(i2[-1])
 
     def create_field_profile(self, insertion_device, pts_period=1001):
-        peak = insertion_device.peak_field
+        """Create a sinusoidal field with first and second integrals zero.
+
+        Args:
+            insertion_device (InsertionParams object): Object from class
+             InsertionParams.
+            pts_period (int, optional): Number of points per period. Defaults
+             to 1001.
+
+        Returns:
+            numpy array: first row is the spatial coordinate and second row
+            the field amplitude.
+        """
+        by_peak = insertion_device.by_peak
+        bx_peak = insertion_device.bx_peak
         nr_periods = insertion_device.nr_periods
         period = insertion_device.period
-        result = minimize(
-            EqParamAnalysis._calc_field_integral,
-            0.4,
-            args=(peak, period, nr_periods, pts_period),
-        )
-        x, b = self._generate_field(
-            result.x, peak, period, nr_periods, pts_period
-        )
-        field = _np.ones((len(x), 2))
+        field = _np.zeros(((nr_periods + 2) * pts_period, 3))
+
+        if by_peak is not None:
+            result = minimize(
+                EqParamAnalysis._calc_field_integral,
+                0.4,
+                args=(by_peak, period, nr_periods, pts_period),
+            )
+            x, by = self._generate_field(
+                result.x, by_peak, period, nr_periods, pts_period
+            )
+            field[:, 1] = by
+
+        if bx_peak is not None:
+            result = minimize(
+                EqParamAnalysis._calc_field_integral,
+                0.4,
+                args=(bx_peak, period, nr_periods, pts_period),
+            )
+            x, bx = self._generate_field(
+                result.x, bx_peak, period, nr_periods, pts_period
+            )
+            field[:, 2] = bx
+
         field[:, 0] = x
-        field[:, 1] = b
         insertion_device.field_profile = field
         return field
 
     def calc_dispersion(self, insertion_device):
+        """Calculate dispersion generated by one ID.
+
+        Args:
+            insertion_device (InsertionParams object): Object from class
+             InsertionParams.
+
+        Returns:
+            numpy array: Horizontal dispersion on the ID
+            numpy array: Vertical dispersion on the ID
+        """
         x = 1e-3 * insertion_device.field_profile[:, 0]
-        b = insertion_device.field_profile[:, 1]
+        by = insertion_device.field_profile[:, 1]
+        bx = insertion_device.field_profile[:, 2]
         dx = _np.diff(x)[0]
-        i1 = cumtrapz(dx=dx, y=-b)
-        i2 = cumtrapz(dx=dx, y=i1)
-        eta = i2 / self.brho
-        insertion_device._eta = eta
-        return eta
+        i1x = cumtrapz(dx=dx, y=by)
+        i2x = cumtrapz(dx=dx, y=i1x)
+        i1y = cumtrapz(dx=dx, y=-bx)
+        i2y = cumtrapz(dx=dx, y=i1y)
+        etax = -1 * i2x / self.brho
+        etay = -1 * i2y / self.brho
+        insertion_device._etax = etax
+        insertion_device._etay = etay
+        return etax, etay
 
     def calc_dispersion_dot(self, insertion_device):
+        """Calculate the derivative of dispersion generated by one ID.
+
+        Args:
+            insertion_device (InsertionParams object): Object from class
+             InsertionParams.
+
+        Returns:
+            numpy array: d(etax)/ds on the ID
+            numpy array: d(etay)/ds on the ID
+        """
         x = 1e-3 * insertion_device.field_profile[:, 0]
-        b = insertion_device.field_profile[:, 1]
+        by = insertion_device.field_profile[:, 1]
+        bx = insertion_device.field_profile[:, 2]
         dx = _np.diff(x)[0]
-        i1 = cumtrapz(dx=dx, y=-b)
-        etadot = i1 / self.brho
-        insertion_device._etadot = etadot
-        return etadot
+        i1x = cumtrapz(dx=dx, y=by)
+        i1y = cumtrapz(dx=dx, y=-bx)
+        etadotx = -1 * i1x / self.brho
+        etadoty = -1 * i1y / self.brho
+        insertion_device._etadotx = etadotx
+        insertion_device._etadoty = etadoty
+        return etadotx, etadoty
 
     def get_curly_h(self, insertion_device):
+        """Calculate curly H with ID.
+
+        Args:
+            insertion_device (InsertionParams object): Object from class
+             InsertionParams.
+
+        Returns:
+            numpy 1d array: Curly Hx in the ID region.
+            numpy 1d array: Curly Hy in the ID region.
+        """
         x = 1e-3 * insertion_device.field_profile[:, 0]
+        length = x[-1] - x[0]
         subsec = insertion_device.straight_section
         si = pymodels.si.create_accelerator()
         mia = pyaccel.lattice.find_indices(si, "fam_name", "mia")
@@ -1648,84 +1890,174 @@ class EqParamAnalysis:
         twiss, *_ = pyaccel.optics.calc_twiss(si, indices="open")
         spos = twiss.spos
         s0 = spos[idx]
-        idx_end = (
-            _np.argmin(_np.abs(spos - s0 - insertion_device.length / 2)) + 1
-        )
-        idx_begin = _np.argmin(
-            _np.abs(spos - s0 + insertion_device.length / 2)
-        )
+        idx_end = _np.argmin(_np.abs(spos - s0 - length / 2)) + 1
+        idx_begin = _np.argmin(_np.abs(spos - s0 + length / 2))
 
         betax = twiss.betax[idx_begin : idx_end + 1]
         alphax = twiss.alphax[idx_begin : idx_end + 1]
 
+        betay = twiss.betay[idx_begin : idx_end + 1]
+        alphay = twiss.alphay[idx_begin : idx_end + 1]
+
         pos = twiss.spos[idx_begin : idx_end + 1]
         pos = pos - pos[0]
 
-        beta = _np.interp(_np.linspace(pos[0], pos[-1], len(x)), pos, betax)
-        alpha = _np.interp(_np.linspace(pos[0], pos[-1], len(x)), pos, alphax)
-
-        eta = self.calc_dispersion(insertion_device)
-        etadot = self.calc_dispersion_dot(insertion_device)
-
-        H = pyaccel.optics.get_curlyh(
-            beta[1:-1], alpha[1:-1], eta, etadot[:-1]
+        betax_interp = _np.interp(
+            _np.linspace(pos[0], pos[-1], len(x)), pos, betax
+        )
+        alphax_interp = _np.interp(
+            _np.linspace(pos[0], pos[-1], len(x)), pos, alphax
         )
 
-        return H
+        betay_interp = _np.interp(
+            _np.linspace(pos[0], pos[-1], len(x)), pos, betay
+        )
+        alphay_interp = _np.interp(
+            _np.linspace(pos[0], pos[-1], len(x)), pos, alphay
+        )
+
+        etax, etay = self.calc_dispersion(insertion_device)
+        etaxdot, etaydot = self.calc_dispersion_dot(insertion_device)
+
+        hx = pyaccel.optics.get_curlyh(
+            betax_interp[1:-1], alphax_interp[1:-1], etax, etaxdot[:-1]
+        )
+
+        hy = pyaccel.optics.get_curlyh(
+            betay_interp[1:-1], alphay_interp[1:-1], etay, etaydot[:-1]
+        )
+
+        return hx, hy
 
     def calc_delta_i1(self, insertion_device):
-        b = insertion_device.field_profile[:, 1]
+        """Calculate first radiation integral contribution from one ID.
+
+        Args:
+            insertion_device (InsertionParams object): Object from class
+             InsertionParams.
+
+        Returns:
+            float: delta I1x
+            float: delta I1y
+        """
+        by = insertion_device.field_profile[:, 1]
+        bx = insertion_device.field_profile[:, 2]
         x = 1e-3 * insertion_device.field_profile[:, 0]
         dx = _np.diff(x)[0]
-        eta = self.calc_dispersion(insertion_device)
-        delta_i1 = cumtrapz(dx=dx, y=-eta * b[1:-1])[-1]
-        insertion_device._delta_i1 = delta_i1
-        return delta_i1
+        etax, etay = self.calc_dispersion(insertion_device)
+        delta_i1x = cumtrapz(dx=dx, y=etax * by[1:-1] / self.brho)[-1]
+        delta_i1y = cumtrapz(dx=dx, y=etay * bx[1:-1] / self.brho)[-1]
+        insertion_device._delta_i1x = delta_i1x
+        insertion_device._delta_i1y = delta_i1y
+        return delta_i1x, delta_i1y
 
     def calc_delta_i2(self, insertion_device):
-        b = insertion_device.field_profile[:, 1]
+        """Calculate second radiation integral contribution from one ID.
+
+        Args:
+            insertion_device (InsertionParams object): Object from class
+             InsertionParams.
+
+        Returns:
+            float: delta I2x
+            float: delta I2y
+        """
+        by = insertion_device.field_profile[:, 1]
+        bx = insertion_device.field_profile[:, 2]
         x = 1e-3 * insertion_device.field_profile[:, 0]
         dx = _np.diff(x)[0]
-        delta_i2 = cumtrapz(dx=dx, y=(b / self.brho) ** 2)[-1]
-        insertion_device._delta_i2 = delta_i2
-        return delta_i2
+        delta_i2x = cumtrapz(dx=dx, y=(by / self.brho) ** 2)[-1]
+        delta_i2y = cumtrapz(dx=dx, y=(bx / self.brho) ** 2)[-1]
+        insertion_device._delta_i2x = delta_i2x
+        insertion_device._delta_i2y = delta_i2y
+        return delta_i2x, delta_i2y
 
     def calc_delta_i3(self, insertion_device):
-        b = insertion_device.field_profile[:, 1]
+        """Calculate third radiation integral contribution from one ID.
+
+        Args:
+            insertion_device (InsertionParams object): Object from class
+             InsertionParams.
+
+        Returns:
+            float: delta I3x
+            float: delta I3y
+        """
+        by = insertion_device.field_profile[:, 1]
+        bx = insertion_device.field_profile[:, 2]
         x = 1e-3 * insertion_device.field_profile[:, 0]
         dx = _np.diff(x)[0]
-        delta_i3 = cumtrapz(dx=dx, y=_np.abs((b / self.brho) ** 3))[-1]
-        insertion_device._delta_i3 = delta_i3
-        return delta_i3
+        delta_i3x = cumtrapz(dx=dx, y=_np.abs((by / self.brho) ** 3))[-1]
+        delta_i3y = cumtrapz(dx=dx, y=_np.abs((bx / self.brho) ** 3))[-1]
+        insertion_device._delta_i3x = delta_i3x
+        insertion_device._delta_i3y = delta_i3y
+        return delta_i3x, delta_i3y
 
     def calc_delta_i4(self, insertion_device):
-        b = insertion_device.field_profile[:, 1]
+        """Calculate fourth radiation integral contribution from one ID.
+
+        Args:
+            insertion_device (InsertionParams object): Object from class
+             InsertionParams.
+
+        Returns:
+            float: delta I4x
+            float: delta I4y
+        """
+        by = insertion_device.field_profile[:, 1]
+        bx = insertion_device.field_profile[:, 2]
         x = 1e-3 * insertion_device.field_profile[:, 0]
         dx = _np.diff(x)[0]
-        db = _np.diff(b)
-        px = cumtrapz(dx=dx, y=b) / self.brho
-        k = -(db / dx) * px / self.brho
-        eta = self.calc_dispersion(insertion_device)
-        delta_i4 = cumtrapz(
+        dby = _np.diff(by)
+        dbx = _np.diff(bx)
+        px = cumtrapz(dx=dx, y=by) / self.brho
+        py = cumtrapz(dx=dx, y=-bx) / self.brho
+        kx = -(dby / dx) * px / self.brho
+        ky = -(dbx / dx) * py / self.brho
+        etax, etay = self.calc_dispersion(insertion_device)
+        delta_i4x = cumtrapz(
             dx=dx,
             y=(
-                eta * (b[1:-1] / self.brho) ** 3
-                - 2 * k[:-1] * eta * (b[1:-1] / self.brho)
+                etax * (by[1:-1] / self.brho) ** 3
+                - 2 * ky[:-1] * etax * (by[1:-1] / self.brho)
             ),
         )[-1]
-        insertion_device._delta_i4 = delta_i4
-        return delta_i4
+        delta_i4y = cumtrapz(
+            dx=dx,
+            y=(
+                etay * (bx[1:-1] / self.brho) ** 3
+                - 2 * kx[:-1] * etay * (bx[1:-1] / self.brho)
+            ),
+        )[-1]
+        insertion_device._delta_i4x = delta_i4x
+        insertion_device._delta_i4y = delta_i4y
+        return delta_i4x, delta_i4y
 
     def calc_delta_i5(self, insertion_device):
-        b = insertion_device.field_profile[:, 1]
+        """Calculate fifth radiation integral contribution from one ID.
+
+        Args:
+            insertion_device (InsertionParams object): Object from class
+             InsertionParams.
+
+        Returns:
+            float: delta I5x
+            float: delta I5y
+        """
+        by = insertion_device.field_profile[:, 1]
+        bx = insertion_device.field_profile[:, 2]
         x = 1e-3 * insertion_device.field_profile[:, 0]
         dx = _np.diff(x)[0]
-        H = self.get_curly_h(insertion_device)
-        delta_i5 = cumtrapz(dx=dx, y=H*_np.abs((b / self.brho) ** 3)[1:-1])[-1]
-        insertion_device._delta_i5 = delta_i5
-        return delta_i5
-
-
+        hx, hy = self.get_curly_h(insertion_device)
+        delta_i5x = cumtrapz(
+            dx=dx, y=hx * _np.abs((by / self.brho) ** 3)[1:-1]
+        )[-1]
+        delta_i5y = cumtrapz(
+            dx=dx, y=hy * _np.abs((bx / self.brho) ** 3)[1:-1]
+        )[-1]
+        insertion_device._delta_i5x = delta_i5x
+        insertion_device._delta_i5y = delta_i5y
+        return delta_i5x, delta_i5y
 
     def add_id_to_model(self, insertion_device):
         """Add ID to model.
