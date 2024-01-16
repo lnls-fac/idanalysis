@@ -288,6 +288,7 @@ class _PARAMS:
     """."""
 
     # --- ID parameters ---
+    B_PEAK = None
     PERIOD_LEN = None
     ID_LEN = None
     NR_PERIODS = None
@@ -308,6 +309,7 @@ class DELTA52Data(Tools):
     """DELTA data access and manipulation class."""
 
     PARAMS = _PARAMS()
+    PARAMS.B_PEAK = 1.25  # [T]
     PARAMS.PERIOD_LEN = 52.5  # [mm]
     PARAMS.ID_LEN = 1.200  # [m]
     PARAMS.NR_PERIODS = 21
@@ -470,6 +472,7 @@ class APU22Data(Tools):
     """APU22 data access and manipulation class."""
 
     PARAMS = _PARAMS()
+    PARAMS.B_PEAK = 0.7  # [T]
     PARAMS.PERIOD_LEN = 22  # [mm]
     PARAMS.ID_LEN = 1.300  # [m]
     PARAMS.NR_PERIODS = 51
@@ -566,6 +569,7 @@ class APU58Data(Tools):
     """APU58 data access and manipulation class."""
 
     PARAMS = _PARAMS()
+    PARAMS.B_PEAK = 0.95  # [T]
     PARAMS.PERIOD_LEN = 58  # [mm]
     PARAMS.ID_LEN = 1.300  # [m]
     PARAMS.NR_PERIODS = 18
@@ -677,6 +681,7 @@ class PAPU50Data(Tools):
     """PAPU50 data access and manipulation class."""
 
     PARAMS = _PARAMS()
+    PARAMS.B_PEAK = 0.42  # [T]
     PARAMS.PERIOD_LEN = 50  # [mm]
     PARAMS.ID_LEN = 0.984  # [m]
     PARAMS.NR_PERIODS = 18
@@ -763,6 +768,7 @@ class WIG180Data(Tools):
     """Wiggler data access and manipulation class."""
 
     PARAMS = _PARAMS()
+    PARAMS.B_PEAK = 1.0  # [T]
     PARAMS.PERIOD_LEN = 180  # [mm]
     PARAMS.ID_LEN = 2.654  # [m]
     PARAMS.NR_PERIODS = 13
@@ -875,6 +881,7 @@ class EPU50Data(Tools):
     """EPU50 data access and manipulation class."""
 
     PARAMS = _PARAMS()
+    PARAMS.B_PEAK = 0.47  # [T]
     PARAMS.PERIOD_LEN = 50  # [mm]
     PARAMS.ID_LEN = 2.770  # [m]
     PARAMS.NR_PERIODS = 54
@@ -1036,6 +1043,7 @@ class IVU18Data(Tools):
     """IVU18 data access and manipulation class."""
 
     PARAMS = _PARAMS()
+    PARAMS.B_PEAK = 1.32  # [T]
     PARAMS.PERIOD_LEN = 18.5  # [mm]
     PARAMS.ID_LEN = 2.500  # [m]
     PARAMS.NR_PERIODS = 108
@@ -1090,6 +1098,7 @@ class VPU29Data(Tools):
     """VPU29 data access and manipulation class."""
 
     PARAMS = _PARAMS()
+    PARAMS.B_PEAK = 0.82  # [T]
     PARAMS.PERIOD_LEN = 29  # [mm]
     PARAMS.ID_LEN = 1.700  # [m]
     PARAMS.NR_PERIODS = 51
