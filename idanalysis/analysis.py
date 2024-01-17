@@ -1430,8 +1430,8 @@ class EqParamAnalysis:
             """Field profile.
 
             Returns:
-                numpy array: First column contains longitudinalspatial
-                coordinate (z) [mm, second column contais vertical field
+                numpy array: First column contains longitudinal spatial
+                coordinate (z) [mm], second column contais vertical field
                 [T], and third column constais horizontal field [T].
             """
             return self._field_profile
