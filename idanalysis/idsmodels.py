@@ -266,7 +266,6 @@ class WIG180(RadiaModelAnalysis):
         """
         gap = gap if gap is not None else self.gap
         nr_periods = nr_periods if nr_periods is not None else self.nr_periods
-        nr_periods = self.nr_periods
         period_length = self.period_length
         longitudinal_distance = self.longitudinal_distance
         height = self.block_height
@@ -349,7 +348,6 @@ class IVU18(RadiaModelAnalysis):
         """
         gap = gap if gap is not None else self.gap
         nr_periods = nr_periods if nr_periods is not None else self.nr_periods
-        nr_periods = self.nr_periods
         period_length = self.period_length
         mr = self.mr
         longitudinal_distance = self.longitudinal_distance
