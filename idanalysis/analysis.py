@@ -1375,7 +1375,12 @@ class StorageRingAnalysis(Tools):
 
 
 class EqParamAnalysis:
-    """Class to calculate beam equilibrium parameters."""
+    """Class to calculate beam equilibrium parameters.
+
+    All equations used here are from the book: Clarke, James A.,
+    'The Science and Technology of Undulators and Wigglers'.
+    Chapter 10: 'The Effect of Insertion Devices on the Electron Beam'.
+    """
 
     class InsertionParams:
         """Class to specify insertion parameters."""
