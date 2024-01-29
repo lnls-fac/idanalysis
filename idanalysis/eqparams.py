@@ -740,6 +740,7 @@ class EqParamAnalysis:
     def __init__(self):
         """Class constructor."""
         self.ids = list()
+        self._model = pymodels.si.create_accelerator()
         self._eq_params_nominal = None
         self._beam = Beam(3)
         self.brho = self._beam.brho
@@ -751,6 +752,19 @@ class EqParamAnalysis:
         self._tauy = None
         self._taue = None
         self._u0 = None
+
+    @property
+    def model(self):
+        """Sirius model.
+
+        Returns:
+            Pymodels object: Si model
+        """
+        return self._model
+
+    @model.setter
+    def model(self, value):
+        self._model = value
 
     @property
     def eq_params_nominal(self):
@@ -824,33 +838,29 @@ class EqParamAnalysis:
         """
         return self._u0
 
-    def get_nominal_model_eqparams(self, model=None):
+    def get_nominal_model_eqparams(self):
         """Get nominal model equilibrium parameters.
-
-        Args:
-            model (Pymodels object, optional): Sirius model. Defaults to None.
 
         Returns:
             EqParamsFromRadIntegrals object: Object containing Eqparams
         """
-        if model is None:
-            model = pymodels.si.create_accelerator()
-        model = pyaccel.lattice.refine_lattice(
-            model, max_length=0.01, fam_names=["BC", "B1", "B2", "QN"]
+        if self.model is None:
+            self.model = pymodels.si.create_accelerator()
+        self.model = pyaccel.lattice.refine_lattice(
+            self.model, max_length=0.01, fam_names=["BC", "B1", "B2", "QN"]
         )
-        eqparam_nom = pyaccel.optics.EqParamsFromRadIntegrals(model)
+        eqparam_nom = pyaccel.optics.EqParamsFromRadIntegrals(self.model)
         self._eq_params_nominal = eqparam_nom
         return eqparam_nom
 
     def calc_id_effect_on_emittance(
-        self, insertion_device=None, model=None, *args
+        self, insertion_device=None, *args
     ):
         """Calculate ID's effect on emittances.
 
         Args:
             insertion_device (InsertionParams object): Object from class
              InsertionParams. Defaults to None
-            model (Pymodels object, optional): Sirius model. Defaults to None.
             *args (floats): Delta in radiation integrals.
             The order of args must be the following:
             args[0] = i2x, args[1] = i2y
@@ -868,7 +878,7 @@ class EqParamAnalysis:
         ):
             insertion_device.create_field_profile()
         if self.eq_params_nominal is None:
-            self.get_nominal_model_eqparams(model)
+            self.get_nominal_model_eqparams()
 
         i5x = self.eq_params_nominal.I5x
         i5y = self.eq_params_nominal.I5y
@@ -906,14 +916,13 @@ class EqParamAnalysis:
         return emitx, emity
 
     def calc_id_effect_on_espread(
-        self, insertion_device=None, model=None, *args
+        self, insertion_device=None, *args
     ):
         """Calculate ID's effect on energy spread.
 
         Args:
             insertion_device (InsertionParams object): Object from class
              InsertionParams. Defaults to None.
-            model (Pymodels object, optional): Sirius model. Defaults to None.
             *args (floats): Delta in radiation integrals.
             The order of args must be the following:
             args[0] = i2
@@ -929,7 +938,7 @@ class EqParamAnalysis:
         ):
             insertion_device.create_field_profile()
         if self.eq_params_nominal is None:
-            self.get_nominal_model_eqparams(model)
+            self.get_nominal_model_eqparams()
 
         i2 = self.eq_params_nominal.I2
         i3 = self.eq_params_nominal.I3
@@ -955,14 +964,13 @@ class EqParamAnalysis:
         return espread
 
     def calc_id_effect_on_damping_times(
-        self, insertion_device=None, model=None, *args
+        self, insertion_device=None, *args
     ):
         """Calculate ID's effect on damping times.
 
         Args:
             insertion_device (InsertionParams object): Object from class
              InsertionParams. Defaults to None.
-            model (Pymodels object, optional): Sirius model. Defaults to None.
             *args (floats): Delta in radiation integrals.
             The order of args must be the following:
             args[0] = i2
@@ -980,9 +988,7 @@ class EqParamAnalysis:
         ):
             insertion_device.create_field_profile()
         if self.eq_params_nominal is None:
-            self.get_nominal_model_eqparams(model)
-        if model is None:
-            si = pymodels.si.create_accelerator()
+            self.get_nominal_model_eqparams()
 
         i2 = self.eq_params_nominal.I2
         i4 = self.eq_params_nominal.I4x
@@ -1010,7 +1016,7 @@ class EqParamAnalysis:
         jz = 2 + i4 / i2
 
         e = Beam(3).energy * 1e9 * mathphys.constants.elementary_charge
-        t0 = si.length / mathphys.constants.light_speed
+        t0 = self.model.length / mathphys.constants.light_speed
 
         taux = 2 * e * t0 / (u0 * jx)
         tauy = 2 * e * t0 / (u0 * jy)
@@ -1027,11 +1033,8 @@ class EqParamAnalysis:
         """
         self.ids.append(insertion_device)
 
-    def calc_total_effect_on_emittance(self, model=None):
+    def calc_total_effect_on_emittance(self):
         """Calculate cumulative effect on emittances.
-
-        Args:
-            model (Pymodels object, optional): Sirius model. Defaults to None.
 
         Returns:
             numpy 1d array: Horizontal emittance [m rad]
@@ -1040,7 +1043,7 @@ class EqParamAnalysis:
         emitx = _np.zeros(len(self.ids) + 1)
         emity = _np.zeros(len(self.ids) + 1)
         if self.eq_params_nominal is None:
-            self.get_nominal_model_eqparams(model)
+            self.get_nominal_model_eqparams()
         emitx[0] = self.eq_params_nominal.emitx
         emity[0] = self.eq_params_nominal.emity
         di2x, di2y = 0, 0
@@ -1059,24 +1062,21 @@ class EqParamAnalysis:
             di5x += di5x_
             di5y += di5y_
             emitx[i + 1], emity[i + 1] = self.calc_id_effect_on_emittance(
-                None, model, di2x, di2y, di4x, di4y, di5x, di5y
+                None, di2x, di2y, di4x, di4y, di5x, di5y
             )
         self._emitx = emitx
         self._emity = emity
         return emitx, emity
 
-    def calc_total_effect_on_espread(self, model=None):
+    def calc_total_effect_on_espread(self):
         """Calculate cumulative effect on energy spread.
-
-        Args:
-            model (Pymodels object, optional): Sirius model. Defaults to None.
 
         Returns:
             numpy 1d array: Energy spread
         """
         espread = _np.zeros(len(self.ids) + 1)
         if self.eq_params_nominal is None:
-            self.get_nominal_model_eqparams(model)
+            self.get_nominal_model_eqparams()
         espread[0] = self.eq_params_nominal.espread0
         di2, di3, di4 = 0, 0, 0
         for i, insertion_device in enumerate(self.ids):
@@ -1089,16 +1089,13 @@ class EqParamAnalysis:
             di3 += di3_
             di4 += di4_
             espread[i + 1] = self.calc_id_effect_on_espread(
-                None, model, di2, di3, di4
+                None, di2, di3, di4
             )
         self._espread = espread
         return espread
 
-    def calc_total_effect_on_damping_times(self, model=None):
+    def calc_total_effect_on_damping_times(self):
         """Calculate cumulative effect on damping_times.
-
-        Args:
-            model (Pymodels object, optional): Sirius model. Defaults to None.
 
         Returns:
             numpy 1d array: Horizontal damping time [s]
@@ -1109,7 +1106,7 @@ class EqParamAnalysis:
         tauy = _np.zeros(len(self.ids) + 1)
         taue = _np.zeros(len(self.ids) + 1)
         if self.eq_params_nominal is None:
-            self.get_nominal_model_eqparams(model)
+            self.get_nominal_model_eqparams()
         taux[0] = self.eq_params_nominal.taux
         tauy[0] = self.eq_params_nominal.tauy
         taue[0] = self.eq_params_nominal.taue
@@ -1132,25 +1129,22 @@ class EqParamAnalysis:
                 tauy[i + 1],
                 taue[i + 1],
             ) = self.calc_id_effect_on_damping_times(
-                None, model, di2, di4, du0
+                None, di2, di4, du0
             )
         self._taux = taux
         self._tauy = tauy
         self._taue = taue
         return taux, tauy, taue
 
-    def calc_total_energy_loss(self, model=None):
+    def calc_total_energy_loss(self):
         """Calculate cumulative effect on damping_times.
-
-        Args:
-            model (Pymodels object, optional): Sirius model. Defaults to None.
 
         Returns:
             numpy 1d array: Energy loss [keV]
         """
         u0 = _np.zeros(len(self.ids) + 1)
         if self.eq_params_nominal is None:
-            self.get_nominal_model_eqparams(model)
+            self.get_nominal_model_eqparams()
         u0[0] = 1e-3 * self.eq_params_nominal.U0
         for i, insertion_device in enumerate(self.ids):
             if insertion_device.field_profile is None:
