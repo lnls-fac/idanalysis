@@ -1,20 +1,13 @@
 """IDs analysis."""
 
+import mathphys
 import matplotlib.pyplot as _plt
 import numpy as _np
 import pyaccel
 import pymodels
-from apsuite.dynap import DynapXY
 from fieldmaptrack import Beam
 from scipy.integrate import cumtrapz
 from scipy.optimize import minimize
-import mathphys
-
-from idanalysis import (
-    IDKickMap as _IDKickMap,
-    optics as optics,
-    orbcorr as orbcorr,
-)
 
 
 class InsertionParams:
