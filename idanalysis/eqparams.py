@@ -9,6 +9,16 @@ from fieldmaptrack import Beam
 from scipy.integrate import cumtrapz
 from scipy.optimize import minimize
 
+ECHARGE = mathphys.constants.elementary_charge
+EMASS = mathphys.constants.electron_mass
+LSPEED = mathphys.constants.light_speed
+VCPERM = mathphys.constants.vacuum_permitticity
+CQ = mathphys.constants.Cq
+ECHARGE_MC = ECHARGE / (EMASS * LSPEED)
+
+_model = pymodels.si.create_accelerator()
+_mid_subsections = None
+
 
 class InsertionParams:
     """Class to specify insertion parameters.
@@ -18,8 +28,12 @@ class InsertionParams:
     Chapter 10: 'The Effect of Insertion Devices on the Electron Beam'.
     """
 
-    def __init__(self):
-        """Class constructor."""
+    def __init__(self, beam_energy=3.0):
+        """Class constructor.
+
+        Args:
+            beam_energy (Float, optional): Beam energy [GeV]. Defaults to 3.0.
+        """
         self._field_profile = None
         self._fam_name = None
         self._bx_peak = None
@@ -45,10 +59,33 @@ class InsertionParams:
         self._i4y = None
         self._i5y = None
         self._u0 = None
-        self.brho = Beam(3).brho
-        self._e = mathphys.constants.elementary_charge
-        self._m = mathphys.constants.electron_mass
-        self._c = mathphys.constants.light_speed
+        self._model = None
+        self._mid_subsections = None
+        self.beam = Beam(beam_energy)
+        self.brho = self.beam.brho
+        self.gamma = self.beam.gamma
+
+    @property
+    def model(self):
+        """Sirius model.
+
+        Returns:
+            Pymodels object: Si model
+        """
+        return self._model
+
+    @model.setter
+    def model(self, value):
+        global _model
+        global _mid_subsections
+        global _twiss
+        _model = value
+        mia = pyaccel.lattice.find_indices(_model, "fam_name", "mia")
+        mib = pyaccel.lattice.find_indices(_model, "fam_name", "mib")
+        mip = pyaccel.lattice.find_indices(_model, "fam_name", "mip")
+        _mid_subsections = _np.sort(_np.array(mia + mib + mip))
+        _twiss, *_ = pyaccel.optics.calc_twiss(_model, indices="open")
+        self._model = _model
 
     @property
     def fam_name(self):
@@ -92,11 +129,7 @@ class InsertionParams:
         self._bx_peak = value
         if self.period is not None:
             self._kx = (
-                1e-3
-                * self._e
-                / (2 * _np.pi * self._m * self._c)
-                * self._bx_peak
-                * self.period
+                1e-3 * ECHARGE_MC / (2 * _np.pi) * self._bx_peak * self.period
             )
 
     @property
@@ -113,11 +146,7 @@ class InsertionParams:
         self._by_peak = value
         if self.period is not None:
             self._ky = (
-                1e-3
-                * self._e
-                / (2 * _np.pi * self._m * self._c)
-                * self._by_peak
-                * self.period
+                1e-3 * ECHARGE_MC / (2 * _np.pi) * self._by_peak * self.period
             )
 
     @property
@@ -134,12 +163,7 @@ class InsertionParams:
         self._kx = value
         if self.period is not None:
             self._bx_peak = (
-                2
-                * _np.pi
-                * self._m
-                * self._c
-                * self._kx
-                / (self._e * 1e-3 * self.period)
+                2 * _np.pi * self._kx / (ECHARGE_MC * 1e-3 * self.period)
             )
 
     @property
@@ -156,12 +180,7 @@ class InsertionParams:
         self._ky = value
         if self.period is not None:
             self._by_peak = (
-                2
-                * _np.pi
-                * self._m
-                * self._c
-                * self._ky
-                / (self._e * 1e-3 * self.period)
+                2 * _np.pi * self._ky / (ECHARGE_MC * 1e-3 * self.period)
             )
 
     @property
@@ -178,37 +197,19 @@ class InsertionParams:
         self._period = value
         if self._bx_peak is not None:
             self._kx = (
-                1e-3
-                * self._e
-                / (2 * _np.pi * self._m * self._c)
-                * self._bx_peak
-                * self.period
+                1e-3 * ECHARGE_MC / (2 * _np.pi) * self._bx_peak * self.period
             )
         if self._by_peak is not None:
             self._ky = (
-                1e-3
-                * self._e
-                / (2 * _np.pi * self._m * self._c)
-                * self._by_peak
-                * self.period
+                1e-3 * ECHARGE_MC / (2 * _np.pi) * self._by_peak * self.period
             )
         if self._kx is not None:
             self._bx_peak = (
-                2
-                * _np.pi
-                * self._m
-                * self._c
-                * self._kx
-                / (self._e * 1e-3 * self.period)
+                2 * _np.pi * self._kx / (ECHARGE_MC * 1e-3 * self.period)
             )
         if self._ky is not None:
             self._by_peak = (
-                2
-                * _np.pi
-                * self._m
-                * self._c
-                * self._ky
-                / (self._e * 1e-3 * self.period)
+                2 * _np.pi * self._ky / (ECHARGE_MC * 1e-3 * self.period)
             )
 
     @property
@@ -417,19 +418,18 @@ class InsertionParams:
 
         return x_out, out
 
-    @staticmethod
-    def _calc_field_integral(a, *args):
+    def _calc_field_integral(self, a, *args):
         peak = args[0]
         period = args[1]
         nr_periods = args[2]
         pts_period = args[3]
-        x_out, out = InsertionParams._generate_field(
+        x_out, out = self._generate_field(
             a, peak, period, nr_periods, pts_period
         )
         dx = _np.diff(x_out)[0]
         i1 = cumtrapz(dx=dx, y=-out)
-        i2 = cumtrapz(dx=dx, y=i1)
-        return _np.abs(i2[-1])
+        i2 = _np.trapz(dx=dx, y=i1)
+        return _np.abs(i2)
 
     def create_field_profile(self, pts_period=1001):
         """Create a sinusoidal field with first and second integrals zero.
@@ -476,30 +476,11 @@ class InsertionParams:
         return field
 
     def calc_dispersion(self):
-        """Calculate dispersion generated by the ID.
+        """Calculate dispersion (and its derivative) generated by the ID.
 
         Returns:
             numpy array: Horizontal dispersion on the ID
             numpy array: Vertical dispersion on the ID
-        """
-        x = 1e-3 * self.field_profile[:, 0]
-        by = self.field_profile[:, 1]
-        bx = self.field_profile[:, 2]
-        dx = _np.diff(x)[0]
-        i1x = cumtrapz(dx=dx, y=by)
-        i2x = cumtrapz(dx=dx, y=i1x)
-        i1y = cumtrapz(dx=dx, y=-bx)
-        i2y = cumtrapz(dx=dx, y=i1y)
-        etax = -1 * i2x / self.brho
-        etay = -1 * i2y / self.brho
-        self._etax = etax
-        self._etay = etay
-        return etax, etay
-
-    def calc_dispersion_derivative(self):
-        """Calculate the derivative of dispersion generated by the ID.
-
-        Returns:
             numpy array: d(etax)/ds on the ID
             numpy array: d(etay)/ds on the ID
         """
@@ -507,13 +488,22 @@ class InsertionParams:
         by = self.field_profile[:, 1]
         bx = self.field_profile[:, 2]
         dx = _np.diff(x)[0]
-        i1x = cumtrapz(dx=dx, y=by)
-        i1y = cumtrapz(dx=dx, y=-bx)
+
+        i1x = cumtrapz(dx=dx, y=by, initial=0)
+        i1y = cumtrapz(dx=dx, y=-bx, initial=0)
         etapx = -1 * i1x / self.brho
         etapy = -1 * i1y / self.brho
+
+        i2x = cumtrapz(dx=dx, y=i1x, initial=0)
+        i2y = cumtrapz(dx=dx, y=i1y, initial=0)
+        etax = -1 * i2x / self.brho
+        etay = -1 * i2y / self.brho
+
         self._etapx = etapx
         self._etapy = etapy
-        return etapx, etapy
+        self._etax = etax
+        self._etay = etay
+        return etax, etay, etapx, etapy
 
     def get_curly_h(self):
         """Calculate curly H in ID section.
@@ -522,61 +512,77 @@ class InsertionParams:
             numpy 1d array: Curly Hx in the ID region.
             numpy 1d array: Curly Hy in the ID region.
         """
+        global _twiss
+        global _mid_subsections
         x = 1e-3 * self.field_profile[:, 0]
         if len(x) % 2 == 0:
-            length = (x - x[0])[:int(len(x)/2)]
+            length = (x - x[0])[: int(len(x) / 2)]
         else:
-            length = (x - x[0])[:int((len(x)+1)/2)]
+            length = (x - x[0])[: int((len(x) + 1) / 2)]
         subsec = self.straight_section
-        si = pymodels.si.create_accelerator()
-        mia = pyaccel.lattice.find_indices(si, "fam_name", "mia")
-        mib = pyaccel.lattice.find_indices(si, "fam_name", "mib")
-        mip = pyaccel.lattice.find_indices(si, "fam_name", "mip")
-        mid_subsections = _np.sort(_np.array(mia + mib + mip))
-        idx = mid_subsections[int(subsec[2:4]) - 1]
-        twiss, *_ = pyaccel.optics.calc_twiss(si, indices="open")
+        idx = _mid_subsections[int(subsec[2:4]) - 1]
 
-        betax0 = twiss.betax[idx]
-        betay0 = twiss.betay[idx]
+        etax0 = _twiss.etax[idx]
+        etay0 = _twiss.etay[idx]
 
-        alphax0 = twiss.alphax[idx]
-        alphay0 = twiss.alphay[idx]
+        etapx0 = _twiss.etapx[idx]
+        etapy0 = _twiss.etapy[idx]
 
-        gammax0 = twiss.gammax[idx]
-        gammay0 = twiss.gammay[idx]
+        betax0 = _twiss.betax[idx]
+        betay0 = _twiss.betay[idx]
 
-        betax_after = betax0 - 2*length*alphax0 + length**2*gammax0
-        betax_before = betax0 + 2*length*alphax0 + length**2*gammax0
+        alphax0 = _twiss.alphax[idx]
+        alphay0 = _twiss.alphay[idx]
 
-        alphax_after = alphax0 - length*gammax0
-        alphax_before = alphax0 + length*gammax0
+        gammax0 = _twiss.gammax[idx]
+        gammay0 = _twiss.gammay[idx]
 
-        betay_after = betay0 - 2*length*alphay0 + length**2*gammay0
-        betay_before = betay0 + 2*length*alphay0 + length**2*gammay0
+        etapx_acc = etapx0 * _np.ones(len(x))
+        etax_acc_after = etax0 + etapx_acc[0] * length
+        etax_acc_before = etax0 - etapx_acc[0] * length
 
-        alphay_after = alphay0 - length*gammay0
-        alphay_before = alphay0 + length*gammay0
-        if len(x) % 2 != 0 :
+        etapy_acc = etapy0 * _np.ones(len(x))
+        etay_acc_after = etay0 + etapx_acc[0] * length
+        etay_acc_before = etay0 - etapx_acc[0] * length
+
+        betax_after = betax0 - 2 * length * alphax0 + length**2 * gammax0
+        betax_before = betax0 + 2 * length * alphax0 + length**2 * gammax0
+
+        alphax_after = alphax0 - length * gammax0
+        alphax_before = alphax0 + length * gammax0
+
+        betay_after = betay0 - 2 * length * alphay0 + length**2 * gammay0
+        betay_before = betay0 + 2 * length * alphay0 + length**2 * gammay0
+
+        alphay_after = alphay0 - length * gammay0
+        alphay_before = alphay0 + length * gammay0
+        if len(x) % 2 != 0:
             betax_after = betax_after[1:]
             alphax_after = alphax_after[1:]
+            etax_acc_after = etax_acc_after[1:]
+
             betay_after = betay_after[1:]
             alphay_after = alphay_after[1:]
+            etay_acc_after = etay_acc_after[1:]
 
         betax = _np.concatenate((betax_before[::-1], betax_after))
         alphax = _np.concatenate((alphax_before[::-1], alphax_after))
+        etax_acc = _np.concatenate((etax_acc_before[::-1], etax_acc_after))
+
         betay = _np.concatenate((betay_before[::-1], betay_after))
         alphay = _np.concatenate((alphay_before[::-1], alphay_after))
+        etay_acc = _np.concatenate((etay_acc_before[::-1], etay_acc_after))
 
-        etax, etay = self.calc_dispersion()
-        etapx, etapy = self.calc_dispersion_derivative()
+        etax, etay, etapx, etapy = self.calc_dispersion()
 
-        hx = pyaccel.optics.get_curlyh(
-                betax[1:-1], alphax[1:-1], etax, etapx[:-1]
-            )
+        etax += etax_acc
+        etay += etay_acc
+        etapx += etapx_acc
+        etapx += etapy_acc
 
-        hy = pyaccel.optics.get_curlyh(
-                betay[1:-1], alphay[1:-1], etay, etapy[:-1]
-            )
+        hx = pyaccel.optics.get_curlyh(betax, alphax, etax, etapx)
+
+        hy = pyaccel.optics.get_curlyh(betay, alphay, etay, etapy)
 
         return hx, hy
 
@@ -591,17 +597,10 @@ class InsertionParams:
         by = self.field_profile[:, 1]
         bx = self.field_profile[:, 2]
         b = _np.sqrt(bx**2 + by**2)
-        gamma = Beam(3).gamma
-        brho = Beam(3).brho
-        e = mathphys.constants.elementary_charge
-        e0 = mathphys.constants.vacuum_permitticity
-        u0 = (
-            1e-3
-            * (
-                (e * gamma**4)
-                * cumtrapz(dx=dx, y=(b / brho) ** 2)
-                / (6 * _np.pi * e0)
-            )[-1]
+        u0 = 1e-3 * (
+            (ECHARGE * self.gamma**4)
+            * _np.trapz(dx=dx, y=(b / self.brho) ** 2)
+            / (6 * _np.pi * VCPERM)
         )
         self._u0 = u0
         return u0
@@ -629,9 +628,9 @@ class InsertionParams:
         bx = self.field_profile[:, 2]
         x = 1e-3 * self.field_profile[:, 0]
         dx = _np.diff(x)[0]
-        etax, etay = self.calc_dispersion()
-        i1x = cumtrapz(dx=dx, y=etax * by[1:-1] / self.brho)[-1]
-        i1y = cumtrapz(dx=dx, y=etay * bx[1:-1] / self.brho)[-1]
+        etax, etay, *_ = self.calc_dispersion()
+        i1x = _np.trapz(dx=dx, y=etax * by / self.brho)
+        i1y = _np.trapz(dx=dx, y=etay * bx / self.brho)
         self._i1x = i1x
         self._i1y = i1y
         return i1x, i1y
@@ -647,8 +646,8 @@ class InsertionParams:
         bx = self.field_profile[:, 2]
         x = 1e-3 * self.field_profile[:, 0]
         dx = _np.diff(x)[0]
-        i2x = cumtrapz(dx=dx, y=(by / self.brho) ** 2)[-1]
-        i2y = cumtrapz(dx=dx, y=(bx / self.brho) ** 2)[-1]
+        i2x = _np.trapz(dx=dx, y=(by / self.brho) ** 2)
+        i2y = _np.trapz(dx=dx, y=(bx / self.brho) ** 2)
         self._i2x = i2x
         self._i2y = i2y
         return i2x, i2y
@@ -664,8 +663,8 @@ class InsertionParams:
         bx = self.field_profile[:, 2]
         x = 1e-3 * self.field_profile[:, 0]
         dx = _np.diff(x)[0]
-        i3x = cumtrapz(dx=dx, y=_np.abs((by / self.brho) ** 3))[-1]
-        i3y = cumtrapz(dx=dx, y=_np.abs((bx / self.brho) ** 3))[-1]
+        i3x = _np.trapz(dx=dx, y=_np.abs((by / self.brho) ** 3))
+        i3y = _np.trapz(dx=dx, y=_np.abs((bx / self.brho) ** 3))
         self._i3x = i3x
         self._i3y = i3y
         return i3x, i3y
@@ -683,25 +682,21 @@ class InsertionParams:
         dx = _np.diff(x)[0]
         dby = _np.diff(by)
         dbx = _np.diff(bx)
-        px = cumtrapz(dx=dx, y=by) / self.brho
-        py = cumtrapz(dx=dx, y=-bx) / self.brho
+        dby = _np.append(dby, dby[-1])
+        dbx = _np.append(dbx, dbx[-1])
+        px = cumtrapz(dx=dx, y=by, initial=0) / self.brho
+        py = cumtrapz(dx=dx, y=-bx, initial=0) / self.brho
         kx = -(dby / dx) * px / self.brho
         ky = -(dbx / dx) * py / self.brho
-        etax, etay = self.calc_dispersion()
-        i4x = cumtrapz(
+        etax, etay, *_ = self.calc_dispersion()
+        i4x = _np.trapz(
             dx=dx,
-            y=(
-                etax * (by[1:-1] / self.brho) ** 3
-                - 2 * ky[:-1] * etax * (by[1:-1] / self.brho)
-            ),
-        )[-1]
-        i4y = cumtrapz(
+            y=etax * (by / self.brho) ** 3 - 2 * ky * etax * (by / self.brho),
+        )
+        i4y = _np.trapz(
             dx=dx,
-            y=(
-                etay * (bx[1:-1] / self.brho) ** 3
-                - 2 * kx[:-1] * etay * (bx[1:-1] / self.brho)
-            ),
-        )[-1]
+            y=etay * (bx / self.brho) ** 3 - 2 * kx * etay * (bx / self.brho),
+        )
         self._i4x = i4x
         self._i4y = i4y
         return i4x, i4y
@@ -718,12 +713,8 @@ class InsertionParams:
         x = 1e-3 * self.field_profile[:, 0]
         dx = _np.diff(x)[0]
         hx, hy = self.get_curly_h()
-        i5x = cumtrapz(
-            dx=dx, y=hx * _np.abs((by / self.brho) ** 3)[1:-1]
-        )[-1]
-        i5y = cumtrapz(
-            dx=dx, y=hy * _np.abs((bx / self.brho) ** 3)[1:-1]
-        )[-1]
+        i5x = _np.trapz(dx=dx, y=hx * _np.abs((by / self.brho) ** 3))
+        i5y = _np.trapz(dx=dx, y=hy * _np.abs((bx / self.brho) ** 3))
         self._i5x = i5x
         self._i5y = i5y
         return i5x, i5y
@@ -737,12 +728,16 @@ class EqParamAnalysis:
     Chapter 10: 'The Effect of Insertion Devices on the Electron Beam'.
     """
 
-    def __init__(self):
-        """Class constructor."""
+    def __init__(self, beam_energy=3.0):
+        """Class constructor.
+
+        Args:
+            beam_energy (Float, optional): Beam energy [GeV]. Defaults to 3.0.
+        """
         self.ids = list()
-        self._model = pymodels.si.create_accelerator()
+        self._model = _model
         self._eq_params_nominal = None
-        self._beam = Beam(3)
+        self._beam = Beam(beam_energy)
         self.brho = self._beam.brho
         self.gamma = self._beam.gamma
         self._emitx = None
@@ -764,7 +759,16 @@ class EqParamAnalysis:
 
     @model.setter
     def model(self, value):
-        self._model = value
+        global _model
+        global _mid_subsections
+        global _twiss
+        _model = value
+        mia = pyaccel.lattice.find_indices(_model, "fam_name", "mia")
+        mib = pyaccel.lattice.find_indices(_model, "fam_name", "mib")
+        mip = pyaccel.lattice.find_indices(_model, "fam_name", "mip")
+        _mid_subsections = _np.sort(_np.array(mia + mib + mip))
+        _twiss, *_ = pyaccel.optics.calc_twiss(_model, indices="open")
+        self._model = _model
 
     @property
     def eq_params_nominal(self):
@@ -844,8 +848,6 @@ class EqParamAnalysis:
         Returns:
             EqParamsFromRadIntegrals object: Object containing Eqparams
         """
-        if self.model is None:
-            self.model = pymodels.si.create_accelerator()
         self.model = pyaccel.lattice.refine_lattice(
             self.model, max_length=0.01, fam_names=["BC", "B1", "B2", "QN"]
         )
@@ -853,9 +855,7 @@ class EqParamAnalysis:
         self._eq_params_nominal = eqparam_nom
         return eqparam_nom
 
-    def calc_id_effect_on_emittance(
-        self, insertion_device=None, *args
-    ):
+    def calc_id_effect_on_emittance(self, insertion_device=None, *args):
         """Calculate ID's effect on emittances.
 
         Args:
@@ -906,18 +906,12 @@ class EqParamAnalysis:
         i2y += di2y
         i4y += di4y
 
-        emitx = (
-            mathphys.constants.Cq * self.gamma ** 2 * (i5x / (i2x - i4x))
-        )
-        emity = (
-            mathphys.constants.Cq * self.gamma ** 2 * (i5y / (i2y - i4y))
-        )
+        emitx = CQ * self.gamma**2 * (i5x / (i2x - i4x))
+        emity = CQ * self.gamma**2 * (i5y / (i2y - i4y))
 
         return emitx, emity
 
-    def calc_id_effect_on_espread(
-        self, insertion_device=None, *args
-    ):
+    def calc_id_effect_on_espread(self, insertion_device=None, *args):
         """Calculate ID's effect on energy spread.
 
         Args:
@@ -957,15 +951,11 @@ class EqParamAnalysis:
         i3 += di3
         i4 += di4
 
-        espread = _np.sqrt(
-            mathphys.constants.Cq * self.gamma ** 2 * (i3 / (2 * i2 + i4))
-        )
+        espread = _np.sqrt(CQ * self.gamma**2 * (i3 / (2 * i2 + i4)))
 
         return espread
 
-    def calc_id_effect_on_damping_times(
-        self, insertion_device=None, *args
-    ):
+    def calc_id_effect_on_damping_times(self, insertion_device=None, *args):
         """Calculate ID's effect on damping times.
 
         Args:
@@ -992,16 +982,12 @@ class EqParamAnalysis:
 
         i2 = self.eq_params_nominal.I2
         i4 = self.eq_params_nominal.I4x
-        u0 = self.eq_params_nominal.U0 * mathphys.constants.elementary_charge
+        u0 = self.eq_params_nominal.U0 * ECHARGE
 
         if len(args) == 0:
             di2, _ = insertion_device.calc_i2()
             di4, _ = insertion_device.calc_i4()
-            du0 = (
-                1e-3
-                * self.calc_u0(insertion_device)
-                * mathphys.constants.elementary_charge
-            )
+            du0 = 1e-3 * self.calc_u0(insertion_device) * ECHARGE
         else:
             di2 = args[0]
             di4 = args[1]
@@ -1015,12 +1001,12 @@ class EqParamAnalysis:
         jy = 1
         jz = 2 + i4 / i2
 
-        e = Beam(3).energy * 1e9 * mathphys.constants.elementary_charge
-        t0 = self.model.length / mathphys.constants.light_speed
+        energy = self._beam.energy * 1e9 * ECHARGE
+        t0 = self.model.length / LSPEED
 
-        taux = 2 * e * t0 / (u0 * jx)
-        tauy = 2 * e * t0 / (u0 * jy)
-        taue = 2 * e * t0 / (u0 * jz)
+        taux = 2 * energy * t0 / (u0 * jx)
+        tauy = 2 * energy * t0 / (u0 * jy)
+        taue = 2 * energy * t0 / (u0 * jz)
 
         return taux, tauy, taue
 
@@ -1033,108 +1019,71 @@ class EqParamAnalysis:
         """
         self.ids.append(insertion_device)
 
-    def calc_total_effect_on_emittance(self):
-        """Calculate cumulative effect on emittances.
+    def calc_total_effect_on_eqparams(self):
+        """Calculate cumulative effect on equilibrium parameters.
 
         Returns:
             numpy 1d array: Horizontal emittance [m rad]
             numpy 1d array: Vertical emittance [m rad]
+            numpy 1d array: Energy spread
+            numpy 1d array: Horizontal damping time [s]
+            numpy 1d array: Vertical damping time [s]
+            numpy 1d array: Longitudinal damping time [s]
         """
         emitx = _np.zeros(len(self.ids) + 1)
         emity = _np.zeros(len(self.ids) + 1)
+        espread = _np.zeros(len(self.ids) + 1)
+        taux = _np.zeros(len(self.ids) + 1)
+        tauy = _np.zeros(len(self.ids) + 1)
+        taue = _np.zeros(len(self.ids) + 1)
+
         if self.eq_params_nominal is None:
             self.get_nominal_model_eqparams()
         emitx[0] = self.eq_params_nominal.emitx
         emity[0] = self.eq_params_nominal.emity
+        espread[0] = self.eq_params_nominal.espread0
+        taux[0] = self.eq_params_nominal.taux
+        tauy[0] = self.eq_params_nominal.tauy
+        taue[0] = self.eq_params_nominal.taue
+
         di2x, di2y = 0, 0
         di4x, di4y = 0, 0
         di5x, di5y = 0, 0
+        di3, du0 = 0, 0
         for i, insertion_device in enumerate(self.ids):
             if insertion_device.field_profile is None:
                 insertion_device.create_field_profile()
             di2x_, di2y_ = insertion_device.calc_i2()
             di4x_, di4y_ = insertion_device.calc_i4()
             di5x_, di5y_ = insertion_device.calc_i5()
+            di3_, _ = insertion_device.calc_i3()
+            du0_ = 1e-3 * insertion_device.calc_u0() * ECHARGE
             di2x += di2x_
             di2y += di2y_
             di4x += di4x_
             di4y += di4y_
             di5x += di5x_
             di5y += di5y_
+            di3 += di3_
+            du0 += du0_
             emitx[i + 1], emity[i + 1] = self.calc_id_effect_on_emittance(
                 None, di2x, di2y, di4x, di4y, di5x, di5y
             )
-        self._emitx = emitx
-        self._emity = emity
-        return emitx, emity
-
-    def calc_total_effect_on_espread(self):
-        """Calculate cumulative effect on energy spread.
-
-        Returns:
-            numpy 1d array: Energy spread
-        """
-        espread = _np.zeros(len(self.ids) + 1)
-        if self.eq_params_nominal is None:
-            self.get_nominal_model_eqparams()
-        espread[0] = self.eq_params_nominal.espread0
-        di2, di3, di4 = 0, 0, 0
-        for i, insertion_device in enumerate(self.ids):
-            if insertion_device.field_profile is None:
-                insertion_device.create_field_profile()
-            di2_, _ = insertion_device.calc_i2()
-            di3_, _ = insertion_device.calc_i3()
-            di4_, _ = insertion_device.calc_i4()
-            di2 += di2_
-            di3 += di3_
-            di4 += di4_
             espread[i + 1] = self.calc_id_effect_on_espread(
-                None, di2, di3, di4
+                None, di2x, di3, di4x
             )
-        self._espread = espread
-        return espread
-
-    def calc_total_effect_on_damping_times(self):
-        """Calculate cumulative effect on damping_times.
-
-        Returns:
-            numpy 1d array: Horizontal damping time [s]
-            numpy 1d array: Vertical damping time [s]
-            numpy 1d array: Longitudinal damping time [s]
-        """
-        taux = _np.zeros(len(self.ids) + 1)
-        tauy = _np.zeros(len(self.ids) + 1)
-        taue = _np.zeros(len(self.ids) + 1)
-        if self.eq_params_nominal is None:
-            self.get_nominal_model_eqparams()
-        taux[0] = self.eq_params_nominal.taux
-        tauy[0] = self.eq_params_nominal.tauy
-        taue[0] = self.eq_params_nominal.taue
-        di2, di4, du0 = 0, 0, 0
-        for i, insertion_device in enumerate(self.ids):
-            if insertion_device.field_profile is None:
-                insertion_device.create_field_profile()
-            di2_, _ = insertion_device.calc_i2()
-            di4_, _ = insertion_device.calc_i4()
-            du0_ = (
-                1e-3
-                * insertion_device.calc_u0()
-                * mathphys.constants.elementary_charge
-            )
-            di2 += di2_
-            di4 += di4_
-            du0 += du0_
             (
                 taux[i + 1],
                 tauy[i + 1],
                 taue[i + 1],
-            ) = self.calc_id_effect_on_damping_times(
-                None, di2, di4, du0
-            )
+            ) = self.calc_id_effect_on_damping_times(None, di2x, di4x, du0)
+        self._emitx = emitx
+        self._emity = emity
+        self._espread = espread
         self._taux = taux
         self._tauy = tauy
         self._taue = taue
-        return taux, tauy, taue
+        return emitx, emity, espread, taux, tauy, taue
 
     def calc_total_energy_loss(self):
         """Calculate cumulative effect on damping_times.
@@ -1156,8 +1105,7 @@ class EqParamAnalysis:
 
     def plot_ids_effects_emit_espread(self):
         """Plot ID's effects on horizontal emittance and energy spread."""
-        emitx, _ = self.calc_total_effect_on_emittance()
-        energy_spread = self.calc_total_effect_on_espread()
+        emitx, _, energy_spread, *_ = self.calc_total_effect_on_eqparams()
 
         fig, ax1 = _plt.subplots(1, sharey=True)
         fig.set_figwidth(9)
