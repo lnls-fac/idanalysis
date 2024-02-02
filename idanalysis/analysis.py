@@ -253,7 +253,8 @@ class RadiaModelAnalysis:
         """Get field roll-off.
 
         Args:
-            field_component (_type_): _description_
+            field_component (_str_): Chosen field component
+            (it can be bx, by or bz)
             r_transverse (_1D numpy array_): Numpy array with positions
             to calculate field
             plane (str, optional): _Chosen plane (it can be x or y)_.

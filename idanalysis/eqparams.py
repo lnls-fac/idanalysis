@@ -14,10 +14,11 @@ EMASS = mathphys.constants.electron_mass
 LSPEED = mathphys.constants.light_speed
 VCPERM = mathphys.constants.vacuum_permitticity
 CQ = mathphys.constants.Cq
-ECHARGE_MC = ECHARGE / (EMASS * LSPEED)
+ECHARGE_MC = ECHARGE / (2 * _np.pi * EMASS * LSPEED)
 
 _model = pymodels.si.create_accelerator()
 _mid_subsections = None
+_twiss = None
 
 
 class InsertionParams:
@@ -59,33 +60,34 @@ class InsertionParams:
         self._i4y = None
         self._i5y = None
         self._u0 = None
-        self._model = None
         self._mid_subsections = None
         self.beam = Beam(beam_energy)
-        self.brho = self.beam.brho
-        self.gamma = self.beam.gamma
 
-    @property
-    def model(self):
-        """Sirius model.
+        global _twiss
+        global _mid_subsections
+        if _twiss is None:
+            mia = pyaccel.lattice.find_indices(_model, "fam_name", "mia")
+            mib = pyaccel.lattice.find_indices(_model, "fam_name", "mib")
+            mip = pyaccel.lattice.find_indices(_model, "fam_name", "mip")
+            _mid_subsections = _np.sort(_np.array(mia + mib + mip))
+            _twiss, *_ = pyaccel.optics.calc_twiss(_model, indices="open")
 
-        Returns:
-            Pymodels object: Si model
+    @staticmethod
+    def set_model(model):
+        """Set Sirius model.
+
+        Args:
+            model (Pymodels object): Sirius model
         """
-        return self._model
-
-    @model.setter
-    def model(self, value):
         global _model
         global _mid_subsections
         global _twiss
-        _model = value
+        _model = model
         mia = pyaccel.lattice.find_indices(_model, "fam_name", "mia")
         mib = pyaccel.lattice.find_indices(_model, "fam_name", "mib")
         mip = pyaccel.lattice.find_indices(_model, "fam_name", "mip")
         _mid_subsections = _np.sort(_np.array(mia + mib + mip))
         _twiss, *_ = pyaccel.optics.calc_twiss(_model, indices="open")
-        self._model = _model
 
     @property
     def fam_name(self):
@@ -128,9 +130,7 @@ class InsertionParams:
     def bx_peak(self, value):
         self._bx_peak = value
         if self.period is not None:
-            self._kx = (
-                1e-3 * ECHARGE_MC / (2 * _np.pi) * self._bx_peak * self.period
-            )
+            self._kx = 1e-3 * ECHARGE_MC * self._bx_peak * self.period
 
     @property
     def by_peak(self):
@@ -145,9 +145,7 @@ class InsertionParams:
     def by_peak(self, value):
         self._by_peak = value
         if self.period is not None:
-            self._ky = (
-                1e-3 * ECHARGE_MC / (2 * _np.pi) * self._by_peak * self.period
-            )
+            self._ky = 1e-3 * ECHARGE_MC * self._by_peak * self.period
 
     @property
     def kx(self):
@@ -162,9 +160,7 @@ class InsertionParams:
     def kx(self, value):
         self._kx = value
         if self.period is not None:
-            self._bx_peak = (
-                2 * _np.pi * self._kx / (ECHARGE_MC * 1e-3 * self.period)
-            )
+            self._bx_peak = self._kx / (ECHARGE_MC * 1e-3 * self.period)
 
     @property
     def ky(self):
@@ -179,9 +175,7 @@ class InsertionParams:
     def ky(self, value):
         self._ky = value
         if self.period is not None:
-            self._by_peak = (
-                2 * _np.pi * self._ky / (ECHARGE_MC * 1e-3 * self.period)
-            )
+            self._by_peak = self._ky / (ECHARGE_MC * 1e-3 * self.period)
 
     @property
     def period(self):
@@ -196,21 +190,13 @@ class InsertionParams:
     def period(self, value):
         self._period = value
         if self._bx_peak is not None:
-            self._kx = (
-                1e-3 * ECHARGE_MC / (2 * _np.pi) * self._bx_peak * self.period
-            )
+            self._kx = 1e-3 * ECHARGE_MC * self._bx_peak * self.period
         if self._by_peak is not None:
-            self._ky = (
-                1e-3 * ECHARGE_MC / (2 * _np.pi) * self._by_peak * self.period
-            )
+            self._ky = 1e-3 * ECHARGE_MC * self._by_peak * self.period
         if self._kx is not None:
-            self._bx_peak = (
-                2 * _np.pi * self._kx / (ECHARGE_MC * 1e-3 * self.period)
-            )
+            self._bx_peak = self._kx / (ECHARGE_MC * 1e-3 * self.period)
         if self._ky is not None:
-            self._by_peak = (
-                2 * _np.pi * self._ky / (ECHARGE_MC * 1e-3 * self.period)
-            )
+            self._by_peak = self._ky / (ECHARGE_MC * 1e-3 * self.period)
 
     @property
     def length(self):
@@ -390,47 +376,6 @@ class InsertionParams:
         """
         return self._u0
 
-    @staticmethod
-    def _generate_field(a, peak, period, nr_periods, pts_period):
-        x_1period = _np.linspace(-period / 2, period / 2, pts_period)
-        y = peak * _np.sin(2 * _np.pi / period * x_1period)
-
-        x_nperiods = _np.linspace(
-            -nr_periods * period / 2,
-            nr_periods * period / 2,
-            nr_periods * pts_period,
-        )
-        mid = peak * _np.sin(2 * _np.pi / period * x_nperiods)
-
-        if nr_periods % 2 == 1:
-            term0 = (_np.tanh(a * 2 * _np.pi / period * x_1period) + 1) / 2
-            term1 = (-_np.tanh(a * 2 * _np.pi / period * x_1period) + 1) / 2
-        else:
-            term0 = -(_np.tanh(a * 2 * _np.pi / period * x_1period) + 1) / 2
-            term1 = -(-_np.tanh(a * 2 * _np.pi / period * x_1period) + 1) / 2
-
-        out = _np.concatenate((term0 * y, mid, term1 * y))
-        x_out = _np.linspace(
-            -(2 + nr_periods) * period / 2,
-            (2 + nr_periods) * period / 2,
-            1 * (2 + nr_periods) * len(x_1period),
-        )
-
-        return x_out, out
-
-    def _calc_field_integral(self, a, *args):
-        peak = args[0]
-        period = args[1]
-        nr_periods = args[2]
-        pts_period = args[3]
-        x_out, out = self._generate_field(
-            a, peak, period, nr_periods, pts_period
-        )
-        ds = _np.diff(x_out)[0]
-        i1 = cumtrapz(dx=ds, y=-out)
-        i2 = _np.trapz(dx=ds, y=i1)
-        return _np.abs(i2)
-
     def create_field_profile(self, pts_period=1001):
         """Create a sinusoidal field with first and second integrals zero.
 
@@ -484,20 +429,21 @@ class InsertionParams:
             numpy array: d(etax)/ds on the ID
             numpy array: d(etay)/ds on the ID
         """
+        brho = self.beam.brho
         s = 1e-3 * self.field_profile[:, 0]
         by = self.field_profile[:, 1]
         bx = self.field_profile[:, 2]
-        ds = _np.diff(s)[0]
+        ds = s[1] - s[0]
 
         i1x = cumtrapz(dx=ds, y=by, initial=0)
         i1y = cumtrapz(dx=ds, y=-bx, initial=0)
-        etapx = -1 * i1x / self.brho
-        etapy = -1 * i1y / self.brho
+        etapx = -1 * i1x / brho
+        etapy = -1 * i1y / brho
 
         i2x = cumtrapz(dx=ds, y=i1x, initial=0)
         i2y = cumtrapz(dx=ds, y=i1y, initial=0)
-        etax = -1 * i2x / self.brho
-        etay = -1 * i2y / self.brho
+        etax = -1 * i2x / brho
+        etay = -1 * i2y / brho
 
         self._etapx = etapx
         self._etapy = etapy
@@ -581,7 +527,6 @@ class InsertionParams:
         etapx += etapy_acc
 
         hx = pyaccel.optics.get_curlyh(betax, alphax, etax, etapx)
-
         hy = pyaccel.optics.get_curlyh(betay, alphay, etay, etapy)
 
         return hx, hy
@@ -592,14 +537,16 @@ class InsertionParams:
         Returns:
             float: Energy loss in [keV]
         """
+        brho = self.beam.brho
+        gamma = self.beam.gamma
         s = 1e-3 * self.field_profile[:, 0]
-        ds = _np.diff(s)[0]
+        ds = s[1] - s[0]
         by = self.field_profile[:, 1]
         bx = self.field_profile[:, 2]
         b = _np.sqrt(bx**2 + by**2)
         u0 = 1e-3 * (
-            (ECHARGE * self.gamma**4)
-            * _np.trapz(dx=ds, y=(b / self.brho) ** 2)
+            (ECHARGE * gamma**4)
+            * _np.trapz(dx=ds, y=(b / brho) ** 2)
             / (6 * _np.pi * VCPERM)
         )
         self._u0 = u0
@@ -624,13 +571,14 @@ class InsertionParams:
             float: delta I1x
             float: delta I1y
         """
+        brho = self.beam.brho
         by = self.field_profile[:, 1]
         bx = self.field_profile[:, 2]
         s = 1e-3 * self.field_profile[:, 0]
-        ds = _np.diff(s)[0]
+        ds = s[1] - s[0]
         etax, etay, *_ = self.calc_dispersion()
-        i1x = _np.trapz(dx=ds, y=etax * by / self.brho)
-        i1y = _np.trapz(dx=ds, y=etay * bx / self.brho)
+        i1x = _np.trapz(dx=ds, y=etax * by / brho)
+        i1y = _np.trapz(dx=ds, y=etay * bx / brho)
         self._i1x = i1x
         self._i1y = i1y
         return i1x, i1y
@@ -642,12 +590,13 @@ class InsertionParams:
             float: delta I2x
             float: delta I2y
         """
+        brho = self.beam.brho
         by = self.field_profile[:, 1]
         bx = self.field_profile[:, 2]
         s = 1e-3 * self.field_profile[:, 0]
-        ds = _np.diff(s)[0]
-        i2x = _np.trapz(dx=ds, y=(by / self.brho) ** 2)
-        i2y = _np.trapz(dx=ds, y=(bx / self.brho) ** 2)
+        ds = s[1] - s[0]
+        i2x = _np.trapz(dx=ds, y=(by / brho) ** 2)
+        i2y = _np.trapz(dx=ds, y=(bx / brho) ** 2)
         self._i2x = i2x
         self._i2y = i2y
         return i2x, i2y
@@ -659,12 +608,13 @@ class InsertionParams:
             float: delta I3x
             float: delta I3y
         """
+        brho = self.beam.brho
         by = self.field_profile[:, 1]
         bx = self.field_profile[:, 2]
         s = 1e-3 * self.field_profile[:, 0]
-        ds = _np.diff(s)[0]
-        i3x = _np.trapz(dx=ds, y=_np.abs((by / self.brho) ** 3))
-        i3y = _np.trapz(dx=ds, y=_np.abs((bx / self.brho) ** 3))
+        ds = s[1] - s[0]
+        i3x = _np.trapz(dx=ds, y=_np.abs((by / brho) ** 3))
+        i3y = _np.trapz(dx=ds, y=_np.abs((bx / brho) ** 3))
         self._i3x = i3x
         self._i3y = i3y
         return i3x, i3y
@@ -676,24 +626,25 @@ class InsertionParams:
             float: delta I4x
             float: delta I4y
         """
+        brho = self.beam.brho
         by = self.field_profile[:, 1]
         bx = self.field_profile[:, 2]
         s = 1e-3 * self.field_profile[:, 0]
-        ds = _np.diff(s)[0]
+        ds = s[1] - s[0]
         dby = _np.diff(by)
         dbx = _np.diff(bx)
-        dby_ds = _np.append(dby, dby[-1])/ds
-        dbx_ds = _np.append(dbx, dbx[-1])/ds
-        kx = -cumtrapz(dx=ds, y=by*dby_ds, initial=0) / (self.brho)**2
-        ky = -cumtrapz(dx=ds, y=-bx*dbx_ds, initial=0) / (self.brho)**2
+        dby_ds = _np.append(dby, dby[-1]) / ds
+        dbx_ds = _np.append(dbx, dbx[-1]) / ds
+        kx = -cumtrapz(dx=ds, y=by * dby_ds, initial=0) / (brho) ** 2
+        ky = -cumtrapz(dx=ds, y=-bx * dbx_ds, initial=0) / (brho) ** 2
         etax, etay, *_ = self.calc_dispersion()
         i4x = _np.trapz(
             dx=ds,
-            y=etax * (by / self.brho) ** 3 - 2 * ky * etax * (by / self.brho),
+            y=etax * (by / brho) ** 3 - 2 * ky * etax * (by / brho),
         )
         i4y = _np.trapz(
             dx=ds,
-            y=etay * (bx / self.brho) ** 3 - 2 * kx * etay * (bx / self.brho),
+            y=etay * (bx / brho) ** 3 - 2 * kx * etay * (bx / brho),
         )
         self._i4x = i4x
         self._i4y = i4y
@@ -706,16 +657,59 @@ class InsertionParams:
             float: delta I5x
             float: delta I5y
         """
+        brho = self.beam.brho
         by = self.field_profile[:, 1]
         bx = self.field_profile[:, 2]
         s = 1e-3 * self.field_profile[:, 0]
-        ds = _np.diff(s)[0]
+        ds = s[1] - s[0]
         hx, hy = self.get_curly_h()
-        i5x = _np.trapz(dx=ds, y=hx * _np.abs((by / self.brho) ** 3))
-        i5y = _np.trapz(dx=ds, y=hy * _np.abs((bx / self.brho) ** 3))
+        i5x = _np.trapz(dx=ds, y=hx * _np.abs((by / brho) ** 3))
+        i5y = _np.trapz(dx=ds, y=hy * _np.abs((bx / brho) ** 3))
         self._i5x = i5x
         self._i5y = i5y
         return i5x, i5y
+
+    def _calc_field_integral(self, a, *args):
+        peak = args[0]
+        period = args[1]
+        nr_periods = args[2]
+        pts_period = args[3]
+        x_out, out = self._generate_field(
+            a, peak, period, nr_periods, pts_period
+        )
+        ds = _np.diff(x_out)[0]
+        i1 = cumtrapz(dx=ds, y=-out)
+        i2 = _np.trapz(dx=ds, y=i1)
+        return _np.abs(i2)
+
+    @staticmethod
+    def _generate_field(a, peak, period, nr_periods, pts_period):
+        x_1period = _np.linspace(-period / 2, period / 2, pts_period)
+        y = peak * _np.sin(2 * _np.pi / period * x_1period)
+
+        x_nperiods = _np.linspace(
+            -nr_periods * period / 2,
+            nr_periods * period / 2,
+            nr_periods * pts_period,
+        )
+        mid = peak * _np.sin(2 * _np.pi / period * x_nperiods)
+
+        tanh = _np.tanh(a * 2 * _np.pi / period * x_1period)
+        if nr_periods % 2 == 1:
+            term0 = (tanh + 1) / 2
+            term1 = (-tanh + 1) / 2
+        else:
+            term0 = -(tanh + 1) / 2
+            term1 = (tanh - 1) / 2
+
+        out = _np.concatenate((term0 * y, mid, term1 * y))
+        x_out = _np.linspace(
+            -(2 + nr_periods) * period / 2,
+            (2 + nr_periods) * period / 2,
+            1 * (2 + nr_periods) * len(x_1period),
+        )
+
+        return x_out, out
 
 
 class EqParamAnalysis:
@@ -733,11 +727,8 @@ class EqParamAnalysis:
             beam_energy (Float, optional): Beam energy [GeV]. Defaults to 3.0.
         """
         self.ids = list()
-        self._model = _model
+        self.beam = Beam(beam_energy)
         self._eq_params_nominal = None
-        self._beam = Beam(beam_energy)
-        self.brho = self._beam.brho
-        self.gamma = self._beam.gamma
         self._emitx = None
         self._emity = None
         self._espread = None
@@ -746,27 +737,31 @@ class EqParamAnalysis:
         self._taue = None
         self._u0 = None
 
-    @property
-    def model(self):
-        """Sirius model.
+        global _twiss
+        global _mid_subsections
+        if _twiss is None:
+            mia = pyaccel.lattice.find_indices(_model, "fam_name", "mia")
+            mib = pyaccel.lattice.find_indices(_model, "fam_name", "mib")
+            mip = pyaccel.lattice.find_indices(_model, "fam_name", "mip")
+            _mid_subsections = _np.sort(_np.array(mia + mib + mip))
+            _twiss, *_ = pyaccel.optics.calc_twiss(_model, indices="open")
 
-        Returns:
-            Pymodels object: Si model
+    @staticmethod
+    def set_model(model):
+        """Set Sirius model.
+
+        Args:
+            model (Pymodels object): Sirius model
         """
-        return self._model
-
-    @model.setter
-    def model(self, value):
         global _model
         global _mid_subsections
         global _twiss
-        _model = value
+        _model = model
         mia = pyaccel.lattice.find_indices(_model, "fam_name", "mia")
         mib = pyaccel.lattice.find_indices(_model, "fam_name", "mib")
         mip = pyaccel.lattice.find_indices(_model, "fam_name", "mip")
         _mid_subsections = _np.sort(_np.array(mia + mib + mip))
         _twiss, *_ = pyaccel.optics.calc_twiss(_model, indices="open")
-        self._model = _model
 
     @property
     def eq_params_nominal(self):
@@ -846,10 +841,10 @@ class EqParamAnalysis:
         Returns:
             EqParamsFromRadIntegrals object: Object containing Eqparams
         """
-        self.model = pyaccel.lattice.refine_lattice(
-            self.model, max_length=0.01, fam_names=["BC", "B1", "B2", "QN"]
+        model = pyaccel.lattice.refine_lattice(
+            _model, max_length=0.01, fam_names=["BC", "B1", "B2", "QN"]
         )
-        eqparam_nom = pyaccel.optics.EqParamsFromRadIntegrals(self.model)
+        eqparam_nom = pyaccel.optics.EqParamsFromRadIntegrals(model)
         self._eq_params_nominal = eqparam_nom
         return eqparam_nom
 
@@ -870,6 +865,7 @@ class EqParamAnalysis:
             Float: Horizontal emittance [m rad]
             Float: Vertical emittance [m rad]
         """
+        gamma = self.beam.gamma
         if (
             insertion_device is not None
             and insertion_device.field_profile is None
@@ -904,8 +900,8 @@ class EqParamAnalysis:
         i2y += di2y
         i4y += di4y
 
-        emitx = CQ * self.gamma**2 * (i5x / (i2x - i4x))
-        emity = CQ * self.gamma**2 * (i5y / (i2y - i4y))
+        emitx = CQ * gamma**2 * (i5x / (i2x - i4x))
+        emity = CQ * gamma**2 * (i5y / (i2y - i4y))
 
         return emitx, emity
 
@@ -924,6 +920,7 @@ class EqParamAnalysis:
         Returns:
             float: energy spread
         """
+        gamma = self.beam.gamma
         if (
             insertion_device is not None
             and insertion_device.field_profile is None
@@ -949,7 +946,7 @@ class EqParamAnalysis:
         i3 += di3
         i4 += di4
 
-        espread = _np.sqrt(CQ * self.gamma**2 * (i3 / (2 * i2 + i4)))
+        espread = _np.sqrt(CQ * gamma**2 * (i3 / (2 * i2 + i4)))
 
         return espread
 
@@ -999,8 +996,8 @@ class EqParamAnalysis:
         jy = 1
         jz = 2 + i4 / i2
 
-        energy = self._beam.energy * 1e9 * ECHARGE
-        t0 = self.model.length / LSPEED
+        energy = self.beam.energy * 1e9 * ECHARGE
+        t0 = _model.length / LSPEED
 
         taux = 2 * energy * t0 / (u0 * jx)
         tauy = 2 * energy * t0 / (u0 * jy)
@@ -1034,6 +1031,7 @@ class EqParamAnalysis:
         taux = _np.zeros(len(self.ids) + 1)
         tauy = _np.zeros(len(self.ids) + 1)
         taue = _np.zeros(len(self.ids) + 1)
+        u0 = _np.zeros(len(self.ids) + 1)
 
         if self.eq_params_nominal is None:
             self.get_nominal_model_eqparams()
@@ -1043,6 +1041,7 @@ class EqParamAnalysis:
         taux[0] = self.eq_params_nominal.taux
         tauy[0] = self.eq_params_nominal.tauy
         taue[0] = self.eq_params_nominal.taue
+        u0[0] = 1e-3 * self.eq_params_nominal.U0
 
         di2x, di2y = 0, 0
         di4x, di4y = 0, 0
@@ -1075,35 +1074,21 @@ class EqParamAnalysis:
                 tauy[i + 1],
                 taue[i + 1],
             ) = self.calc_id_effect_on_damping_times(None, di2x, di4x, du0)
+            u0[i + 1] = u0[i] + 1e3 * du0_ / ECHARGE
         self._emitx = emitx
         self._emity = emity
         self._espread = espread
         self._taux = taux
         self._tauy = tauy
         self._taue = taue
-        return emitx, emity, espread, taux, tauy, taue
-
-    def calc_total_energy_loss(self):
-        """Calculate cumulative effect on damping_times.
-
-        Returns:
-            numpy 1d array: Energy loss [keV]
-        """
-        u0 = _np.zeros(len(self.ids) + 1)
-        if self.eq_params_nominal is None:
-            self.get_nominal_model_eqparams()
-        u0[0] = 1e-3 * self.eq_params_nominal.U0
-        for i, insertion_device in enumerate(self.ids):
-            if insertion_device.field_profile is None:
-                insertion_device.create_field_profile()
-            du0 = insertion_device.calc_u0()
-            u0[i + 1] = u0[i] + du0
         self._u0 = u0
-        return u0
+        return
 
     def plot_ids_effects_emit_espread(self):
         """Plot ID's effects on horizontal emittance and energy spread."""
-        emitx, _, energy_spread, *_ = self.calc_total_effect_on_eqparams()
+        self.calc_total_effect_on_eqparams()
+        emitx = self.emitx
+        energy_spread = self.espread
 
         fig, ax1 = _plt.subplots(1, sharey=True)
         fig.set_figwidth(9)
@@ -1152,7 +1137,7 @@ class SiriusIDS:
         ids = list()
 
         id1 = InsertionParams()
-        id1.fam_name = 'APU22'
+        id1.fam_name = "APU22"
         id1.period = 22
         id1.by_peak = 0.70
         id1.nr_periods = 51
@@ -1160,7 +1145,7 @@ class SiriusIDS:
         ids.append(id1)
 
         id2 = InsertionParams()
-        id2.fam_name = 'APU22'
+        id2.fam_name = "APU22"
         id2.period = 22
         id2.by_peak = 0.70
         id2.nr_periods = 51
@@ -1168,7 +1153,7 @@ class SiriusIDS:
         ids.append(id2)
 
         id3 = InsertionParams()
-        id3.fam_name = 'APU22'
+        id3.fam_name = "APU22"
         id3.period = 22
         id3.by_peak = 0.70
         id3.nr_periods = 51
@@ -1176,7 +1161,7 @@ class SiriusIDS:
         ids.append(id3)
 
         id4 = InsertionParams()
-        id4.fam_name = 'APU22'
+        id4.fam_name = "APU22"
         id4.period = 22
         id4.by_peak = 0.70
         id4.nr_periods = 51
@@ -1184,7 +1169,7 @@ class SiriusIDS:
         ids.append(id4)
 
         id5 = InsertionParams()
-        id5.fam_name = 'APU58'
+        id5.fam_name = "APU58"
         id5.period = 58
         id5.by_peak = 0.95
         id5.nr_periods = 18
@@ -1192,7 +1177,7 @@ class SiriusIDS:
         ids.append(id5)
 
         id6 = InsertionParams()
-        id6.fam_name = 'PAPU50'
+        id6.fam_name = "PAPU50"
         id6.period = 50
         id6.by_peak = 0.42
         id6.nr_periods = 18
@@ -1200,7 +1185,7 @@ class SiriusIDS:
         ids.append(id6)
 
         id7 = InsertionParams()
-        id7.fam_name = 'WIG180'
+        id7.fam_name = "WIG180"
         id7.period = 180
         id7.by_peak = 1.0
         id7.nr_periods = 13
@@ -1208,7 +1193,7 @@ class SiriusIDS:
         ids.append(id7)
 
         id8 = InsertionParams()
-        id8.fam_name = 'DELTA52'
+        id8.fam_name = "DELTA52"
         id8.period = 52.5
         id8.by_peak = 1.25
         id8.bx_peak = 1.25
@@ -1224,7 +1209,7 @@ class SiriusIDS:
         ids = list()
 
         id1 = InsertionParams()
-        id1.fam_name = 'VPU29'
+        id1.fam_name = "VPU29"
         id1.period = 29
         id1.bx_peak = 0.82
         id1.nr_periods = 51
@@ -1232,7 +1217,7 @@ class SiriusIDS:
         ids.append(id1)
 
         id2 = InsertionParams()
-        id2.fam_name = 'VPU29'
+        id2.fam_name = "VPU29"
         id2.period = 29
         id2.bx_peak = 0.82
         id2.nr_periods = 51
@@ -1240,7 +1225,7 @@ class SiriusIDS:
         ids.append(id2)
 
         id3 = InsertionParams()
-        id3.fam_name = 'IVU18'
+        id3.fam_name = "IVU18"
         id3.period = 18.5
         id3.by_peak = 1.22
         id3.nr_periods = 108
@@ -1248,17 +1233,17 @@ class SiriusIDS:
         ids.append(id3)
 
         id4 = InsertionParams()
-        id4.fam_name = 'APU22'
+        id4.fam_name = "APU22"
         id4.period = 22
         id4.by_peak = 0.70
-        id4.nr_periods = 2*51
+        id4.nr_periods = 2 * 51
         id4.straight_section = "ID09SA"
         ids.append(id4)
 
         # This ID can be changed by an APPLE-II, but there is no
-        # specification. by the moment
+        # specification by the moment.
         id5 = InsertionParams()
-        id5.fam_name = 'APU58'
+        id5.fam_name = "APU58"
         id5.period = 58
         id5.by_peak = 0.95
         id5.nr_periods = 18
@@ -1266,15 +1251,15 @@ class SiriusIDS:
         ids.append(id5)
 
         id6 = InsertionParams()
-        id6.fam_name = 'APU22'
+        id6.fam_name = "APU22"
         id6.period = 22
         id6.by_peak = 0.70
-        id6.nr_periods = 2*51
+        id6.nr_periods = 2 * 51
         id6.straight_section = "ID17SA"
         ids.append(id6)
 
         id7 = InsertionParams()
-        id7.fam_name = 'IVU18'
+        id7.fam_name = "IVU18"
         id7.period = 18.5
         id7.by_peak = 1.22
         id7.nr_periods = 108
@@ -1282,7 +1267,7 @@ class SiriusIDS:
         ids.append(id7)
 
         id8 = InsertionParams()
-        id8.fam_name = 'DELTA52'
+        id8.fam_name = "DELTA52"
         id8.period = 52.5
         id8.by_peak = 1.25
         id8.bx_peak = 1.25
