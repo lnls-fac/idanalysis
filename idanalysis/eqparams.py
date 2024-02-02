@@ -16,12 +16,29 @@ VCPERM = mathphys.constants.vacuum_permitticity
 CQ = mathphys.constants.Cq
 ECHARGE_MC = ECHARGE / (2 * _np.pi * EMASS * LSPEED)
 
-_model = pymodels.si.create_accelerator()
-_mid_subsections = None
-_twiss = None
+
+class RefModel:
+    """Base class of module."""
+    _model = None
+    _mid_subsections = None
+    _twiss = None
+
+    @staticmethod
+    def set_model(value):
+        """Set Sirius model.
+
+        Args:
+            value (Pymodels object): Sirius model
+        """
+        RefModel._model = value
+        mia = pyaccel.lattice.find_indices(value, "fam_name", "mia")
+        mib = pyaccel.lattice.find_indices(value, "fam_name", "mib")
+        mip = pyaccel.lattice.find_indices(value, "fam_name", "mip")
+        RefModel._mid_subsections = _np.sort(_np.array(mia + mib + mip))
+        RefModel._twiss, *_ = pyaccel.optics.calc_twiss(value, indices="open")
 
 
-class InsertionParams:
+class InsertionParams(RefModel):
     """Class to specify insertion parameters.
 
      All equations used here are from the book: Clarke, James A.,
@@ -60,34 +77,10 @@ class InsertionParams:
         self._i4y = None
         self._i5y = None
         self._u0 = None
-        self._mid_subsections = None
         self.beam = Beam(beam_energy)
 
-        global _twiss
-        global _mid_subsections
-        if _twiss is None:
-            mia = pyaccel.lattice.find_indices(_model, "fam_name", "mia")
-            mib = pyaccel.lattice.find_indices(_model, "fam_name", "mib")
-            mip = pyaccel.lattice.find_indices(_model, "fam_name", "mip")
-            _mid_subsections = _np.sort(_np.array(mia + mib + mip))
-            _twiss, *_ = pyaccel.optics.calc_twiss(_model, indices="open")
-
-    @staticmethod
-    def set_model(model):
-        """Set Sirius model.
-
-        Args:
-            model (Pymodels object): Sirius model
-        """
-        global _model
-        global _mid_subsections
-        global _twiss
-        _model = model
-        mia = pyaccel.lattice.find_indices(_model, "fam_name", "mia")
-        mib = pyaccel.lattice.find_indices(_model, "fam_name", "mib")
-        mip = pyaccel.lattice.find_indices(_model, "fam_name", "mip")
-        _mid_subsections = _np.sort(_np.array(mia + mib + mip))
-        _twiss, *_ = pyaccel.optics.calc_twiss(_model, indices="open")
+        if self._model is None:
+            self.set_model(pymodels.si.create_accelerator())
 
     @property
     def fam_name(self):
@@ -458,30 +451,28 @@ class InsertionParams:
             numpy 1d array: Curly Hx in the ID region.
             numpy 1d array: Curly Hy in the ID region.
         """
-        global _twiss
-        global _mid_subsections
         s = 1e-3 * self.field_profile[:, 0]
         if len(s) % 2 == 0:
             length = (s - s[0])[: int(len(s) / 2)]
         else:
             length = (s - s[0])[: int((len(s) + 1) / 2)]
         subsec = self.straight_section
-        idx = _mid_subsections[int(subsec[2:4]) - 1]
+        idx = self._mid_subsections[int(subsec[2:4]) - 1]
 
-        etax0 = _twiss.etax[idx]
-        etay0 = _twiss.etay[idx]
+        etax0 = self._twiss.etax[idx]
+        etay0 = self._twiss.etay[idx]
 
-        etapx0 = _twiss.etapx[idx]
-        etapy0 = _twiss.etapy[idx]
+        etapx0 = self._twiss.etapx[idx]
+        etapy0 = self._twiss.etapy[idx]
 
-        betax0 = _twiss.betax[idx]
-        betay0 = _twiss.betay[idx]
+        betax0 = self._twiss.betax[idx]
+        betay0 = self._twiss.betay[idx]
 
-        alphax0 = _twiss.alphax[idx]
-        alphay0 = _twiss.alphay[idx]
+        alphax0 = self._twiss.alphax[idx]
+        alphay0 = self._twiss.alphay[idx]
 
-        gammax0 = _twiss.gammax[idx]
-        gammay0 = _twiss.gammay[idx]
+        gammax0 = self._twiss.gammax[idx]
+        gammay0 = self._twiss.gammay[idx]
 
         etapx_acc = etapx0 * _np.ones(len(s))
         etax_acc_after = etax0 + etapx_acc[0] * length
@@ -712,7 +703,7 @@ class InsertionParams:
         return x_out, out
 
 
-class EqParamAnalysis:
+class EqParamAnalysis(RefModel):
     """Class to calculate beam equilibrium parameters.
 
     All equations used here are from the book: Clarke, James A.,
@@ -737,31 +728,8 @@ class EqParamAnalysis:
         self._taue = None
         self._u0 = None
 
-        global _twiss
-        global _mid_subsections
-        if _twiss is None:
-            mia = pyaccel.lattice.find_indices(_model, "fam_name", "mia")
-            mib = pyaccel.lattice.find_indices(_model, "fam_name", "mib")
-            mip = pyaccel.lattice.find_indices(_model, "fam_name", "mip")
-            _mid_subsections = _np.sort(_np.array(mia + mib + mip))
-            _twiss, *_ = pyaccel.optics.calc_twiss(_model, indices="open")
-
-    @staticmethod
-    def set_model(model):
-        """Set Sirius model.
-
-        Args:
-            model (Pymodels object): Sirius model
-        """
-        global _model
-        global _mid_subsections
-        global _twiss
-        _model = model
-        mia = pyaccel.lattice.find_indices(_model, "fam_name", "mia")
-        mib = pyaccel.lattice.find_indices(_model, "fam_name", "mib")
-        mip = pyaccel.lattice.find_indices(_model, "fam_name", "mip")
-        _mid_subsections = _np.sort(_np.array(mia + mib + mip))
-        _twiss, *_ = pyaccel.optics.calc_twiss(_model, indices="open")
+        if self._model is None:
+            self.set_model(pymodels.si.create_accelerator())
 
     @property
     def eq_params_nominal(self):
@@ -842,7 +810,7 @@ class EqParamAnalysis:
             EqParamsFromRadIntegrals object: Object containing Eqparams
         """
         model = pyaccel.lattice.refine_lattice(
-            _model, max_length=0.01, fam_names=["BC", "B1", "B2", "QN"]
+            self._model, max_length=0.01, fam_names=["BC", "B1", "B2", "QN"]
         )
         eqparam_nom = pyaccel.optics.EqParamsFromRadIntegrals(model)
         self._eq_params_nominal = eqparam_nom
@@ -997,7 +965,7 @@ class EqParamAnalysis:
         jz = 2 + i4 / i2
 
         energy = self.beam.energy * 1e9 * ECHARGE
-        t0 = _model.length / LSPEED
+        t0 = self._model.length / LSPEED
 
         taux = 2 * energy * t0 / (u0 * jx)
         tauy = 2 * energy * t0 / (u0 * jy)
