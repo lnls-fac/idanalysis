@@ -665,10 +665,10 @@ class InsertionParams(RefModel):
         period = args[1]
         nr_periods = args[2]
         pts_period = args[3]
-        x_out, out = self._generate_field(
+        s, out = self._generate_field(
             a, peak, period, nr_periods, pts_period
         )
-        ds = _np.diff(x_out)[0]
+        ds = s[1] - s[0]
         i1 = cumtrapz(dx=ds, y=-out)
         i2 = _np.trapz(dx=ds, y=i1)
         return _np.abs(i2)
@@ -1050,7 +1050,6 @@ class EqParamAnalysis(RefModel):
         self._tauy = tauy
         self._taue = taue
         self._u0 = u0
-        return
 
     def plot_ids_effects_emit_espread(self):
         """Plot ID's effects on horizontal emittance and energy spread."""
