@@ -7,8 +7,11 @@ import pymodels
 from apsuite.dynap import DynapXY
 from fieldmaptrack import Beam
 
-from idanalysis import IDKickMap as _IDKickMap, optics as optics, \
-    orbcorr as orbcorr
+from idanalysis import (
+    IDKickMap as _IDKickMap,
+    optics as optics,
+    orbcorr as orbcorr,
+)
 
 
 class Tools:
@@ -790,14 +793,57 @@ class StorageRingAnalysis(Tools):
         self.ids.extend(idmodel)
         return True
 
-    def set_model_ids(self):
-        """Set model with IDS.
+    def set_model_ids(self, model=None):
+        """Create model with ids.
+
+        Args:
+            model (pymodels object, optional): Sirius model. Defaults to None.
 
         Returns:
-            Accelerator_: SI model with ids
+            SI model: Sirius model with ID
         """
-        model = self.create_model_with_ids(self.ids)
+        if model is None:
+            model = self.create_model_with_ids(self.ids)
+        else:
+            model = self.insert_kickmaps(model)
         self.model_ids = model
+        return model
+
+    def insert_kickmaps(self, model, verbose=True):
+        """Insert a kickmap into the model.
+
+        Args:
+            model (pymodels object): Lattice
+            verbose (Boolean): If True prints will be made
+
+        Returns:
+            pymodels object: Lattice with kickmap
+
+        """
+        famdata = pymodels.si.get_family_data(model)
+        kickmaps, _ = pymodels.si.lattice.create_id_kickmaps_dict(
+            self.ids, energy=3e9
+        )
+        twiss, *_ = pyaccel.optics.calc_twiss(model, indices="closed")
+        if verbose:
+            print("Model without ID:")
+            print("length : {:.4f} m".format(model.length))
+            print("tunex  : {:.6f}".format(twiss.mux[-1] / 2 / _np.pi))
+            print("tuney  : {:.6f}".format(twiss.muy[-1] / 2 / _np.pi))
+            print()
+
+        for id_ in self.ids:
+            idcs = _np.array(famdata[id_.fam_name]["index"]).ravel()
+            for i, idc in enumerate(idcs):
+                model[idc] = kickmaps[id_.subsec][i]
+
+        twiss, *_ = pyaccel.optics.calc_twiss(model, indices="closed")
+        if verbose:
+            print("Model with ID:")
+            print("length : {:.4f} m".format(model.length))
+            print("tunex  : {:.6f}".format(twiss.mux[-1] / 2 / _np.pi))
+            print("tuney  : {:.6f}".format(twiss.muy[-1] / 2 / _np.pi))
+            print()
         return model
 
     def _create_model_nominal(self):
@@ -1165,8 +1211,8 @@ class StorageRingAnalysis(Tools):
         )
         print()
 
-        stg_tune = f"\u0394\u03BDx: {dtunex:+0.04f}\n"
-        stg_tune += f"\u0394\u03BDy: {dtuney:+0.04f}"
+        stg_tune = f"\u0394\u03bdx: {dtunex:+0.04f}\n"
+        stg_tune += f"\u0394\u03bdy: {dtuney:+0.04f}"
         labelx = f"X ({bbeatx_rms:.3f} % rms)"
         labely = f"Y ({bbeaty_rms:.3f} % rms)"
 
@@ -1285,18 +1331,24 @@ class StorageRingAnalysis(Tools):
             _plt.show()
         return True
 
-    def run_correction_algorithms(self):
+    def run_correction_algorithms(self, nom_model=None):
         """Run correction algorithms.
+
+        Args:
+            nom_model (pymodels ob._, optional): Lattice. Defaults to None.
 
         Raises:
             ValueError: Error if calc type is invalid.
 
         Returns:
-            Bool: True
+            _Bool: True
         """
-        self.nom_model = self._create_model_nominal()
+        if nom_model is None:
+            self.nom_model = self._create_model_nominal()
+        else:
+            self.nom_model = nom_model
         if self.calc_type == self.CalcTypes.nominal:
-            self.model_ids = self._create_model_nominal()
+            self.model_ids = self.nom_model
         elif self.calc_type in (
             self.CalcTypes.symmetrized,
             self.CalcTypes.nonsymmetrized,
