@@ -1133,6 +1133,7 @@ class StorageRingAnalysis(Tools):
 
             # calculate nominal twiss
             twiss0, *_ = pyaccel.optics.calc_twiss(self.nom_model)
+
             goal_tunes = _np.array(
                 [
                     twiss0.mux[-1] / 2 / _np.pi,
@@ -1353,7 +1354,6 @@ class StorageRingAnalysis(Tools):
             self.CalcTypes.symmetrized,
             self.CalcTypes.nonsymmetrized,
         ):
-            self.set_model_ids()
             _ = self.do_orbit_correction(
                 self.orbcorr_system, self._plot_orbcorr
             )
