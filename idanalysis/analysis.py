@@ -217,7 +217,7 @@ class RadiaModelAnalysis:
         """
         period = self.model.period_length
         comp_idx = self._get_field_component_idx(field_component)
-        rz = _np.linspace(-period, period, 201)
+        rz = _np.linspace(-period, period, 501)
         field = self.model.get_field(0, 0, rz)
         b = field[:, comp_idx]
         idxmax = _np.argmax(_np.abs(b))
