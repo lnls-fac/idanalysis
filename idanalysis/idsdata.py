@@ -3,7 +3,7 @@
 from idanalysis import IDKickMap as _IDKickMap
 
 DATA_REPOS_PATH = "/Dados/"  # Put your data repository path here
-REPOS_PATH = "/repos/idanalysis/"  # Put your repository path here
+REPOS_PATH = "/home/gabriel/repos/idanalysis/"  # Put your repository path here
 
 
 class Tools:
@@ -888,7 +888,7 @@ class EPU50Data(Tools):
     PARAMS.PPARAMETER_NAME = "phase"
     PARAMS.KPARAMETER_NAME = "gap"
     PARAMS.ID_FAMNAME = "EPU50"
-    PARAMS.SUBSECS = ["ID10SB"]
+    PARAMS.SUBSECS = ["ID10SB", "ID11SP"]
 
     PARAMS.KICKMAPS_DATA_PATH = REPOS_PATH + "epu50/kickmaps/"
     PARAMS.FIELDMAPS_DATA_PATH = (
@@ -1147,3 +1147,47 @@ class VPU29Data(Tools):
         fname = self.FIELMAPS_CONFIGS[idconfig]
         fmap_fname = fpath + fname
         return fmap_fname
+
+
+class UE44Data(Tools):
+    """UE44 data access and manipulation class."""
+
+    PARAMS = _PARAMS()
+    PARAMS.B_PEAK = 0.6  # [T]
+    PARAMS.PERIOD_LEN = 44  # [mm]
+    PARAMS.ID_LEN = 3.4  # [m]
+    PARAMS.NR_PERIODS = 75
+    PARAMS.PPARAMETER_NAME = "phase"
+    PARAMS.KPARAMETER_NAME = "de"
+    PARAMS.ID_FAMNAME = "UE44"
+    PARAMS.SUBSECS = ["ID11SP"]
+
+    PARAMS.KICKMAPS_DATA_PATH = REPOS_PATH + "ue44/kickmaps/"
+    PARAMS.FIELDMAPS_DATA_PATH = None
+    PARAMS.FOLDER_BASE_OUTPUT = REPOS_PATH + "ue44/results/data/"
+
+    FIELMAPS_CONFIGS = {None}
+    phase_de_dict = {None}
+
+    def __init__(self):
+        """Class constructor."""
+        self._params = UE44Data.PARAMS
+        self.si_idmodel = None
+
+    @staticmethod
+    def _get_config_path(phase, de):
+        path = ""
+        phase_str = Tools.get_phase_str(phase)
+        path += "phases/phase_{}/".format(phase_str)
+        de_str = Tools.get_phase_str(de)
+        path += "des/de_{}/".format(de_str)
+        return path
+
+    @staticmethod
+    def _get_kmap_config_name(phase, de):
+        fname = "kickmap-ID"
+        phase_str = Tools.get_phase_str(phase)
+        fname += "_phase_{}".format(phase_str)
+        de_str = Tools.get_phase_str(de)
+        fname += "_de_{}".format(de_str)
+        return fname

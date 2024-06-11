@@ -1341,8 +1341,6 @@ class StorageRingAnalysis(Tools):
         Raises:
             ValueError: Error if calc type is invalid.
 
-        Returns:
-            _Bool: True
         """
         if nom_model is None:
             self.nom_model = self._create_model_nominal()
@@ -1373,7 +1371,6 @@ class StorageRingAnalysis(Tools):
                 )
         else:
             raise ValueError("Invalid calc_type")
-        return True
 
     def analysis_dynapt(
         self,
