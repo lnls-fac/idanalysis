@@ -285,6 +285,7 @@ class TrajectoryAnalysis:
 
         Args:
             fieldsource: RADIA object or Fieldmap object
+            fpath: Path to fieldmap folder
         """
         self._fieldsource = fieldsource
         self._beam_energy = Beam(3).energy  # [GeV]
@@ -459,8 +460,12 @@ class TrajectoryAnalysis:
             return False
         elif "fieldmap" in typ:
             return True
+        elif "str" in typ:
+            return True
         else:
-            raise ValueError("Field source must be RADIA model or fieldmap.")
+            raise ValueError(
+                "Field source must be RADIA model, fieldmap or a fieldmap name."
+            )
 
     def set_traj_configs(self):
         """Set trajectory configurations."""
@@ -468,7 +473,13 @@ class TrajectoryAnalysis:
 
         if self._is_fiedsource_fieldmap():
             print("Fieldmap setted as fieldsource")
-            self._idkickmap.fmap_fname = self.fieldsource.filename
+            typ = str(self._fieldsource.__class__)
+            if "str" in typ:
+                self._idkickmap.fmap_fname = self.fieldsource
+            else:
+                self._idkickmap.fmap_fname = (
+                    self._fpath + self.fieldsource.filename
+                )
         else:
             print("RADIA model setted as fieldsource")
             self._idkickmap.radia_model = self.fieldsource
