@@ -2,8 +2,8 @@
 
 from idanalysis import IDKickMap as _IDKickMap
 
-DATA_REPOS_PATH = "/Dados/"  # Put your data repository path here
-REPOS_PATH = "/home/gabriel/repos/idanalysis/"  # Put your repository path here
+DATA_REPOS_PATH = "/opt/ids-data/"  # Put your data repository path here
+REPOS_PATH = "~/repos/idanalysis/"  # Put your repository path here
 
 
 class Tools:
@@ -1191,3 +1191,90 @@ class UE44Data(Tools):
         de_str = Tools.get_phase_str(de)
         fname += "_de_{}".format(de_str)
         return fname
+
+
+class WLSData(Tools):
+    """WLS data access and manipulation class."""
+
+    PARAMS = _PARAMS()
+    # PARAMS.B_PEAK = 1.0  # [T]
+    # PARAMS.PERIOD_LEN = 180  # [mm]
+    # PARAMS.ID_LEN = 2.654  # [m]
+    # PARAMS.NR_PERIODS = 13
+    PARAMS.KPARAMETER_NAME = "current"
+    PARAMS.ID_FAMNAME = "WLS"
+    PARAMS.SUBSECS = ["ID14SB"]
+
+    PARAMS.KICKMAPS_DATA_PATH = REPOS_PATH + "wls/kickmaps/"
+    PARAMS.FIELDMAPS_DATA_PATH = (
+        DATA_REPOS_PATH
+        + "lnls-ima/si-wls/model-09/simulation/magnetic/updated-BHcurves/"
+        + "magnet-results/field-maps-two-currents/"
+    )
+    PARAMS.FOLDER_BASE_OUTPUT = REPOS_PATH + "wls/results/data/"
+
+    FIELMAPS_CONFIGS = {
+        'I=1A': 'SWLS_I=1A_X=-10_10mm_Y=-1.75_1.75mm_Z=-1000_1000mm.txt',
+        'I=10A': 'SWLS_I=10A_X=-10_10mm_Y=-1.75_1.75mm_Z=-1000_1000mm.txt',
+        'I=20A': 'SWLS_I=20A_X=-10_10mm_Y=-1.75_1.75mm_Z=-1000_1000mm.txt',
+        'I=40A': 'SWLS_I=40A_X=-10_10mm_Y=-1.75_1.75mm_Z=-1000_1000mm.txt',
+        'I=60A': 'SWLS_I=60A_X=-10_10mm_Y=-1.75_1.75mm_Z=-1000_1000mm.txt',
+        'I=80A': 'SWLS_I=80A_X=-10_10mm_Y=-1.75_1.75mm_Z=-1000_1000mm.txt',
+        'I=100A': 'SWLS_I=100A_X=-10_10mm_Y=-1.75_1.75mm_Z=-1000_1000mm.txt',
+        'I=120A': 'SWLS_I=120A_X=-10_10mm_Y=-1.75_1.75mm_Z=-1000_1000mm.txt',
+        'I=140A': 'SWLS_I=140A_X=-10_10mm_Y=-1.75_1.75mm_Z=-1000_1000mm.txt',
+        'I=160A': 'SWLS_I=160A_X=-10_10mm_Y=-1.75_1.75mm_Z=-1000_1000mm.txt',
+        'I=200A': 'SWLS_I=200A_X=-10_10mm_Y=-1.75_1.75mm_Z=-1000_1000mm.txt',
+        'I=227A': 'SWLS_I=227A_X=-10_10mm_Y=-1.75_1.75mm_Z=-1000_1000mm.txt',
+        'I=250A': 'SWLS_I=250A_X=-10_10mm_Y=-1.75_1.75mm_Z=-1000_1000mm.txt',
+    }
+
+    CURR_DICT = {
+        (1): 'I=1A',
+        (10): 'I=10A',
+        (20): 'I=20A',
+        (40): 'I=40A',
+        (60): 'I=60A',
+        (80): 'I=80A',
+        (100): 'I=100A',
+        (120): 'I=120A',
+        (140): 'I=140A',
+        (160): 'I=160A',
+        (200): 'I=200A',
+        (227): 'I=227A',
+        (250): 'I=250A',
+    }
+
+    def __init__(self):
+        """Class constructor."""
+        self._params = WLSData.PARAMS
+        self.si_idmodel = None
+
+    @staticmethod
+    def _get_config_path(curr):
+        path = ""
+        curr_str = Tools.get_phase_str(curr)
+        path += "currs/curr_{}/".format(curr_str)
+        return path
+
+    @staticmethod
+    def _get_kmap_config_name(curr):
+        fname = "kickmap-ID"
+        curr_str = Tools.get_phase_str(curr)
+        fname += "_curr_{}".format(curr_str)
+        return fname
+
+    def get_fmap_fname(self, curr):
+        """Get fmap fname.
+
+        Args:
+            curr (float): curr value
+
+        Returns:
+            str: fieldmap name
+        """
+        fpath = self.folder_base_fieldmaps
+        idconfig = self.CURR_DICT[(curr)]
+        fname = self.FIELMAPS_CONFIGS[idconfig]
+        fmap_fname = fpath + fname
+        return fmap_fname
