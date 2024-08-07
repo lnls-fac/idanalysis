@@ -294,8 +294,8 @@ class IDKickMap:
             data = []
             with multiprocessing.Pool(processes=num_processes - 1) as parallel:
                 data = parallel.map(self._calc_kickmap_mp, arglist)
-            for i, _ in enumerate(self.posy):
-                for j, _ in enumerate(self.posx):
+            for i, ryi in enumerate(self.posy):
+                for j, rxi in enumerate(self.posx):
                     output = data[i*len(self.posx) + j]
                     pxf, pyf, rxf, ryf = output
                     stg = "rx = {:.01f} mm, ry = {:.01f}: ".format(
