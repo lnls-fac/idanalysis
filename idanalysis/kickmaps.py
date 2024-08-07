@@ -1,9 +1,10 @@
 #!/usr/bin/env python-sirius
 """IDKickMap class."""
 
-
 import fieldmaptrack as _fmaptrack
 import matplotlib.pyplot as _plt
+import multiprocessing
+from copy import deepcopy
 import numpy as _np
 from scipy.optimize import curve_fit as _curve_fit
 
@@ -253,7 +254,21 @@ class IDKickMap:
                 self.kickx[i, j] = pxf * brho**2
                 self.kicky[i, j] = pyf * brho**2
 
-    def fmap_calc_kickmap(self, posx, posy, beam_energy=None, rk_s_step=None):
+    def _calc_kickmap_mp(self, args):
+        (rxi, ryi, config) = args
+        config.traj_init_rx = rxi
+        config.traj_init_ry = ryi
+        IDKickMap._fmap_calc_traj(config)
+        pxf = config.traj.px[-1]
+        pyf = config.traj.py[-1]
+        rxf = config.traj.rx[-1]
+        ryf = config.traj.ry[-1]
+        data = (pxf, pyf, rxf, ryf)
+        return data
+
+    def fmap_calc_kickmap(
+        self, posx, posy, beam_energy=None, rk_s_step=None, parallelize=False
+    ):
         """."""
         self.posx = _np.array(posx)  # [m]
         self.posy = _np.array(posy)  # [m]
@@ -269,26 +284,52 @@ class IDKickMap:
         self.fposy = _np.full((len(self.posy), len(self.posx)), _np.inf)
         config = self._fmap_config or self._radia_model_config
         self._config = config
-        for i, ryi in enumerate(self.posy):
-            for j, rxi in enumerate(self.posx):
-                self._config.traj_init_rx = 1e3 * rxi
-                self._config.traj_init_ry = 1e3 * ryi
-                IDKickMap._fmap_calc_traj(self._config)
-                pxf = self._config.traj.px[-1]
-                pyf = self._config.traj.py[-1]
-                rxf = self._config.traj.rx[-1]
-                ryf = self._config.traj.ry[-1]
-                stg = "rx = {:.01f} mm, ry = {:.01f}: ".format(
-                    rxi * 1e3, ryi * 1e3
-                )
-                stg += "px = {:.01f} urad, py = {:.01f} urad".format(
-                    pxf * 1e6, pyf * 1e6
-                )
-                print(stg)
-                self.kickx[i, j] = pxf * brho**2
-                self.kicky[i, j] = pyf * brho**2
-                self.fposx[i, j] = rxf / 1e3
-                self.fposy[i, j] = ryf / 1e3
+        if parallelize:
+            arglist = []
+            for i, ryi in enumerate(self.posy):
+                for j, rxi in enumerate(self.posx):
+                    config = deepcopy(self._config)
+                    arglist += [(1e3 * rxi, 1e3 * ryi, config)]
+            num_processes = multiprocessing.cpu_count()
+            data = []
+            with multiprocessing.Pool(processes=num_processes - 1) as parallel:
+                data = parallel.map(self._calc_kickmap_mp, arglist)
+            for i, _ in enumerate(self.posy):
+                for j, _ in enumerate(self.posx):
+                    output = data[i*len(self.posx) + j]
+                    pxf, pyf, rxf, ryf = output
+                    stg = "rx = {:.01f} mm, ry = {:.01f}: ".format(
+                        rxi * 1e3, ryi * 1e3
+                    )
+                    stg += "px = {:.01f} urad, py = {:.01f} urad".format(
+                        pxf * 1e6, pyf * 1e6
+                    )
+                    print(stg)
+                    self.kickx[i, j] = pxf * brho**2
+                    self.kicky[i, j] = pyf * brho**2
+                    self.fposx[i, j] = rxf / 1e3
+                    self.fposy[i, j] = ryf / 1e3
+        else:
+            for i, ryi in enumerate(self.posy):
+                for j, rxi in enumerate(self.posx):
+                    self._config.traj_init_rx = 1e3 * rxi
+                    self._config.traj_init_ry = 1e3 * ryi
+                    IDKickMap._fmap_calc_traj(self._config)
+                    pxf = self._config.traj.px[-1]
+                    pyf = self._config.traj.py[-1]
+                    rxf = self._config.traj.rx[-1]
+                    ryf = self._config.traj.ry[-1]
+                    stg = "rx = {:.01f} mm, ry = {:.01f}: ".format(
+                        rxi * 1e3, ryi * 1e3
+                    )
+                    stg += "px = {:.01f} urad, py = {:.01f} urad".format(
+                        pxf * 1e6, pyf * 1e6
+                    )
+                    print(stg)
+                    self.kickx[i, j] = pxf * brho**2
+                    self.kicky[i, j] = pyf * brho**2
+                    self.fposx[i, j] = rxf / 1e3
+                    self.fposy[i, j] = ryf / 1e3
 
     def filter_kmap(self, posx=None, posy=None, order=5, plot_flag=False):
         self._load_kmap()

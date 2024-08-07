@@ -487,6 +487,8 @@ class TrajectoryAnalysis:
         self._idkickmap.beam_energy = self.beam_energy
         self._idkickmap.rk_s_step = self.rk_s_step
         self._idkickmap.kmap_idlen = self.kmap_idlen
+        self._idkickmap.traj_init_rz = self.traj_init_rz
+        self._idkickmap.traj_rk_min_rz = self.traj_max_rz
 
     def calculate_traj(self):
         """Calculate RK-4 trajectory.
@@ -506,14 +508,17 @@ class TrajectoryAnalysis:
         self.traj = self._idkickmap.traj
         return self.traj
 
-    def generate_kickmap(self, gridx, gridy):
+    def generate_kickmap(self, gridx, gridy, parallelize=True):
         """Generate kickmap.
 
         Args:
             gridx (1D numpy array): Values to calculate kickmap
             gridy (1D numpy array): Values to calculate kickmap
+            parallelize (Bool): If true kickmap calc will be parallelized
         """
-        self._idkickmap.fmap_calc_kickmap(posx=gridx, posy=gridy)
+        self._idkickmap.fmap_calc_kickmap(
+            posx=gridx, posy=gridy, parallelize=parallelize
+        )
         self._idkickmap.save_kickmap_file(kickmap_filename=self._kmap_fname)
 
 
