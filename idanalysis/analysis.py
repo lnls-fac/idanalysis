@@ -440,7 +440,7 @@ class TrajectoryAnalysis:
 
     @kmap_idlen.setter
     def kmap_idlen(self, value):
-        self._kmap_id_len = value
+        self._kmap_idlen = value
 
     @beam_energy.setter
     def beam_energy(self, value):
