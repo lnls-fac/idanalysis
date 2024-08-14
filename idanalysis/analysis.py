@@ -533,6 +533,12 @@ class KickmapAnalysis(Tools):
     def run_shift_kickmap(self):
         """Generate kickmap without dipolar term."""
         fname = self.kmap_fname
+        idxy = list(self._idkickmap.posy).index(0)
+        idxx = list(self._idkickmap.posx).index(0)
+        kickx0 = self._idkickmap.kickx[idxy, idxx]
+        kicky0 = self._idkickmap.kicky[idxy, idxx]
+        self._idkickmap.kickx -= kickx0
+        self._idkickmap.kicky -= kicky0
         fname = fname.replace(".txt", "-shifted_on_axis.txt")
         self._idkickmap.save_kickmap_file(fname)
 
@@ -690,7 +696,7 @@ class KickmapAnalysis(Tools):
                 if indep_var.lower() == "x"
                 else _np.array([0, 0, pos0, 0, 0, 0])
             )
-            coord_fin, *_ = pyaccel.tracking.line_pass(
+            coord_fin, lost_flag, *_ = pyaccel.tracking.line_pass(
                 model, coord_ini, indices="open"
             )
             rxf_trk[i] = coord_fin[0, idx_dif + 1]
@@ -698,7 +704,7 @@ class KickmapAnalysis(Tools):
             pxf_trk[i] = coord_fin[1, idx_dif + 1]
             pyf_trk[i] = coord_fin[3, idx_dif + 1]
 
-        return pxf_trk, pyf_trk, rxf_trk, ryf_trk
+        return pxf_trk, pyf_trk, rxf_trk, ryf_trk, lost_flag
 
 
 class StorageRingAnalysis(Tools):
@@ -848,8 +854,14 @@ class StorageRingAnalysis(Tools):
             print("tuney  : {:.6f}".format(twiss.muy[-1] / 2 / _np.pi))
             print()
 
+        mia = pyaccel.lattice.find_indices(model, "fam_name", "mia")
+        mib = pyaccel.lattice.find_indices(model, "fam_name", "mib")
+        mip = pyaccel.lattice.find_indices(model, "fam_name", "mip")
+        mid_subsections = _np.sort(_np.array(mia + mib + mip))
+
         for id_ in self.ids:
-            idcs = _np.array(famdata[id_.fam_name]["index"]).ravel()
+            idx = mid_subsections[int(id_.subsec[2:4]) - 1]
+            idcs = [idx-1, idx+1]
             for i, idc in enumerate(idcs):
                 model[idc] = kickmaps[id_.subsec][i]
 

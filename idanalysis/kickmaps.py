@@ -669,10 +669,6 @@ class IDKickMap:
         self.posx, self.posy = info["posx"], info["posy"]
         self.kickx, self.kicky = info["kickx"], info["kicky"]
         self.fposx, self.fposy = info["fposx"], info["fposy"]
-        self.kickx_upstream = info["kickx_upstream"]
-        self.kicky_upstream = info["kicky_upstream"]
-        self.kickx_downstream = info["kickx_downstream"]
-        self.kicky_downstream = info["kicky_downstream"]
 
         if self.shift_on_axis:
             # find indices of central line
@@ -694,22 +690,7 @@ class IDKickMap:
         rst = ""
         # header
         rst += self.author
-        if self.kickx_upstream is not None:
-            flag = True
-            if flag:
-                fmt = (
-                    "\n# Termination_kicks [T2m2]: "
-                    "{:+11.4e} {:+11.4e} {:+11.4e} {:+11.4e} "
-                )
-                rst += fmt.format(
-                    self.kickx_upstream,
-                    self.kicky_upstream,
-                    self.kickx_downstream,
-                    self.kicky_downstream,
-                )
-        else:
-            rst += "\n# "
-
+        rst += "\n# "
         id_len = self.kmap_idlen or self.fmap_idlen
         rst += "\n# Total Length of Longitudinal Interval [m]"
         rst += "\n{}".format(id_len)
@@ -717,9 +698,6 @@ class IDKickMap:
         rst += "\n{}".format(len(self.posx))
         rst += "\n# Number of Vertical Points"
         rst += "\n{}".format(len(self.posy))
-
-        kickx_end = (self.kickx_upstream or 0) + (self.kickx_downstream or 0)
-        kicky_end = (self.kicky_upstream or 0) + (self.kicky_downstream or 0)
 
         rst += "\n# Total Horizontal 2nd Order Kick [T2m2]"
         rst += "\nSTART"
@@ -731,7 +709,7 @@ class IDKickMap:
         for i, ryi in enumerate(self.posy[::-1]):
             rst += "\n{:+011.5f} ".format(ryi)
             for j, rxi in enumerate(self.posx):
-                rst += "{:+11.4e} ".format(self.kickx[-i - 1, j] - kickx_end)
+                rst += "{:+11.4e} ".format(self.kickx[-i - 1, j])
 
         rst += "\n# Total Vertical 2nd Order Kick [T2m2]"
         rst += "\nSTART"
@@ -743,7 +721,7 @@ class IDKickMap:
         for i, ryi in enumerate(self.posy[::-1]):
             rst += "\n{:+011.5f} ".format(ryi)
             for j, rxi in enumerate(self.posx):
-                rst += "{:+11.4e} ".format(self.kicky[-i - 1, j] - kicky_end)
+                rst += "{:+11.4e} ".format(self.kicky[-i - 1, j])
 
         rst += "\n# Horizontal Final Position [m]"
         rst += "\nSTART"
