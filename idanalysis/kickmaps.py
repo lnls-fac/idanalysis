@@ -1,9 +1,10 @@
 #!/usr/bin/env python-sirius
 """IDKickMap class."""
 
-
 import fieldmaptrack as _fmaptrack
 import matplotlib.pyplot as _plt
+import multiprocessing
+from copy import deepcopy
 import numpy as _np
 from scipy.optimize import curve_fit as _curve_fit
 
@@ -253,7 +254,37 @@ class IDKickMap:
                 self.kickx[i, j] = pxf * brho**2
                 self.kicky[i, j] = pyf * brho**2
 
-    def fmap_calc_kickmap(self, posx, posy, beam_energy=None, rk_s_step=None):
+    @staticmethod
+    def _calc_kickmap_mp(args):
+        (rxi, ryi, config) = args
+        config.traj_init_rx = rxi
+        config.traj_init_ry = ryi
+        IDKickMap._fmap_calc_traj(config)
+        pxf = config.traj.px[-1]
+        pyf = config.traj.py[-1]
+        rxf = config.traj.rx[-1]
+        ryf = config.traj.ry[-1]
+        data = (pxf, pyf, rxf, ryf)
+        return data
+
+    def _addoutput_to_kickmap(self, i, j, pxf, pyf, rxf, ryf):
+        brho = self.brho
+        rxi, ryi = self.posx[j], self.posy[i]
+        stg = "rx = {:.01f} mm, ry = {:.01f}: ".format(
+                        rxi * 1e3, ryi * 1e3
+            )
+        stg += "px = {:.01f} urad, py = {:.01f} urad".format(
+                        pxf * 1e6, pyf * 1e6
+            )
+        print(stg)
+        self.kickx[i, j] = pxf * brho**2
+        self.kicky[i, j] = pyf * brho**2
+        self.fposx[i, j] = rxf / 1e3
+        self.fposy[i, j] = ryf / 1e3
+
+    def fmap_calc_kickmap(
+        self, posx, posy, beam_energy=None, rk_s_step=None, parallelize=False
+    ):
         """."""
         self.posx = _np.array(posx)  # [m]
         self.posy = _np.array(posy)  # [m]
@@ -262,33 +293,35 @@ class IDKickMap:
             self.beam_energy = beam_energy
         if rk_s_step is not None:
             self.rk_s_step = rk_s_step
-        brho = self.brho
         self.kickx = _np.full((len(self.posy), len(self.posx)), _np.inf)
         self.kicky = _np.full((len(self.posy), len(self.posx)), _np.inf)
         self.fposx = _np.full((len(self.posy), len(self.posx)), _np.inf)
         self.fposy = _np.full((len(self.posy), len(self.posx)), _np.inf)
         config = self._fmap_config or self._radia_model_config
         self._config = config
-        for i, ryi in enumerate(self.posy):
-            for j, rxi in enumerate(self.posx):
-                self._config.traj_init_rx = 1e3 * rxi
-                self._config.traj_init_ry = 1e3 * ryi
-                IDKickMap._fmap_calc_traj(self._config)
-                pxf = self._config.traj.px[-1]
-                pyf = self._config.traj.py[-1]
-                rxf = self._config.traj.rx[-1]
-                ryf = self._config.traj.ry[-1]
-                stg = "rx = {:.01f} mm, ry = {:.01f}: ".format(
-                    rxi * 1e3, ryi * 1e3
-                )
-                stg += "px = {:.01f} urad, py = {:.01f} urad".format(
-                    pxf * 1e6, pyf * 1e6
-                )
-                print(stg)
-                self.kickx[i, j] = pxf * brho**2
-                self.kicky[i, j] = pyf * brho**2
-                self.fposx[i, j] = rxf / 1e3
-                self.fposy[i, j] = ryf / 1e3
+        if parallelize:
+            arglist = []
+            for ryi in self.posy:
+                for rxi in self.posx:
+                    config = deepcopy(self._config)
+                    arglist += [(1e3 * rxi, 1e3 * ryi, config)]
+            num_processes = multiprocessing.cpu_count()
+            data = []
+            with multiprocessing.Pool(processes=num_processes - 1) as parallel:
+                data = parallel.map(self._calc_kickmap_mp, arglist)
+            for i, _ in enumerate(self.posy):
+                for j, _ in enumerate(self.posx):
+                    output = data[i * len(self.posx) + j]
+                    pxf, pyf, rxf, ryf = output
+                    self._addoutput_to_kickmap(i, j, pxf, pyf, rxf, ryf)
+        else:
+            for i, ryi in enumerate(self.posy):
+                for j, rxi in enumerate(self.posx):
+                    IDKickMap._fmap_calc_traj(self._config)
+                    pxf, pyf, rxf, ryf = self._calc_kickmap_mp(
+                        1e3 * rxi, 1e3 * ryi, self._config
+                    )
+                    self._addoutput_to_kickmap(i, j, pxf, pyf, rxf, ryf)
 
     def filter_kmap(self, posx=None, posy=None, order=5, plot_flag=False):
         self._load_kmap()
@@ -636,10 +669,6 @@ class IDKickMap:
         self.posx, self.posy = info["posx"], info["posy"]
         self.kickx, self.kicky = info["kickx"], info["kicky"]
         self.fposx, self.fposy = info["fposx"], info["fposy"]
-        self.kickx_upstream = info["kickx_upstream"]
-        self.kicky_upstream = info["kicky_upstream"]
-        self.kickx_downstream = info["kickx_downstream"]
-        self.kicky_downstream = info["kicky_downstream"]
 
         if self.shift_on_axis:
             # find indices of central line
@@ -661,22 +690,7 @@ class IDKickMap:
         rst = ""
         # header
         rst += self.author
-        if self.kickx_upstream is not None:
-            flag = True
-            if flag:
-                fmt = (
-                    "\n# Termination_kicks [T2m2]: "
-                    "{:+11.4e} {:+11.4e} {:+11.4e} {:+11.4e} "
-                )
-                rst += fmt.format(
-                    self.kickx_upstream,
-                    self.kicky_upstream,
-                    self.kickx_downstream,
-                    self.kicky_downstream,
-                )
-        else:
-            rst += "\n# "
-
+        rst += "\n# "
         id_len = self.kmap_idlen or self.fmap_idlen
         rst += "\n# Total Length of Longitudinal Interval [m]"
         rst += "\n{}".format(id_len)
@@ -684,9 +698,6 @@ class IDKickMap:
         rst += "\n{}".format(len(self.posx))
         rst += "\n# Number of Vertical Points"
         rst += "\n{}".format(len(self.posy))
-
-        kickx_end = (self.kickx_upstream or 0) + (self.kickx_downstream or 0)
-        kicky_end = (self.kicky_upstream or 0) + (self.kicky_downstream or 0)
 
         rst += "\n# Total Horizontal 2nd Order Kick [T2m2]"
         rst += "\nSTART"
@@ -698,7 +709,7 @@ class IDKickMap:
         for i, ryi in enumerate(self.posy[::-1]):
             rst += "\n{:+011.5f} ".format(ryi)
             for j, rxi in enumerate(self.posx):
-                rst += "{:+11.4e} ".format(self.kickx[-i - 1, j] - kickx_end)
+                rst += "{:+11.4e} ".format(self.kickx[-i - 1, j])
 
         rst += "\n# Total Vertical 2nd Order Kick [T2m2]"
         rst += "\nSTART"
@@ -710,7 +721,7 @@ class IDKickMap:
         for i, ryi in enumerate(self.posy[::-1]):
             rst += "\n{:+011.5f} ".format(ryi)
             for j, rxi in enumerate(self.posx):
-                rst += "{:+11.4e} ".format(self.kicky[-i - 1, j] - kicky_end)
+                rst += "{:+11.4e} ".format(self.kicky[-i - 1, j])
 
         rst += "\n# Horizontal Final Position [m]"
         rst += "\nSTART"
