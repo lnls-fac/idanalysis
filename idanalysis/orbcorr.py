@@ -52,7 +52,10 @@ def correct_orbit_local(
     inds = pyaccel.lattice.find_indices(model1, "fam_name", id_famname)
     idinds = list()
     for idx in inds:
-        if model1[idx].pass_method == "kicktable_pass":
+        if (
+            model1[idx].pass_method == "kicktable_pass"
+            or model1[idx].pass_method == "str_mpole_symplectic4_pass"
+        ):
             idinds.append(idx)
     idc1, idc2 = idinds[0], idinds[-1]
     while idc1 >= 0 and model1[idc1].fam_name != "IDC":
