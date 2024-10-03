@@ -1,9 +1,10 @@
 """IDs data."""
 
 from idanalysis import IDKickMap as _IDKickMap
+import os
 
 DATA_REPOS_PATH = "/opt/ids-data/"  # Put your data repository path here
-REPOS_PATH = "~/repos/idanalysis/"  # Put your repository path here
+REPOS_PATH = os.path.dirname(os.path.abspath(__file__))
 
 
 class Tools:
@@ -532,7 +533,7 @@ class APU22Data(Tools):
 
     def __init__(self):
         """Class constructor."""
-        self._params = APU22Data.PARAMS
+        self._params = self.PARAMS
         self.si_idmodel = None
 
     @staticmethod
@@ -563,6 +564,138 @@ class APU22Data(Tools):
         fname = self.FIELMAPS_CONFIGS[idconfig]
         fmap_fname = fpath + fname
         return fmap_fname
+
+
+class APU22MANACAData(APU22Data):
+    PARAMS = _PARAMS()
+    PARAMS.B_PEAK = 0.7  # [T]
+    PARAMS.PERIOD_LEN = 22  # [mm]
+    PARAMS.ID_LEN = 1.300  # [m]
+    PARAMS.NR_PERIODS = 51
+    PARAMS.KPARAMETER_NAME = "phase"
+    PARAMS.ID_FAMNAME = "APU22"
+    PARAMS.SUBSECS = ["ID09SA"]
+
+    PARAMS.KICKMAPS_DATA_PATH = REPOS_PATH + "apu22/kickmaps/"
+    PARAMS.FIELDMAPS_DATA_PATH = (
+        DATA_REPOS_PATH
+        + "lnls-ima/kyma22/id-manaca/commissioning_id/measurement/magnetic/"
+        + "lnls/hallprobe/vertical_position_0mm/"
+    )  # noqa: E501
+    PARAMS.FOLDER_BASE_OUTPUT = REPOS_PATH + "apu22/results/data/"
+
+    FIELMAPS_CONFIGS = {
+        "ID2828": "2020-05-26_1991b_Fieldmap_X=-12_12mm_Z=-740_740mm_"
+        + "Y=0mm_ID=2828_Phase=0mm.dat",
+        "ID2829": "2020-05-26_1991b_Fieldmap_X=-12_12mm_Z=-740_740mm_"
+        + "Y=0mm_ID=2829_Phase=1mm.dat",
+        "ID2830": "2020-05-26_1991b_Fieldmap_X=-12_12mm_Z=-740_740mm_"
+        + "Y=0mm_ID=2830_Phase=2mm.dat",
+        "ID2831": "2020-05-26_1991b_Fieldmap_X=-12_12mm_Z=-740_740mm_"
+        + "Y=0mm_ID=2831_Phase=3mm.dat",
+        "ID2832": "2020-05-26_1991b_Fieldmap_X=-12_12mm_Z=-740_740mm_"
+        + "Y=0mm_ID=2832_Phase=4mm.dat",
+        "ID2833": "2020-05-26_1991b_Fieldmap_X=-12_12mm_Z=-740_740mm_"
+        + "Y=0mm_ID=2833_Phase=5mm.dat",
+        "ID2834": "2020-05-26_1991b_Fieldmap_X=-12_12mm_Z=-740_740mm_"
+        + "Y=0mm_ID=2834_Phase=6mm.dat",
+        "ID2835": "2020-05-26_1991b_Fieldmap_X=-12_12mm_Z=-740_740mm_"
+        + "Y=0mm_ID=2835_Phase=7mm.dat",
+        "ID2836": "2020-05-26_1991b_Fieldmap_X=-12_12mm_Z=-740_740mm_"
+        + "Y=0mm_ID=2836_Phase=8mm.dat",
+        "ID2837": "2020-05-26_1991b_Fieldmap_X=-12_12mm_Z=-740_740mm_"
+        + "Y=0mm_ID=2837_Phase=9mm.dat",
+        "ID2838": "2020-05-26_1991b_Fieldmap_X=-12_12mm_Z=-740_740mm_"
+        + "Y=0mm_ID=2838_Phase=10mm.dat",
+        "ID2839": "2020-05-26_1991b_Fieldmap_X=-12_12mm_Z=-740_740mm_"
+        + "Y=0mm_ID=2839_Phase=11mm.dat",
+    }
+
+    phase_dict = {
+        (0): "ID2828",
+        (1): "ID2829",
+        (2): "ID2830",
+        (3): "ID2831",
+        (4): "ID2832",
+        (5): "ID2833",
+        (6): "ID2834",
+        (7): "ID2835",
+        (8): "ID2836",
+        (9): "ID2837",
+        (10): "ID2838",
+        (11): "ID2839",
+    }
+
+    def __init__(self):
+        """Class constructor."""
+        self._params = self.PARAMS
+        self.si_idmodel = None
+
+
+class APU22SAPUCAIAData(APU22Data):
+    PARAMS = _PARAMS()
+    PARAMS.B_PEAK = 0.7  # [T]
+    PARAMS.PERIOD_LEN = 22  # [mm]
+    PARAMS.ID_LEN = 1.300  # [m]
+    PARAMS.NR_PERIODS = 51
+    PARAMS.KPARAMETER_NAME = "phase"
+    PARAMS.ID_FAMNAME = "APU22"
+    PARAMS.SUBSECS = ["ID17SA"]
+
+    PARAMS.KICKMAPS_DATA_PATH = REPOS_PATH + "apu22/kickmaps/"
+    PARAMS.FIELDMAPS_DATA_PATH = (
+        DATA_REPOS_PATH
+        + "lnls-ima/kyma22/id-ema/commissioning_id/measurement/magnetic/"
+        + "lnls/hallprobe/vertical_position_0mm/"
+    )  # noqa: E501
+    PARAMS.FOLDER_BASE_OUTPUT = REPOS_PATH + "apu22/results/data/"
+
+    FIELMAPS_CONFIGS = {
+        "ID2532": "2020-08-02_1991d_Fieldmap_X=-12_12mm_Z=-740_740mm_"
+        + "Y=0mm_ID=2532_Phase=0mm.dat",
+        "ID2533": "2020-08-02_1991d_Fieldmap_X=-12_12mm_Z=-740_740mm_"
+        + "Y=0mm_ID=2533_Phase=1mm.dat",
+        "ID2534": "2020-08-02_1991d_Fieldmap_X=-12_12mm_Z=-740_740mm_"
+        + "Y=0mm_ID=2534_Phase=2mm.dat",
+        "ID2535": "2020-08-02_1991d_Fieldmap_X=-12_12mm_Z=-740_740mm_"
+        + "Y=0mm_ID=2535_Phase=3mm.dat",
+        "ID2536": "2020-08-02_1991d_Fieldmap_X=-12_12mm_Z=-740_740mm_"
+        + "Y=0mm_ID=2536_Phase=4mm.dat",
+        "ID2537": "2020-08-02_1991d_Fieldmap_X=-12_12mm_Z=-740_740mm_"
+        + "Y=0mm_ID=2537_Phase=5mm.dat",
+        "ID2538": "2020-08-02_1991d_Fieldmap_X=-12_12mm_Z=-740_740mm_"
+        + "Y=0mm_ID=2538_Phase=6mm.dat",
+        "ID2539": "2020-08-02_1991d_Fieldmap_X=-12_12mm_Z=-740_740mm_"
+        + "Y=0mm_ID=2539_Phase=7mm.dat",
+        "ID2540": "2020-08-02_1991d_Fieldmap_X=-12_12mm_Z=-740_740mm_"
+        + "Y=0mm_ID=2540_Phase=8mm.dat",
+        "ID2541": "2020-08-02_1991d_Fieldmap_X=-12_12mm_Z=-740_740mm_"
+        + "Y=0mm_ID=2541_Phase=9mm.dat",
+        "ID2542": "2020-08-02_1991d_Fieldmap_X=-12_12mm_Z=-740_740mm_"
+        + "Y=0mm_ID=2542_Phase=10mm.dat",
+        "ID2543": "2020-08-02_1991d_Fieldmap_X=-12_12mm_Z=-740_740mm_"
+        + "Y=0mm_ID=2543_Phase=11mm.dat",
+    }
+
+    phase_dict = {
+        (0): "ID2532",
+        (1): "ID2533",
+        (2): "ID2534",
+        (3): "ID2535",
+        (4): "ID2536",
+        (5): "ID2537",
+        (6): "ID2538",
+        (7): "ID2539",
+        (8): "ID2540",
+        (9): "ID2541",
+        (10): "ID2542",
+        (11): "ID2543",
+    }
+
+    def __init__(self):
+        """Class constructor."""
+        self._params = self.PARAMS
+        self.si_idmodel = None
 
 
 class APU58Data(Tools):
@@ -1214,35 +1347,35 @@ class WLSData(Tools):
     PARAMS.FOLDER_BASE_OUTPUT = REPOS_PATH + "wls/results/data/"
 
     FIELMAPS_CONFIGS = {
-        'I=1A': 'SWLS_I=1A_X=-10_10mm_Y=-1.75_1.75mm_Z=-1000_1000mm.txt',
-        'I=10A': 'SWLS_I=10A_X=-10_10mm_Y=-1.75_1.75mm_Z=-1000_1000mm.txt',
-        'I=20A': 'SWLS_I=20A_X=-10_10mm_Y=-1.75_1.75mm_Z=-1000_1000mm.txt',
-        'I=40A': 'SWLS_I=40A_X=-10_10mm_Y=-1.75_1.75mm_Z=-1000_1000mm.txt',
-        'I=60A': 'SWLS_I=60A_X=-10_10mm_Y=-1.75_1.75mm_Z=-1000_1000mm.txt',
-        'I=80A': 'SWLS_I=80A_X=-10_10mm_Y=-1.75_1.75mm_Z=-1000_1000mm.txt',
-        'I=100A': 'SWLS_I=100A_X=-10_10mm_Y=-1.75_1.75mm_Z=-1000_1000mm.txt',
-        'I=120A': 'SWLS_I=120A_X=-10_10mm_Y=-1.75_1.75mm_Z=-1000_1000mm.txt',
-        'I=140A': 'SWLS_I=140A_X=-10_10mm_Y=-1.75_1.75mm_Z=-1000_1000mm.txt',
-        'I=160A': 'SWLS_I=160A_X=-10_10mm_Y=-1.75_1.75mm_Z=-1000_1000mm.txt',
-        'I=200A': 'SWLS_I=200A_X=-10_10mm_Y=-1.75_1.75mm_Z=-1000_1000mm.txt',
-        'I=227A': 'SWLS_I=227A_X=-10_10mm_Y=-1.75_1.75mm_Z=-1000_1000mm.txt',
-        'I=250A': 'SWLS_I=250A_X=-10_10mm_Y=-1.75_1.75mm_Z=-1000_1000mm.txt',
+        "I=1A": "SWLS_I=1A_X=-10_10mm_Y=-1.75_1.75mm_Z=-1000_1000mm.txt",
+        "I=10A": "SWLS_I=10A_X=-10_10mm_Y=-1.75_1.75mm_Z=-1000_1000mm.txt",
+        "I=20A": "SWLS_I=20A_X=-10_10mm_Y=-1.75_1.75mm_Z=-1000_1000mm.txt",
+        "I=40A": "SWLS_I=40A_X=-10_10mm_Y=-1.75_1.75mm_Z=-1000_1000mm.txt",
+        "I=60A": "SWLS_I=60A_X=-10_10mm_Y=-1.75_1.75mm_Z=-1000_1000mm.txt",
+        "I=80A": "SWLS_I=80A_X=-10_10mm_Y=-1.75_1.75mm_Z=-1000_1000mm.txt",
+        "I=100A": "SWLS_I=100A_X=-10_10mm_Y=-1.75_1.75mm_Z=-1000_1000mm.txt",
+        "I=120A": "SWLS_I=120A_X=-10_10mm_Y=-1.75_1.75mm_Z=-1000_1000mm.txt",
+        "I=140A": "SWLS_I=140A_X=-10_10mm_Y=-1.75_1.75mm_Z=-1000_1000mm.txt",
+        "I=160A": "SWLS_I=160A_X=-10_10mm_Y=-1.75_1.75mm_Z=-1000_1000mm.txt",
+        "I=200A": "SWLS_I=200A_X=-10_10mm_Y=-1.75_1.75mm_Z=-1000_1000mm.txt",
+        "I=227A": "SWLS_I=227A_X=-10_10mm_Y=-1.75_1.75mm_Z=-1000_1000mm.txt",
+        "I=250A": "SWLS_I=250A_X=-10_10mm_Y=-1.75_1.75mm_Z=-1000_1000mm.txt",
     }
 
     CURR_DICT = {
-        (1): 'I=1A',
-        (10): 'I=10A',
-        (20): 'I=20A',
-        (40): 'I=40A',
-        (60): 'I=60A',
-        (80): 'I=80A',
-        (100): 'I=100A',
-        (120): 'I=120A',
-        (140): 'I=140A',
-        (160): 'I=160A',
-        (200): 'I=200A',
-        (227): 'I=227A',
-        (250): 'I=250A',
+        (1): "I=1A",
+        (10): "I=10A",
+        (20): "I=20A",
+        (40): "I=40A",
+        (60): "I=60A",
+        (80): "I=80A",
+        (100): "I=100A",
+        (120): "I=120A",
+        (140): "I=140A",
+        (160): "I=160A",
+        (200): "I=200A",
+        (227): "I=227A",
+        (250): "I=250A",
     }
 
     def __init__(self):
