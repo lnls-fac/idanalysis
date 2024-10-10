@@ -4,7 +4,7 @@ from idanalysis import IDKickMap as _IDKickMap
 import os
 
 DATA_REPOS_PATH = "/opt/ids-data/"  # Put your data repository path here
-REPOS_PATH = os.path.dirname(os.path.abspath(__file__))
+REPOS_PATH = "~/repos/repos_sirius/idanalysis/"
 
 
 class Tools:
