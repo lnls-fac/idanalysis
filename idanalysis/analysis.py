@@ -780,6 +780,13 @@ class StorageRingAnalysis(Tools):
     def figures_path(self, value):
         self._figs_fpath = value
 
+    @staticmethod
+    def _get_idcs(fam_name, mod, idc_id):
+        idc = _np.array(pyaccel.lattice.find_indices(mod, 'fam_name',
+                                                     fam_name))
+        idx = _np.argsort(_np.abs(idc_id-idc))[:2]
+        return idc[idx]
+    
     def add_id_to_model(
         self,
         kmap_fname,
@@ -842,7 +849,6 @@ class StorageRingAnalysis(Tools):
             pymodels object: Lattice with kickmap
 
         """
-        famdata = pymodels.si.get_family_data(model)
         kickmaps, _ = pymodels.si.lattice.create_id_kickmaps_dict(
             self.ids, energy=3e9
         )
@@ -1071,7 +1077,8 @@ class StorageRingAnalysis(Tools):
             print()
         return twiss, stg
 
-    def correct_tunes(self, goal_tunes, verbose=True, nr_iter=2):
+    def correct_tunes(self, goal_tunes, verbose=True, nr_iter=2,
+                      idcs_out=None):
         """Correct tunes.
 
         Args:
@@ -1079,6 +1086,7 @@ class StorageRingAnalysis(Tools):
             verbose (bool, optional): If True prints will be executed.
             Defaults to True.
             nr_iter (int, optional): Number of iteractions. Defaults to 2.
+            idcs_out (list, optional): Indices to not use in correction.
 
         Returns:
             Twiss: Twiss after tunes corretion
@@ -1091,7 +1099,8 @@ class StorageRingAnalysis(Tools):
         if verbose:
             print("init    tunes: {:.9f} {:.9f}".format(tunes[0], tunes[1]))
         for i in range(nr_iter):
-            optics.correct_tunes_twoknobs(self.model_ids, goal_tunes)
+            optics.correct_tunes_twoknobs(self.model_ids, goal_tunes,
+                                          idcs_out=idcs_out)
             twiss, *_ = pyaccel.optics.calc_twiss(
                 self.model_ids, indices="closed"
             )
@@ -1111,7 +1120,7 @@ class StorageRingAnalysis(Tools):
             print()
         return twiss
 
-    def do_optics_corrections(self):
+    def do_optics_corrections(self, exclude_loc_qn=False):
         """Do optics correction.
 
         Returns:
@@ -1185,9 +1194,18 @@ class StorageRingAnalysis(Tools):
             twiss_beta_corr, stg = self.correct_beta(
                 straight_nr_, knobs_, goal_beta, goal_alpha
             )
+            idcs_out = None
+            if not exclude_loc_qn:
+                idcs_out = list()
+                idcs_out.extend(self._get_idcs('QFB', self.model_ids,
+                                               ind_id[0]))
+                idcs_out.extend(self._get_idcs('QDB1', self.model_ids,
+                                               ind_id[0]))
+                idcs_out.extend(self._get_idcs('QDB2', self.model_ids,
+                                               ind_id[0]))
 
             # Correct tunes
-            twiss_tune_corr = self.correct_tunes(goal_tunes)
+            twiss_tune_corr = self.correct_tunes(goal_tunes, idcs_out=idcs_out)
 
         return twiss_no_corr, twiss_beta_corr, twiss_tune_corr, stg
 
