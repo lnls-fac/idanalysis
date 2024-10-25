@@ -4,7 +4,7 @@ from idanalysis import IDKickMap as _IDKickMap
 import os
 
 DATA_REPOS_PATH = "/opt/ids-data/"  # Put your data repository path here
-REPOS_PATH = "~/repos/repos_sirius/idanalysis/"
+REPOS_PATH = os.path.dirname(os.path.abspath(__file__))[:-10] + '/'
 
 
 class Tools:
@@ -403,7 +403,7 @@ class DELTA52Data(Tools):
         + "ID=4883.dat",
     }
 
-    dp_dgv_dict = {
+    DP_DGV_DICT = {
         (0, 0): "ID4862",
         (0, 6.5625): "ID4863",
         (0, 13.125): "ID4864",
@@ -463,7 +463,7 @@ class DELTA52Data(Tools):
             str: fielmap name
         """
         fpath = self.folder_base_fieldmaps
-        idconfig = self.dp_dgv_dict[(dp, dgv)]
+        idconfig = self.DP_DGV_DICT[(dp, dgv)]
         fname = self.FIELMAPS_CONFIGS[idconfig]
         fmap_fname = fpath + fname
         return fmap_fname
@@ -516,7 +516,7 @@ class APU22Data(Tools):
         + "Y=0mm_ID=2839_Phase=11mm.dat",
     }
 
-    phase_dict = {
+    PHASE_DICT = {
         (0): "ID2828",
         (1): "ID2829",
         (2): "ID2830",
@@ -560,7 +560,7 @@ class APU22Data(Tools):
             str: fielmap name
         """
         fpath = self.folder_base_fieldmaps
-        idconfig = self.phase_dict[(phase)]
+        idconfig = self.PHASE_DICT[(phase)]
         fname = self.FIELMAPS_CONFIGS[idconfig]
         fmap_fname = fpath + fname
         return fmap_fname
@@ -611,7 +611,7 @@ class APU22MANACAData(APU22Data):
         + "Y=0mm_ID=2839_Phase=11mm.dat",
     }
 
-    phase_dict = {
+    PHASE_DICT = {
         (0): "ID2828",
         (1): "ID2829",
         (2): "ID2830",
@@ -677,7 +677,7 @@ class APU22SAPUCAIAData(APU22Data):
         + "Y=0mm_ID=2543_Phase=11mm.dat",
     }
 
-    phase_dict = {
+    PHASE_DICT = {
         (0): "ID2532",
         (1): "ID2533",
         (2): "ID2534",
@@ -755,7 +755,7 @@ class APU58Data(Tools):
         + "Y=0mm_ID=2961_Phase=29.0mm.dat",
     }
 
-    phase_dict = {
+    PHASE_DICT = {
         (0.0): "ID2945",
         (1.812): "ID2946",
         (3.625): "ID2947",
@@ -804,7 +804,7 @@ class APU58Data(Tools):
             str: fielmap name
         """
         fpath = self.folder_base_fieldmaps
-        idconfig = self.phase_dict[(phase)]
+        idconfig = self.PHASE_DICT[(phase)]
         fname = self.FIELMAPS_CONFIGS[idconfig]
         fmap_fname = fpath + fname
         return fmap_fname
@@ -850,7 +850,7 @@ class PAPU50Data(Tools):
         + "Z=-900_900mm_Y=0mm_ID=4655_Phase=16.48mm.dat",
     }
 
-    phase_dict = {
+    PHASE_DICT = {
         (0): "ID4648",
         (4.33): "ID4647",
         (6.25): "ID4649",
@@ -891,7 +891,7 @@ class PAPU50Data(Tools):
             str: fielmap name
         """
         fpath = self.folder_base_fieldmaps
-        idconfig = self.phase_dict[(phase)]
+        idconfig = self.PHASE_DICT[(phase)]
         fname = self.FIELMAPS_CONFIGS[idconfig]
         fmap_fname = fpath + fname
         return fmap_fname
@@ -959,7 +959,7 @@ class WIG180Data(Tools):
         + "U+0.00_D+0.00_Fieldmap_Z=-1650_1650mm_ID=3994.dat",
     }
 
-    gap_dict = {
+    GAP_DICT = {
         (022.00): "ID3977",
         (023.00): "ID3986",
         (023.95): "ID3987",
@@ -1004,7 +1004,7 @@ class WIG180Data(Tools):
             str: fielmap name
         """
         fpath = self.folder_base_fieldmaps
-        idconfig = self.gap_dict[(gap)]
+        idconfig = self.GAP_DICT[(gap)]
         fname = self.FIELMAPS_CONFIGS[idconfig]
         fmap_fname = fpath + fname
         return fmap_fname
@@ -1099,7 +1099,7 @@ class EPU50Data(Tools):
         + "EPU_gap40.9_fase-25.00_X=-20_20mm_Z=-1800_1800mm_ID=4098.dat",
     }
 
-    phase_gap_dict = {
+    PHASE_GAP_DICT = {
         (0.00, 22.0): "ID4079",
         (16.39, 22.0): "ID4080",
         (25.00, 22.0): "ID4082",
@@ -1166,7 +1166,7 @@ class EPU50Data(Tools):
             str: fielmap name
         """
         fpath = self.folder_base_fieldmaps
-        idconfig = self.phase_gap_dict[(phase, gap)]
+        idconfig = self.PHASE_GAP_DICT[(phase, gap)]
         fname = self.FIELMAPS_CONFIGS[idconfig]
         fmap_fname = fpath + fname
         return fmap_fname
@@ -1190,7 +1190,7 @@ class IVU18Data(Tools):
 
     FIELMAPS_CONFIGS = {None}
 
-    gap_dict = {None}
+    GAP_DICT = {None}
 
     def __init__(self):
         """Class constructor."""
@@ -1221,7 +1221,7 @@ class IVU18Data(Tools):
             str: fielmap name
         """
         fpath = self.folder_base_fieldmaps
-        idconfig = self.gap_dict[(gap)]
+        idconfig = self.GAP_DICT[(gap)]
         fname = self.FIELMAPS_CONFIGS[idconfig]
         fmap_fname = fpath + fname
         return fmap_fname
@@ -1245,7 +1245,7 @@ class VPU29Data(Tools):
 
     FIELMAPS_CONFIGS = {None}
 
-    gap_dict = {None}
+    GAP_DICT = {None}
 
     def __init__(self):
         """Class constructor."""
@@ -1276,7 +1276,7 @@ class VPU29Data(Tools):
             str: fielmap name
         """
         fpath = self.folder_base_fieldmaps
-        idconfig = self.gap_dict[(gap)]
+        idconfig = self.GAP_DICT[(gap)]
         fname = self.FIELMAPS_CONFIGS[idconfig]
         fmap_fname = fpath + fname
         return fmap_fname

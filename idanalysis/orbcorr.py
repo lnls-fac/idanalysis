@@ -45,8 +45,6 @@ def correct_orbit_local(
     tol_svals = 1e-5
 
     orb0 = pyaccel.tracking.find_orbit4(model0, indices="open")
-    orb0_pos = orb0[[0, 2], :]
-    orb0_ang = orb0[[1, 3], :]
 
     # find idc1 and idc2 indices for local correctors
     inds = pyaccel.lattice.find_indices(model1, "fam_name", id_famname)
@@ -70,13 +68,6 @@ def correct_orbit_local(
     bpms = pyaccel.lattice.find_indices(model1, "fam_name", "BPM")
     nrcors = len(cors)
     nrbpms = len(bpms)
-
-    # t_in_original = model1[idinds[0]].t_in.copy()
-    # t_out_original = model1[idinds[-1]].t_out.copy()
-    # model1[idinds[0]].rescale_kicks *= 0
-    # model1[idinds[-1]].rescale_kicks *= 0
-    # model1[idinds[0]].t_in *= 0
-    # model1[idinds[-1]].t_out *= 0
 
     # calc respm
     respm = np.zeros((2 * nrbpms, 2 * len(cors)))
@@ -109,11 +100,6 @@ def correct_orbit_local(
     elif correction_plane == "y":
         for i in range(nrcors):
             respm[:, 0 * nrcors + i] *= 0
-
-    # model1[idinds[0]].rescale_kicks = 0.5
-    # model1[idinds[-1]].rescale_kicks = 0.5
-    # model1[idinds[0]].t_in = t_in_original
-    # model1[idinds[-1]].t_out = t_out_original
 
     # inverse matrix
     umat, smat, vmat = np.linalg.svd(respm, full_matrices=False)
