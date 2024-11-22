@@ -231,7 +231,7 @@ class IDKickMap:
         return config
 
     def generate_linear_kickmap(
-        self, brho, posx, posy, cxx, cyy, cxy=0, cyx=0
+        self, brho, posx, posy, cxx, cyy, cxy=0, cyx=0, verbose=False
     ):
         """Generate a linear kickmap based on Ellaume formalism"""
         self.posx = _np.array(posx)  # [m]
@@ -250,7 +250,8 @@ class IDKickMap:
                 stg += "px = {:.01f} urad, py = {:.01f} urad".format(
                     pxf * 1e6, pyf * 1e6
                 )
-                print(stg)
+                if verbose:
+                    print(stg)
                 self.kickx[i, j] = pxf * brho**2
                 self.kicky[i, j] = pyf * brho**2
 

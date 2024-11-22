@@ -1,9 +1,10 @@
 """IDs data."""
 
 from idanalysis import IDKickMap as _IDKickMap
+import os
 
 DATA_REPOS_PATH = "/opt/ids-data/"  # Put your data repository path here
-REPOS_PATH = "~/repos/idanalysis/"  # Put your repository path here
+REPOS_PATH = os.path.dirname(os.path.abspath(__file__))[:-10]
 
 
 class Tools:
@@ -402,7 +403,7 @@ class DELTA52Data(Tools):
         + "ID=4883.dat",
     }
 
-    dp_dgv_dict = {
+    DP_DGV_DICT = {
         (0, 0): "ID4862",
         (0, 6.5625): "ID4863",
         (0, 13.125): "ID4864",
@@ -462,7 +463,7 @@ class DELTA52Data(Tools):
             str: fielmap name
         """
         fpath = self.folder_base_fieldmaps
-        idconfig = self.dp_dgv_dict[(dp, dgv)]
+        idconfig = self.DP_DGV_DICT[(dp, dgv)]
         fname = self.FIELMAPS_CONFIGS[idconfig]
         fmap_fname = fpath + fname
         return fmap_fname
@@ -515,7 +516,7 @@ class APU22Data(Tools):
         + "Y=0mm_ID=2839_Phase=11mm.dat",
     }
 
-    phase_dict = {
+    PHASE_DICT = {
         (0): "ID2828",
         (1): "ID2829",
         (2): "ID2830",
@@ -532,7 +533,7 @@ class APU22Data(Tools):
 
     def __init__(self):
         """Class constructor."""
-        self._params = APU22Data.PARAMS
+        self._params = self.PARAMS
         self.si_idmodel = None
 
     @staticmethod
@@ -559,10 +560,142 @@ class APU22Data(Tools):
             str: fielmap name
         """
         fpath = self.folder_base_fieldmaps
-        idconfig = self.phase_dict[(phase)]
+        idconfig = self.PHASE_DICT[(phase)]
         fname = self.FIELMAPS_CONFIGS[idconfig]
         fmap_fname = fpath + fname
         return fmap_fname
+
+
+class APU22MANACAData(APU22Data):
+    PARAMS = _PARAMS()
+    PARAMS.B_PEAK = 0.7  # [T]
+    PARAMS.PERIOD_LEN = 22  # [mm]
+    PARAMS.ID_LEN = 1.300  # [m]
+    PARAMS.NR_PERIODS = 51
+    PARAMS.KPARAMETER_NAME = "phase"
+    PARAMS.ID_FAMNAME = "APU22"
+    PARAMS.SUBSECS = ["ID09SA"]
+
+    PARAMS.KICKMAPS_DATA_PATH = REPOS_PATH + "apu22/kickmaps/"
+    PARAMS.FIELDMAPS_DATA_PATH = (
+        DATA_REPOS_PATH
+        + "lnls-ima/kyma22/id-manaca/commissioning_id/measurement/magnetic/"
+        + "lnls/hallprobe/vertical_position_0mm/"
+    )  # noqa: E501
+    PARAMS.FOLDER_BASE_OUTPUT = REPOS_PATH + "apu22/results/data/"
+
+    FIELMAPS_CONFIGS = {
+        "ID2828": "2020-05-26_1991b_Fieldmap_X=-12_12mm_Z=-740_740mm_"
+        + "Y=0mm_ID=2828_Phase=0mm.dat",
+        "ID2829": "2020-05-26_1991b_Fieldmap_X=-12_12mm_Z=-740_740mm_"
+        + "Y=0mm_ID=2829_Phase=1mm.dat",
+        "ID2830": "2020-05-26_1991b_Fieldmap_X=-12_12mm_Z=-740_740mm_"
+        + "Y=0mm_ID=2830_Phase=2mm.dat",
+        "ID2831": "2020-05-26_1991b_Fieldmap_X=-12_12mm_Z=-740_740mm_"
+        + "Y=0mm_ID=2831_Phase=3mm.dat",
+        "ID2832": "2020-05-26_1991b_Fieldmap_X=-12_12mm_Z=-740_740mm_"
+        + "Y=0mm_ID=2832_Phase=4mm.dat",
+        "ID2833": "2020-05-26_1991b_Fieldmap_X=-12_12mm_Z=-740_740mm_"
+        + "Y=0mm_ID=2833_Phase=5mm.dat",
+        "ID2834": "2020-05-26_1991b_Fieldmap_X=-12_12mm_Z=-740_740mm_"
+        + "Y=0mm_ID=2834_Phase=6mm.dat",
+        "ID2835": "2020-05-26_1991b_Fieldmap_X=-12_12mm_Z=-740_740mm_"
+        + "Y=0mm_ID=2835_Phase=7mm.dat",
+        "ID2836": "2020-05-26_1991b_Fieldmap_X=-12_12mm_Z=-740_740mm_"
+        + "Y=0mm_ID=2836_Phase=8mm.dat",
+        "ID2837": "2020-05-26_1991b_Fieldmap_X=-12_12mm_Z=-740_740mm_"
+        + "Y=0mm_ID=2837_Phase=9mm.dat",
+        "ID2838": "2020-05-26_1991b_Fieldmap_X=-12_12mm_Z=-740_740mm_"
+        + "Y=0mm_ID=2838_Phase=10mm.dat",
+        "ID2839": "2020-05-26_1991b_Fieldmap_X=-12_12mm_Z=-740_740mm_"
+        + "Y=0mm_ID=2839_Phase=11mm.dat",
+    }
+
+    PHASE_DICT = {
+        (0): "ID2828",
+        (1): "ID2829",
+        (2): "ID2830",
+        (3): "ID2831",
+        (4): "ID2832",
+        (5): "ID2833",
+        (6): "ID2834",
+        (7): "ID2835",
+        (8): "ID2836",
+        (9): "ID2837",
+        (10): "ID2838",
+        (11): "ID2839",
+    }
+
+    def __init__(self):
+        """Class constructor."""
+        self._params = self.PARAMS
+        self.si_idmodel = None
+
+
+class APU22SAPUCAIAData(APU22Data):
+    PARAMS = _PARAMS()
+    PARAMS.B_PEAK = 0.7  # [T]
+    PARAMS.PERIOD_LEN = 22  # [mm]
+    PARAMS.ID_LEN = 1.300  # [m]
+    PARAMS.NR_PERIODS = 51
+    PARAMS.KPARAMETER_NAME = "phase"
+    PARAMS.ID_FAMNAME = "APU22"
+    PARAMS.SUBSECS = ["ID17SA"]
+
+    PARAMS.KICKMAPS_DATA_PATH = REPOS_PATH + "apu22/kickmaps/"
+    PARAMS.FIELDMAPS_DATA_PATH = (
+        DATA_REPOS_PATH
+        + "lnls-ima/kyma22/id-ema/commissioning_id/measurement/magnetic/"
+        + "lnls/hallprobe/vertical_position_0mm/"
+    )  # noqa: E501
+    PARAMS.FOLDER_BASE_OUTPUT = REPOS_PATH + "apu22/results/data/"
+
+    FIELMAPS_CONFIGS = {
+        "ID2532": "2020-08-02_1991d_Fieldmap_X=-12_12mm_Z=-740_740mm_"
+        + "Y=0mm_ID=2532_Phase=0mm.dat",
+        "ID2533": "2020-08-02_1991d_Fieldmap_X=-12_12mm_Z=-740_740mm_"
+        + "Y=0mm_ID=2533_Phase=1mm.dat",
+        "ID2534": "2020-08-02_1991d_Fieldmap_X=-12_12mm_Z=-740_740mm_"
+        + "Y=0mm_ID=2534_Phase=2mm.dat",
+        "ID2535": "2020-08-02_1991d_Fieldmap_X=-12_12mm_Z=-740_740mm_"
+        + "Y=0mm_ID=2535_Phase=3mm.dat",
+        "ID2536": "2020-08-02_1991d_Fieldmap_X=-12_12mm_Z=-740_740mm_"
+        + "Y=0mm_ID=2536_Phase=4mm.dat",
+        "ID2537": "2020-08-02_1991d_Fieldmap_X=-12_12mm_Z=-740_740mm_"
+        + "Y=0mm_ID=2537_Phase=5mm.dat",
+        "ID2538": "2020-08-02_1991d_Fieldmap_X=-12_12mm_Z=-740_740mm_"
+        + "Y=0mm_ID=2538_Phase=6mm.dat",
+        "ID2539": "2020-08-02_1991d_Fieldmap_X=-12_12mm_Z=-740_740mm_"
+        + "Y=0mm_ID=2539_Phase=7mm.dat",
+        "ID2540": "2020-08-02_1991d_Fieldmap_X=-12_12mm_Z=-740_740mm_"
+        + "Y=0mm_ID=2540_Phase=8mm.dat",
+        "ID2541": "2020-08-02_1991d_Fieldmap_X=-12_12mm_Z=-740_740mm_"
+        + "Y=0mm_ID=2541_Phase=9mm.dat",
+        "ID2542": "2020-08-02_1991d_Fieldmap_X=-12_12mm_Z=-740_740mm_"
+        + "Y=0mm_ID=2542_Phase=10mm.dat",
+        "ID2543": "2020-08-02_1991d_Fieldmap_X=-12_12mm_Z=-740_740mm_"
+        + "Y=0mm_ID=2543_Phase=11mm.dat",
+    }
+
+    PHASE_DICT = {
+        (0): "ID2532",
+        (1): "ID2533",
+        (2): "ID2534",
+        (3): "ID2535",
+        (4): "ID2536",
+        (5): "ID2537",
+        (6): "ID2538",
+        (7): "ID2539",
+        (8): "ID2540",
+        (9): "ID2541",
+        (10): "ID2542",
+        (11): "ID2543",
+    }
+
+    def __init__(self):
+        """Class constructor."""
+        self._params = self.PARAMS
+        self.si_idmodel = None
 
 
 class APU58Data(Tools):
@@ -622,7 +755,7 @@ class APU58Data(Tools):
         + "Y=0mm_ID=2961_Phase=29.0mm.dat",
     }
 
-    phase_dict = {
+    PHASE_DICT = {
         (0.0): "ID2945",
         (1.812): "ID2946",
         (3.625): "ID2947",
@@ -671,7 +804,7 @@ class APU58Data(Tools):
             str: fielmap name
         """
         fpath = self.folder_base_fieldmaps
-        idconfig = self.phase_dict[(phase)]
+        idconfig = self.PHASE_DICT[(phase)]
         fname = self.FIELMAPS_CONFIGS[idconfig]
         fmap_fname = fpath + fname
         return fmap_fname
@@ -717,7 +850,7 @@ class PAPU50Data(Tools):
         + "Z=-900_900mm_Y=0mm_ID=4655_Phase=16.48mm.dat",
     }
 
-    phase_dict = {
+    PHASE_DICT = {
         (0): "ID4648",
         (4.33): "ID4647",
         (6.25): "ID4649",
@@ -758,7 +891,7 @@ class PAPU50Data(Tools):
             str: fielmap name
         """
         fpath = self.folder_base_fieldmaps
-        idconfig = self.phase_dict[(phase)]
+        idconfig = self.PHASE_DICT[(phase)]
         fname = self.FIELMAPS_CONFIGS[idconfig]
         fmap_fname = fpath + fname
         return fmap_fname
@@ -826,7 +959,7 @@ class WIG180Data(Tools):
         + "U+0.00_D+0.00_Fieldmap_Z=-1650_1650mm_ID=3994.dat",
     }
 
-    gap_dict = {
+    GAP_DICT = {
         (022.00): "ID3977",
         (023.00): "ID3986",
         (023.95): "ID3987",
@@ -871,7 +1004,7 @@ class WIG180Data(Tools):
             str: fielmap name
         """
         fpath = self.folder_base_fieldmaps
-        idconfig = self.gap_dict[(gap)]
+        idconfig = self.GAP_DICT[(gap)]
         fname = self.FIELMAPS_CONFIGS[idconfig]
         fmap_fname = fpath + fname
         return fmap_fname
@@ -966,7 +1099,7 @@ class EPU50Data(Tools):
         + "EPU_gap40.9_fase-25.00_X=-20_20mm_Z=-1800_1800mm_ID=4098.dat",
     }
 
-    phase_gap_dict = {
+    PHASE_GAP_DICT = {
         (0.00, 22.0): "ID4079",
         (16.39, 22.0): "ID4080",
         (25.00, 22.0): "ID4082",
@@ -1033,7 +1166,7 @@ class EPU50Data(Tools):
             str: fielmap name
         """
         fpath = self.folder_base_fieldmaps
-        idconfig = self.phase_gap_dict[(phase, gap)]
+        idconfig = self.PHASE_GAP_DICT[(phase, gap)]
         fname = self.FIELMAPS_CONFIGS[idconfig]
         fmap_fname = fpath + fname
         return fmap_fname
@@ -1057,7 +1190,7 @@ class IVU18Data(Tools):
 
     FIELMAPS_CONFIGS = {None}
 
-    gap_dict = {None}
+    GAP_DICT = {None}
 
     def __init__(self):
         """Class constructor."""
@@ -1088,7 +1221,7 @@ class IVU18Data(Tools):
             str: fielmap name
         """
         fpath = self.folder_base_fieldmaps
-        idconfig = self.gap_dict[(gap)]
+        idconfig = self.GAP_DICT[(gap)]
         fname = self.FIELMAPS_CONFIGS[idconfig]
         fmap_fname = fpath + fname
         return fmap_fname
@@ -1112,7 +1245,7 @@ class VPU29Data(Tools):
 
     FIELMAPS_CONFIGS = {None}
 
-    gap_dict = {None}
+    GAP_DICT = {None}
 
     def __init__(self):
         """Class constructor."""
@@ -1143,7 +1276,7 @@ class VPU29Data(Tools):
             str: fielmap name
         """
         fpath = self.folder_base_fieldmaps
-        idconfig = self.gap_dict[(gap)]
+        idconfig = self.GAP_DICT[(gap)]
         fname = self.FIELMAPS_CONFIGS[idconfig]
         fmap_fname = fpath + fname
         return fmap_fname
@@ -1203,46 +1336,48 @@ class WLSData(Tools):
     # PARAMS.NR_PERIODS = 13
     PARAMS.KPARAMETER_NAME = "current"
     PARAMS.ID_FAMNAME = "WLS"
-    PARAMS.SUBSECS = ["ID14SB"]
+    PARAMS.SUBSECS = ["ID15SP"]
 
     PARAMS.KICKMAPS_DATA_PATH = REPOS_PATH + "wls/kickmaps/"
     PARAMS.FIELDMAPS_DATA_PATH = (
         DATA_REPOS_PATH
         + "lnls-ima/si-wls/model-09/simulation/magnetic/updated-BHcurves/"
-        + "magnet-results/field-maps-two-currents/"
+        + "magnet-results/field-maps-two-currents-4symmetry/"
     )
     PARAMS.FOLDER_BASE_OUTPUT = REPOS_PATH + "wls/results/data/"
 
     FIELMAPS_CONFIGS = {
-        'I=1A': 'SWLS_I=1A_X=-10_10mm_Y=-1.75_1.75mm_Z=-1000_1000mm.txt',
-        'I=10A': 'SWLS_I=10A_X=-10_10mm_Y=-1.75_1.75mm_Z=-1000_1000mm.txt',
-        'I=20A': 'SWLS_I=20A_X=-10_10mm_Y=-1.75_1.75mm_Z=-1000_1000mm.txt',
-        'I=40A': 'SWLS_I=40A_X=-10_10mm_Y=-1.75_1.75mm_Z=-1000_1000mm.txt',
-        'I=60A': 'SWLS_I=60A_X=-10_10mm_Y=-1.75_1.75mm_Z=-1000_1000mm.txt',
-        'I=80A': 'SWLS_I=80A_X=-10_10mm_Y=-1.75_1.75mm_Z=-1000_1000mm.txt',
-        'I=100A': 'SWLS_I=100A_X=-10_10mm_Y=-1.75_1.75mm_Z=-1000_1000mm.txt',
-        'I=120A': 'SWLS_I=120A_X=-10_10mm_Y=-1.75_1.75mm_Z=-1000_1000mm.txt',
-        'I=140A': 'SWLS_I=140A_X=-10_10mm_Y=-1.75_1.75mm_Z=-1000_1000mm.txt',
-        'I=160A': 'SWLS_I=160A_X=-10_10mm_Y=-1.75_1.75mm_Z=-1000_1000mm.txt',
-        'I=200A': 'SWLS_I=200A_X=-10_10mm_Y=-1.75_1.75mm_Z=-1000_1000mm.txt',
-        'I=227A': 'SWLS_I=227A_X=-10_10mm_Y=-1.75_1.75mm_Z=-1000_1000mm.txt',
-        'I=250A': 'SWLS_I=250A_X=-10_10mm_Y=-1.75_1.75mm_Z=-1000_1000mm.txt',
+        "I=0.9A": 'full_fieldmap_I=0.90A.txt',
+        "I=8.2A": 'full_fieldmap_I=100.10A.txt',
+        "I=17.3A": 'full_fieldmap_I=122.10A.txt',
+        "I=34.9A": 'full_fieldmap_I=17.30A.txt',
+        "I=47.6A": 'full_fieldmap_I=180.20A.txt',
+        "I=59.1A": 'full_fieldmap_I=227.20A.txt',
+        "I=70.6A": 'full_fieldmap_I=269.90A.txt',
+        "I=83.64A": 'full_fieldmap_I=34.90A.txt',
+        "I=100.1A": 'full_fieldmap_I=47.60A.txt',
+        "I=122.1A": 'full_fieldmap_I=59.10A.txt',
+        "I=180.2A": 'full_fieldmap_I=70.60A.txt',
+        "I=227.2A": 'full_fieldmap_I=8.20A.txt',
+        "I=269.9A": 'full_fieldmap_I=83.64A.txt',
+
+
     }
 
     CURR_DICT = {
-        (1): 'I=1A',
-        (10): 'I=10A',
-        (20): 'I=20A',
-        (40): 'I=40A',
-        (60): 'I=60A',
-        (80): 'I=80A',
-        (100): 'I=100A',
-        (120): 'I=120A',
-        (140): 'I=140A',
-        (160): 'I=160A',
-        (200): 'I=200A',
-        (227): 'I=227A',
-        (250): 'I=250A',
+        (0.9): "I=0.9A",
+        (8.2): "I=8.2A",
+        (17.3): "I=17.3A",
+        (34.9): "I=34.9A",
+        (47.6): "I=47.6A",
+        (59.1): "I=59.1A",
+        (70.6): "I=70.6A",
+        (83.64): "I=83.64A",
+        (100.1): "I=100.1A",
+        (122.1): "I=122.1A",
+        (180.2): "I=180.2A",
+        (227.2): "I=227.2A",
+        (269.9): "I=269.9A",
     }
 
     def __init__(self):
