@@ -4,7 +4,7 @@ from idanalysis import IDKickMap as _IDKickMap
 import os
 
 DATA_REPOS_PATH = "/opt/ids-data/"  # Put your data repository path here
-REPOS_PATH = os.path.dirname(os.path.abspath(__file__))[:-10] + '/'
+REPOS_PATH = os.path.dirname(os.path.abspath(__file__))[:-10]
 
 
 class Tools:
@@ -1342,40 +1342,42 @@ class WLSData(Tools):
     PARAMS.FIELDMAPS_DATA_PATH = (
         DATA_REPOS_PATH
         + "lnls-ima/si-wls/model-09/simulation/magnetic/updated-BHcurves/"
-        + "magnet-results/field-maps-two-currents/"
+        + "magnet-results/field-maps-two-currents-4symmetry/"
     )
     PARAMS.FOLDER_BASE_OUTPUT = REPOS_PATH + "wls/results/data/"
 
     FIELMAPS_CONFIGS = {
-        "I=1A": "SWLS_I=1A_X=-10_10mm_Y=-1.75_1.75mm_Z=-1000_1000mm.txt",
-        "I=10A": "SWLS_I=10A_X=-10_10mm_Y=-1.75_1.75mm_Z=-1000_1000mm.txt",
-        "I=20A": "SWLS_I=20A_X=-10_10mm_Y=-1.75_1.75mm_Z=-1000_1000mm.txt",
-        "I=40A": "SWLS_I=40A_X=-10_10mm_Y=-1.75_1.75mm_Z=-1000_1000mm.txt",
-        "I=60A": "SWLS_I=60A_X=-10_10mm_Y=-1.75_1.75mm_Z=-1000_1000mm.txt",
-        "I=80A": "SWLS_I=80A_X=-10_10mm_Y=-1.75_1.75mm_Z=-1000_1000mm.txt",
-        "I=100A": "SWLS_I=100A_X=-10_10mm_Y=-1.75_1.75mm_Z=-1000_1000mm.txt",
-        "I=120A": "SWLS_I=120A_X=-10_10mm_Y=-1.75_1.75mm_Z=-1000_1000mm.txt",
-        "I=140A": "SWLS_I=140A_X=-10_10mm_Y=-1.75_1.75mm_Z=-1000_1000mm.txt",
-        "I=160A": "SWLS_I=160A_X=-10_10mm_Y=-1.75_1.75mm_Z=-1000_1000mm.txt",
-        "I=200A": "SWLS_I=200A_X=-10_10mm_Y=-1.75_1.75mm_Z=-1000_1000mm.txt",
-        "I=227A": "SWLS_I=227A_X=-10_10mm_Y=-1.75_1.75mm_Z=-1000_1000mm.txt",
-        "I=250A": "SWLS_I=250A_X=-10_10mm_Y=-1.75_1.75mm_Z=-1000_1000mm.txt",
+        "I=0.9A": 'full_fieldmap_I=0.90A.txt',
+        "I=8.2A": 'full_fieldmap_I=100.10A.txt',
+        "I=17.3A": 'full_fieldmap_I=122.10A.txt',
+        "I=34.9A": 'full_fieldmap_I=17.30A.txt',
+        "I=47.6A": 'full_fieldmap_I=180.20A.txt',
+        "I=59.1A": 'full_fieldmap_I=227.20A.txt',
+        "I=70.6A": 'full_fieldmap_I=269.90A.txt',
+        "I=83.64A": 'full_fieldmap_I=34.90A.txt',
+        "I=100.1A": 'full_fieldmap_I=47.60A.txt',
+        "I=122.1A": 'full_fieldmap_I=59.10A.txt',
+        "I=180.2A": 'full_fieldmap_I=70.60A.txt',
+        "I=227.2A": 'full_fieldmap_I=8.20A.txt',
+        "I=269.9A": 'full_fieldmap_I=83.64A.txt',
+
+
     }
 
     CURR_DICT = {
-        (1): "I=1A",
-        (10): "I=10A",
-        (20): "I=20A",
-        (40): "I=40A",
-        (60): "I=60A",
-        (80): "I=80A",
-        (100): "I=100A",
-        (120): "I=120A",
-        (140): "I=140A",
-        (160): "I=160A",
-        (200): "I=200A",
-        (227): "I=227A",
-        (250): "I=250A",
+        (0.9): "I=0.9A",
+        (8.2): "I=8.2A",
+        (17.3): "I=17.3A",
+        (34.9): "I=34.9A",
+        (47.6): "I=47.6A",
+        (59.1): "I=59.1A",
+        (70.6): "I=70.6A",
+        (83.64): "I=83.64A",
+        (100.1): "I=100.1A",
+        (122.1): "I=122.1A",
+        (180.2): "I=180.2A",
+        (227.2): "I=227.2A",
+        (269.9): "I=269.9A",
     }
 
     def __init__(self):
