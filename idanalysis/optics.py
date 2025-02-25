@@ -187,7 +187,8 @@ def calc_dynapt_xy(
             rm = (r1_+r2_) / 2
             rx = rm * np.cos(a)
             ry = rm * np.sin(a)
-            _, lost, _, _, _ = pyaccel.tracking.ring_pass(ring, [rx, 0, ry, 0, 0, 0], nrturns)
+            p_out, lost_info = pyaccel.tracking.ring_pass(ring, [rx, 0, ry, 0, 0, 0], nrturns)
+            lost = lost_info.lost_flag
             if lost:
                 r2_ = rm
             else:
