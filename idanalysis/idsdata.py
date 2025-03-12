@@ -1233,7 +1233,7 @@ class VPU29Data(Tools):
     PARAMS = _PARAMS()
     PARAMS.B_PEAK = 0.82  # [T]
     PARAMS.PERIOD_LEN = 29  # [mm]
-    PARAMS.ID_LEN = 1.700  # [m]
+    PARAMS.ID_LEN = 1.650  # [m]
     PARAMS.NR_PERIODS = 51
     PARAMS.KPARAMETER_NAME = "gap"
     PARAMS.ID_FAMNAME = "VPU29"

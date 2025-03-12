@@ -478,7 +478,7 @@ class TrajectoryAnalysis:
                 self._idkickmap.fmap_fname = self.fieldsource
             else:
                 self._idkickmap.fmap_fname = (
-                    self._fpath + self.fieldsource.filename
+                    self.fieldsource.filename
                 )
         else:
             print("RADIA model setted as fieldsource")
