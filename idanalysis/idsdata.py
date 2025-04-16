@@ -1240,7 +1240,10 @@ class VPU29Data(Tools):
     PARAMS.SUBSECS = ["ID06SB", "ID07SP"]
 
     PARAMS.KICKMAPS_DATA_PATH = REPOS_PATH + "vpu29/kickmaps/"
-    PARAMS.FIELDMAPS_DATA_PATH = None  # noqa: E501
+    PARAMS.FIELDMAPS_DATA_PATH = (
+        DATA_REPOS_PATH
+        + "lnls-ima/id-VPU29-2386b/measurement/magnetic/dat/hallprobe/"
+    )  # noqa: E501
     PARAMS.FOLDER_BASE_OUTPUT = REPOS_PATH + "vpu29/results/data/"
 
     FIELMAPS_CONFIGS = {None}
