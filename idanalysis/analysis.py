@@ -727,6 +727,7 @@ class StorageRingAnalysis(Tools):
         self._plot_orbcorr = False
         self._calc_type = self.CalcTypes.symmetrized
         self._figs_fpath = None
+        self._dynapt: DynapXY = None
 
     @property
     def orbcorr_system(self):
@@ -763,6 +764,10 @@ class StorageRingAnalysis(Tools):
             str: File path to save figures.
         """
         return self._figs_path
+
+    @property
+    def dynapt(self):
+        return self._dynapt
 
     @orbcorr_system.setter
     def orbcorr_system(self, value):
@@ -1434,12 +1439,6 @@ class StorageRingAnalysis(Tools):
             x_nrpts (int, optional): Horizontal nr of points. Defaults to 40.
             y_nrpts (int, optional): Vertical nr of points. Defaults to 20.
             nr_turns (int, optional): Number of turns. Defaults to 2048.
-            nux_bounds (tuple, optional): Tune x bounds on plot.
-            Defaults to (49.05, 49.50).
-            nuy_bounds (tuple, optional): Tune y bounds on plot.
-            Defaults to (14.12, 14.45).
-            fpath (Str, optional): Figure path. Defaults to None.
-            sufix (Str, optional): Figure name's sufix. Defaults to None.
         """
         self.model_ids.radiation_on = 0
         self.model_ids.cavity_on = False
@@ -1452,7 +1451,29 @@ class StorageRingAnalysis(Tools):
         print(dynapxy)
         dynapxy.do_tracking()
         dynapxy.process_data()
-        fig, _, _ = dynapxy.make_figure_diffusion(
+
+        self._dynapt = dynapxy
+
+        return dynapxy
+    
+    def plot_dynapt(
+            self,
+            nux_bounds=(49.05, 49.50),
+            nuy_bounds=(14.12, 14.45),
+            fpath=None,
+            sufix=None
+        ):
+        """Plot dynamic aperture.
+
+        Args:
+            nux_bounds (tuple, optional): Tune x bounds on plot.
+            Defaults to (49.05, 49.50).
+            nuy_bounds (tuple, optional): Tune y bounds on plot.
+            Defaults to (14.12, 14.45).
+            fpath (Str, optional): Figure path. Defaults to None.
+            sufix (Str, optional): Figure name's sufix. Defaults to None.
+        """
+        fig, _, _ = self._dynapt.make_figure_diffusion(
             orders=(1, 2, 3, 4),
             nuy_bounds=nuy_bounds,
             nux_bounds=nux_bounds,
