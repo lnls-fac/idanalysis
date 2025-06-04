@@ -1428,10 +1428,6 @@ class StorageRingAnalysis(Tools):
         x_nrpts=40,
         y_nrpts=20,
         nr_turns=2048,
-        nux_bounds=(49.05, 49.50),
-        nuy_bounds=(14.12, 14.45),
-        fpath=None,
-        sufix=None,
     ):
         """Analysis dynamic aperture.
 
