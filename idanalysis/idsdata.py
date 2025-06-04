@@ -1246,9 +1246,57 @@ class VPU29Data(Tools):
     )  # noqa: E501
     PARAMS.FOLDER_BASE_OUTPUT = REPOS_PATH + "vpu29/results/data/"
 
-    FIELMAPS_CONFIGS = {None}
+    FIELMAPS_CONFIGS = {
+        # Y = 0 mm
+        "ID5229": "X_axis/2025-03-25_VPU29_Gap9.7mm_Fieldmap_X=-2_2mm_Z=-1380_1380mm_"
+        + "ID=5229.dat",
+        "ID5230": "X_axis/2025-03-25_VPU29_Gap10.0mm_Fieldmap_X=-2_2mm_Z=-1380_1380mm_"
+        + "ID=5230.dat",
+        "ID5231": "X_axis/2025-03-25_VPU29_Gap10.5mm_Fieldmap_X=-2_2mm_Z=-1380_1380mm_"
+        + "ID=5231.dat",
+        "ID5232": "X_axis/2025-03-25_VPU29_Gap11.0mm_Fieldmap_X=-2_2mm_Z=-1380_1380mm_"
+        + "ID=5232.dat",
+        "ID5233": "X_axis/2025-03-25_VPU29_Gap11.5mm_Fieldmap_X=-2_2mm_Z=-1380_1380mm_"
+        + "ID=5233.dat",
 
-    GAP_DICT = {None}
+        # X = 0 mm
+        "ID5218": "Y_axis/2025-03-24_VPU29_Gap9.7mm_Fieldmap_Y=-3_3mm_Z=-1380_1380mm_"
+        + "ID=5218.dat",
+        "ID5219": "Y_axis/2025-03-24_VPU29_Gap10.0mm_Fieldmap_Y=-3_3mm_Z=-1380_1380mm_"
+        + "ID=5219.dat",
+        "ID5220": "Y_axis/2025-03-24_VPU29_Gap10.5mm_Fieldmap_Y=-3_3mm_Z=-1380_1380mm_"
+        + "ID=5220.dat",
+        "ID5221": "Y_axis/2025-03-24_VPU29_Gap11.0mm_Fieldmap_Y=-3_3mm_Z=-1380_1380mm_"
+        + "ID=5221.dat",
+        "ID5222": "Y_axis/2025-03-24_VPU29_Gap11.5mm_Fieldmap_Y=-3_3mm_Z=-1380_1380mm_"
+        + "ID=5222.dat",
+        "ID5223": "Y_axis/2025-03-24_VPU29_Gap12.0mm_Fieldmap_Y=-3_3mm_Z=-1380_1380mm_"
+        + "ID=5223.dat",
+        "ID5224": "Y_axis/2025-03-24_VPU29_Gap13.0mm_Fieldmap_Y=-3_3mm_Z=-1380_1380mm_"
+        + "ID=5224.dat",
+        "ID5225": "Y_axis/2025-03-25_VPU29_Gap15.0mm_Fieldmap_Y=-3_3mm_Z=-1380_1380mm_"
+        + "ID=5225.dat",
+        "ID5226": "Y_axis/2025-03-25_VPU29_Gap18.0mm_Fieldmap_Y=-3_3mm_Z=-1380_1380mm_"
+        + "ID=5226.dat",
+        "ID5227": "Y_axis/2025-03-25_VPU29_Gap21.0mm_Fieldmap_Y=-3_3mm_Z=-1380_1380mm_"
+        + "ID=5227.dat",
+        "ID5228": "Y_axis/2025-03-25_VPU29_Gap24.0mm_Fieldmap_Y=-3_3mm_Z=-1380_1380mm_"
+        + "ID=5228.dat",
+    }
+
+    GAP_DICT = {
+        (9.7): "ID5218",
+        (10.0): "ID5219",
+        (10.5): "ID5220",
+        (11.0): "ID5221",
+        (11.5): "ID5222",
+        (12.0): "ID5223",
+        (13.0): "ID5224",
+        (15.0): "ID5225",
+        (18.0): "ID5226",
+        (21.0): "ID5227",
+        (24.0): "ID5228"
+    }
 
     def __init__(self):
         """Class constructor."""
