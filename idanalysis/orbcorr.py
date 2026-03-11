@@ -9,63 +9,76 @@ from apsuite.orbcorr import OrbitCorr, CorrParams
 
 
 IDS_FAMNAMES = [
-    "PAPU50",
-    "APU22",
-    "IVU18",
-    "VPU29",
-    "WIG180",
-    "APU58",
-    "EPU50",
-    "DELTA52",
-    "WLS",
-    "UE44",
-    "CPMU14",
+    'PAPU50',
+    'APU22',
+    'IVU18',
+    'VPU29',
+    'WIG180',
+    'APU58',
+    'EPU50',
+    'DELTA52',
+    'WLS',
+    'UE44',
+    'CPMU13',
+    'CPMU14',
+    'WLS',
 ]
 
 
 def get_ids_indices(model):
-    inds_list = list()
+    inds_list_flat = list()
     for famname in IDS_FAMNAMES:
-        inds = pyaccel.lattice.find_indices(model, "fam_name", famname)
+        inds = pyaccel.lattice.find_indices(model, 'fam_name', famname)
         for idx in inds:
             if (
-                model[idx].pass_method == "kicktable_pass"
-                or model[idx].pass_method == "str_mpole_symplectic4_pass"
+                model[idx].pass_method == 'kicktable_pass'
+                or model[idx].pass_method == 'str_mpole_symplectic4_pass'
+                or model[idx].pass_method == 'field3d_pass'
             ):
-                inds_list.append(idx)
-    return sorted(inds_list)
+                inds_list_flat.append(idx)
+    inds_list_flat = sorted(inds_list_flat)
+    inds_list = list()
+    group = [inds_list_flat[0]]
+    for i in range(1, len(inds_list_flat)):
+        if inds_list_flat[i] - inds_list_flat[i - 1] <= 2:
+            group.append(inds_list_flat[i])
+        else:
+            inds_list.append(group)
+            group = [inds_list_flat[i]]
+    inds_list.append(group)
+    return inds_list
 
 
 def correct_orbit_local(
-    model0, model1, id_famname, correction_plane="both", plot=True
+    model0, model1, id_famname, correction_plane='both', plot=True
 ):
     """."""
-
     delta_kick = 1e-6  # [rad]
     tol_svals = 1e-5
 
-    orb0 = pyaccel.tracking.find_orbit4(model0, indices="open")
+    orb0 = pyaccel.tracking.find_orbit4(model0, indices='open')
 
     # find idc1 and idc2 indices for local correctors
-    inds = pyaccel.lattice.find_indices(model1, "fam_name", id_famname)
+    inds = pyaccel.lattice.find_indices(model1, 'fam_name', id_famname)
     idinds = list()
     for idx in inds:
         if (
-            model1[idx].pass_method == "kicktable_pass"
-            or model1[idx].pass_method == "str_mpole_symplectic4_pass"
+            model1[idx].pass_method == 'kicktable_pass'
+            or model1[idx].pass_method == 'str_mpole_symplectic4_pass'
+            or model1[idx].pass_method == 'pm_field3d_pass'
         ):
             idinds.append(idx)
     idc1, idc2 = idinds[0], idinds[-1]
-    while idc1 >= 0 and model1[idc1].fam_name != "IDC":
+    while idc1 >= 0 and model1[idc1].fam_name != 'IDC':
         idc1 -= 1
-    while idc2 < len(model1) and model1[idc2].fam_name != "IDC":
+    while idc2 < len(model1) and model1[idc2].fam_name != 'IDC':
         idc2 += 1
     if idc1 < 0 or idc2 >= len(model1):
-        raise ValueError("Could not find ID correctors!")
+        raise ValueError('Could not find ID correctors!')
     cors = [idc1, idc2]
 
     # get indices
-    bpms = pyaccel.lattice.find_indices(model1, "fam_name", "BPM")
+    bpms = pyaccel.lattice.find_indices(model1, 'fam_name', 'BPM')
     nrcors = len(cors)
     nrbpms = len(bpms)
 
@@ -74,9 +87,9 @@ def correct_orbit_local(
     for i in range(nrcors):
         kick0 = model1[cors[i]].hkick_polynom
         model1[cors[i]].hkick_polynom = kick0 + delta_kick / 2
-        orb1 = pyaccel.tracking.find_orbit4(model1, indices="open")
+        orb1 = pyaccel.tracking.find_orbit4(model1, indices='open')
         model1[cors[i]].hkick_polynom = kick0 - delta_kick / 2
-        orb2 = pyaccel.tracking.find_orbit4(model1, indices="open")
+        orb2 = pyaccel.tracking.find_orbit4(model1, indices='open')
         orb_delta = (orb1 - orb2) / delta_kick
         orb_delta = orb_delta[[0, 2], :]
         orb_delta = orb_delta[:, bpms]  # select cod in BPMs
@@ -85,19 +98,19 @@ def correct_orbit_local(
     for i in range(nrcors):
         kick0 = model1[cors[i]].vkick_polynom
         model1[cors[i]].vkick_polynom = kick0 + delta_kick / 2
-        orb1 = pyaccel.tracking.find_orbit4(model1, indices="open")
+        orb1 = pyaccel.tracking.find_orbit4(model1, indices='open')
         model1[cors[i]].vkick_polynom = kick0 - delta_kick / 2
-        orb2 = pyaccel.tracking.find_orbit4(model1, indices="open")
+        orb2 = pyaccel.tracking.find_orbit4(model1, indices='open')
         orb_delta = (orb1 - orb2) / delta_kick
         orb_delta = orb_delta[[0, 2], :]
         orb_delta = orb_delta[:, bpms]  # select cod in BPMs
         respm[:, nrcors + i] = orb_delta.flatten()
         model1[cors[i]].vkick_polynom = kick0
 
-    if correction_plane == "x":
+    if correction_plane == 'x':
         for i in range(nrcors):
             respm[:, 1 * nrcors + i] *= 0
-    elif correction_plane == "y":
+    elif correction_plane == 'y':
         for i in range(nrcors):
             respm[:, 0 * nrcors + i] *= 0
 
@@ -109,7 +122,7 @@ def correct_orbit_local(
     ismat = np.diag(ismat)
     invmat = -1 * np.dot(np.dot(vmat.T, ismat), umat.T)
 
-    orb1 = pyaccel.tracking.find_orbit4(model1, indices="open")
+    orb1 = pyaccel.tracking.find_orbit4(model1, indices='open')
     cod_u = orb1 - orb0
     cod0_pos = cod_u[[0, 2], :]
     cod0_ang = cod_u[[1, 3], :]
@@ -125,14 +138,14 @@ def correct_orbit_local(
         for i in range(nrcors):
             model1[cors[i]].hkick_polynom += dk[i]
             model1[cors[i]].vkick_polynom += dk[nrcors + i]
-        orb1 = pyaccel.tracking.find_orbit4(model1, indices="open")
+        orb1 = pyaccel.tracking.find_orbit4(model1, indices='open')
 
     print("Correctors's kicks: ")
-    txt = "IDC1 x: {:.2f} urad   IDC2 x: {:.2f} urad".format(
+    txt = 'IDC1 x: {:.2f} urad   IDC2 x: {:.2f} urad'.format(
         1e6 * dk_total[0], 1e6 * dk_total[1]
     )
     print(txt)
-    txt = "IDC1 y: {:.2f} urad   IDC2 y: {:.2f} urad".format(
+    txt = 'IDC1 y: {:.2f} urad   IDC2 y: {:.2f} urad'.format(
         1e6 * dk_total[2], 1e6 * dk_total[3]
     )
     print(txt)
@@ -190,32 +203,32 @@ def correct_orbit_local(
 
         # uncorrected
         label = (
-            "Uncorrected - rms@bpms, max@ring, rms@ring : {:.2f}, "
-            "{:.2f}, {:.2f} um".format(
+            'Uncorrected - rms@bpms, max@ring, rms@ring : {:.2f}, '
+            '{:.2f}, {:.2f} um'.format(
                 rms_rx0_bpms, max_rx0_ring, rms_rx0_ring
             )
         )
 
-        plt.plot(spos, cod0_rx, "-", color="C0")
-        plt.plot(spos[bpms], cod0_rx[bpms], ".", color="C0", label=label)
+        plt.plot(spos, cod0_rx, '-', color='C0')
+        plt.plot(spos[bpms], cod0_rx[bpms], '.', color='C0', label=label)
 
         # corrected
         label = (
-            "Corrected - rms@bpms, max@ring, rms@ring : {:.2f}, "
-            "{:.2f}, {:.2f} um"
+            'Corrected - rms@bpms, max@ring, rms@ring : {:.2f}, '
+            '{:.2f}, {:.2f} um'
         ).format(rms_rx1_bpms, max_rx1_ring, rms_rx1_ring)
-        plt.plot(spos, cod_c_rx, "-", color="C1")
-        plt.plot(spos[bpms], cod_c_rx[bpms], ".", color="C1", label=label)
+        plt.plot(spos, cod_c_rx, '-', color='C1')
+        plt.plot(spos[bpms], cod_c_rx[bpms], '.', color='C1', label=label)
 
         # corrected @ ID straight
-        label = "Corrected - ID straight"
+        label = 'Corrected - ID straight'
         spos_corr = spos[cors[0] : cors[-1] + 1]
         cod_c_rx_corr = cod_c_rx[cors[0] : cors[-1] + 1]
-        plt.plot(spos_corr, cod_c_rx_corr, ".-", color="C2", label=label)
+        plt.plot(spos_corr, cod_c_rx_corr, '.-', color='C2', label=label)
         plt.legend()
-        plt.title("Horizontal COD Position")
-        plt.xlabel("spos [m]")
-        plt.ylabel("Pos [um]")
+        plt.title('Horizontal COD Position')
+        plt.xlabel('spos [m]')
+        plt.ylabel('Pos [um]')
         plt.grid()
         plt.show()
 
@@ -223,30 +236,30 @@ def correct_orbit_local(
 
         # uncorrected
         label = (
-            "Uncorrected - rms@bpms, max@ring, rms@ring :  {:.2f}, "
-            "{:.2f}, {:.2f} um"
+            'Uncorrected - rms@bpms, max@ring, rms@ring :  {:.2f}, '
+            '{:.2f}, {:.2f} um'
         ).format(rms_ry0_bpms, max_ry0_ring, rms_ry0_ring)
 
-        plt.plot(spos, cod0_ry, "-", color="C0")
-        plt.plot(spos[bpms], cod0_ry[bpms], ".", color="C0", label=label)
+        plt.plot(spos, cod0_ry, '-', color='C0')
+        plt.plot(spos[bpms], cod0_ry[bpms], '.', color='C0', label=label)
 
         # corrected
         label = (
-            "Corrected - rms@bpms, max@ring, rms@ring : {:.2f}, "
-            "{:.2f}, {:.2f} um"
+            'Corrected - rms@bpms, max@ring, rms@ring : {:.2f}, '
+            '{:.2f}, {:.2f} um'
         ).format(rms_ry1_bpms, max_ry1_ring, rms_ry1_ring)
-        plt.plot(spos, cod_c_ry, "-", color="C1")
-        plt.plot(spos[bpms], cod_c_ry[bpms], ".", color="C1", label=label)
+        plt.plot(spos, cod_c_ry, '-', color='C1')
+        plt.plot(spos[bpms], cod_c_ry[bpms], '.', color='C1', label=label)
 
         # corrected @ ID straight
-        label = "Corrected - ID straight"
+        label = 'Corrected - ID straight'
         spos_corr = spos[cors[0] : cors[-1] + 1]
         cod_c_ry_corr = cod_c_ry[cors[0] : cors[-1] + 1]
-        plt.plot(spos_corr, cod_c_ry_corr, ".-", color="C2", label=label)
+        plt.plot(spos_corr, cod_c_ry_corr, '.-', color='C2', label=label)
         plt.legend()
-        plt.title("Vertical COD Position")
-        plt.xlabel("spos [m]")
-        plt.ylabel("Pos [um]")
+        plt.title('Vertical COD Position')
+        plt.xlabel('spos [m]')
+        plt.ylabel('Pos [um]')
         plt.grid()
         plt.show()
 
@@ -254,30 +267,30 @@ def correct_orbit_local(
 
         # uncorrected
         label = (
-            "Uncorrected - rms@bpms, max@ring, rms@ring : {:.2f}, "
-            "{:.2f}, {:.2f} urad"
+            'Uncorrected - rms@bpms, max@ring, rms@ring : {:.2f}, '
+            '{:.2f}, {:.2f} urad'
         ).format(rms_px0_bpms, max_px0_ring, rms_px0_ring)
 
-        plt.plot(spos, cod0_px, "-", color="C0")
-        plt.plot(spos[bpms], cod0_px[bpms], ".", color="C0", label=label)
+        plt.plot(spos, cod0_px, '-', color='C0')
+        plt.plot(spos[bpms], cod0_px[bpms], '.', color='C0', label=label)
 
         # corrected
         label = (
-            "Corrected - rms@bpms, max@ring, rms@ring : {:.2f}, "
-            "{:.2f}, {:.2f} urad"
+            'Corrected - rms@bpms, max@ring, rms@ring : {:.2f}, '
+            '{:.2f}, {:.2f} urad'
         ).format(rms_px1_bpms, max_px1_ring, rms_px1_ring)
-        plt.plot(spos, cod_c_px, "-", color="C1")
-        plt.plot(spos[bpms], cod_c_px[bpms], ".", color="C1", label=label)
+        plt.plot(spos, cod_c_px, '-', color='C1')
+        plt.plot(spos[bpms], cod_c_px[bpms], '.', color='C1', label=label)
 
         # corrected @ ID straight
-        label = "Corrected - ID straight"
+        label = 'Corrected - ID straight'
         spos_corr = spos[cors[0] : cors[-1] + 1]
         cod_c_px_corr = cod_c_px[cors[0] : cors[-1] + 1]
-        plt.plot(spos_corr, cod_c_px_corr, ".-", color="C2", label=label)
+        plt.plot(spos_corr, cod_c_px_corr, '.-', color='C2', label=label)
         plt.legend()
-        plt.title("Horizontal COD Angle")
-        plt.xlabel("spos [m]")
-        plt.ylabel("Angle [urad]")
+        plt.title('Horizontal COD Angle')
+        plt.xlabel('spos [m]')
+        plt.ylabel('Angle [urad]')
         plt.grid()
         plt.show()
 
@@ -285,30 +298,30 @@ def correct_orbit_local(
 
         # uncorrected
         label = (
-            "Uncorrected - rms@bpms, max@ring, rms@ring : {:.2f}, "
-            "{:.2f}, {:.2f} urad"
+            'Uncorrected - rms@bpms, max@ring, rms@ring : {:.2f}, '
+            '{:.2f}, {:.2f} urad'
         ).format(rms_py0_bpms, max_py0_ring, rms_py0_ring)
 
-        plt.plot(spos, cod0_py, "-", color="C0")
-        plt.plot(spos[bpms], cod0_py[bpms], ".", color="C0", label=label)
+        plt.plot(spos, cod0_py, '-', color='C0')
+        plt.plot(spos[bpms], cod0_py[bpms], '.', color='C0', label=label)
 
         # corrected
         label = (
-            "Corrected - rms@bpms, max@ring, rms@ring : {:.2f}, "
-            "{:.2f}, {:.2f} urad"
+            'Corrected - rms@bpms, max@ring, rms@ring : {:.2f}, '
+            '{:.2f}, {:.2f} urad'
         ).format(rms_py1_bpms, max_py1_ring, rms_py1_ring)
-        plt.plot(spos, cod_c_py, "-", color="C1")
-        plt.plot(spos[bpms], cod_c_py[bpms], ".", color="C1", label=label)
+        plt.plot(spos, cod_c_py, '-', color='C1')
+        plt.plot(spos[bpms], cod_c_py[bpms], '.', color='C1', label=label)
 
         # corrected @ ID straight
-        label = "Corrected - ID straight"
+        label = 'Corrected - ID straight'
         spos_corr = spos[cors[0] : cors[-1] + 1]
         cod_c_py_corr = cod_c_py[cors[0] : cors[-1] + 1]
-        plt.plot(spos_corr, cod_c_py_corr, ".-", color="C2", label=label)
+        plt.plot(spos_corr, cod_c_py_corr, '.-', color='C2', label=label)
         plt.legend()
-        plt.title("Vertical COD Angle")
-        plt.xlabel("spos [m]")
-        plt.ylabel("Angle [urad]")
+        plt.title('Vertical COD Angle')
+        plt.xlabel('spos [m]')
+        plt.ylabel('Angle [urad]')
         plt.grid()
         plt.show()
 
@@ -342,37 +355,52 @@ def correct_orbit_fb(
     model1,
     minsingval=0.2,
     nr_steps=1,
-    corr_system="SOFB",
+    corr_system='SOFB',
     plot_flag=False,
 ):
     """."""
     # calculate structures
     famdata = si.get_family_data(model1)
-    bpms = np.array([idx[0] for idx in famdata["BPM"]["index"]])
+    bpms = np.array([idx[0] for idx in famdata['BPM']['index']])
     spos_bpms = pyaccel.lattice.find_spos(model1, indices=bpms)
-    inds_list = get_ids_indices(model1)
+    ids_ind_all = get_ids_indices(model1)
 
     # create orbit corrector
-    cparams = CorrParams()
+    cparams = CorrParams(use6dtrack=False)
     cparams.minsingval = minsingval
     cparams.convergencetol = 1e-8  # [m]
     cparams.maxnriters = 20
 
     # get unperturbed orbit
-    ocorr = OrbitCorr(model0, "SI", params=cparams, corr_system=corr_system)
+    ocorr = OrbitCorr(
+        model0, 'SI', params=cparams, corr_system=corr_system, use6dtrack=False
+    )
     orb0 = ocorr.get_orbit()
 
     factors = np.linspace(0, 1, nr_steps + 1)
-    rescale_kicks_orig = [model1[idx].rescale_kicks for idx in inds_list]
+    # rescale_kicks_orig = [model1[idx].rescale_kicks for idx in inds_list]
+    rescale_kicks_orig = list()
+    for idcs in ids_ind_all:
+        rescale_kicks_local = list()
+        for i, idx in enumerate(idcs):
+            rescale_kicks_local.append(model1[idx].rescale_kicks)
+        rescale_kicks_orig.append(rescale_kicks_local)
 
     for factor in factors:
         # rescale kicks
-        for idx, rescale_kicks in zip(inds_list, rescale_kicks_orig):
-            model1[idx].rescale_kicks = factor * rescale_kicks
+        for idcs, rescale_kicks in zip(  # noqa: B905
+            ids_ind_all, rescale_kicks_orig
+        ):
+            for i, idx in enumerate(idcs):
+                model1[idx].rescale_kicks = factor * rescale_kicks[i]
 
         # get perturbed orbit
         ocorr = OrbitCorr(
-            model1, "SI", params=cparams, corr_system=corr_system
+            model1,
+            'SI',
+            params=cparams,
+            corr_system=corr_system,
+            use6dtrack=False,
         )
         orb1 = ocorr.get_orbit()
 
@@ -382,7 +410,7 @@ def correct_orbit_fb(
         cody_u = cod_u[len(bpms) :]
 
         # calc response matrix and correct orbit
-        sts = ["Sucess", "OrbRMSWarning", "ConvergenceFail", "SaturationFail"]
+        sts = ['Sucess', 'OrbRMSWarning', 'ConvergenceFail', 'SaturationFail']
         res = ocorr.correct_orbit(goal_orbit=orb0)
         print(sts[res])
 
@@ -395,13 +423,13 @@ def correct_orbit_fb(
         codx_c = cod_c[: len(bpms)]
         cody_c = cod_c[len(bpms) :]
 
-    if corr_system == "FOFB":
+    if corr_system == 'FOFB':
         codx_c = codx_c[ocorr.params.enbllistbpm[: len(bpms)]]
         cody_c = cody_c[ocorr.params.enbllistbpm[len(bpms) :]]
         codx_u = codx_u[ocorr.params.enbllistbpm[: len(bpms)]]
         cody_u = cody_u[ocorr.params.enbllistbpm[len(bpms) :]]
         spos_bpms = spos_bpms[ocorr.params.enbllistbpm[: len(bpms)]]
-    elif corr_system == "SOFB":
+    elif corr_system == 'SOFB':
         pass
     else:
         raise ValueError('Corretion system must be "SOFB" or "FOFB"')
@@ -416,31 +444,31 @@ def correct_orbit_fb(
         plt.plot(
             spos_bpms,
             1e6 * codx_u,
-            label="Uncorrected - RMS = {:.3f}".format(rmsx_u),
+            label='Uncorrected - RMS = {:.3f}'.format(rmsx_u),
         )
         plt.plot(
             spos_bpms,
             1e6 * codx_c,
-            label="Corrected - RMS = {:.3f}".format(rmsx_c),
+            label='Corrected - RMS = {:.3f}'.format(rmsx_c),
         )
         plt.legend()
-        plt.xlabel("pos [m]")
-        plt.ylabel("codx [um]")
+        plt.xlabel('pos [m]')
+        plt.ylabel('codx [um]')
 
         plt.figure(2)
         plt.plot(
             spos_bpms,
             1e6 * cody_u,
-            label="Uncorrected - RMS = {:.3f}".format(rmsy_u),
+            label='Uncorrected - RMS = {:.3f}'.format(rmsy_u),
         )
         plt.plot(
             spos_bpms,
             1e6 * cody_c,
-            label="Corrected - RMS = {:.3f}".format(rmsy_c),
+            label='Corrected - RMS = {:.3f}'.format(rmsy_c),
         )
         plt.legend()
-        plt.xlabel("pos [m]")
-        plt.ylabel("cody [um]")
+        plt.xlabel('pos [m]')
+        plt.ylabel('cody [um]')
         plt.show()
 
     return kicks, spos_bpms, codx_c, cody_c, codx_u, cody_u, bpms

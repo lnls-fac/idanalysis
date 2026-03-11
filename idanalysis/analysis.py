@@ -92,11 +92,11 @@ class FieldMapAnalysis:
         Returns:
             _1D numpy array_: Field along z axis
         """
-        if field_component == "by":
+        if field_component == 'by':
             b = self.fmap.by[self.fmap.ry_zero][self.fmap.rx_zero][:]
-        elif field_component == "bx":
+        elif field_component == 'bx':
             b = self.fmap.bx[self.fmap.ry_zero][self.fmap.rx_zero][:]
-        elif field_component == "bz":
+        elif field_component == 'bz':
             b = self.fmap.bz[self.fmap.ry_zero][self.fmap.rx_zero][:]
         return b
 
@@ -126,12 +126,12 @@ class FieldMapAnalysis:
         idxmax = idxmax + _np.argwhere(b == b_slice[0]).ravel()[0]
 
         rzmax = rz[idxmax]
-        print("rz peak: {} mm".format(rzmax))
-        print("b peak: {} T".format(b[idxmax]))
+        print('rz peak: {} mm'.format(rzmax))
+        print('b peak: {} T'.format(b[idxmax]))
         return idxmax, rzmax, b[idxmax]
 
     def get_fmap_transverse_dependence(
-        self, field_component, peak_search=0.1, plane="x"
+        self, field_component, peak_search=0.1, plane='x'
     ):
         """Get field transverse dependence.
 
@@ -148,22 +148,22 @@ class FieldMapAnalysis:
             _1D Numpy array_: Field values on transverse positions
         """
         idxmax, *_ = self.find_field_peak(field_component, peak_search)
-        if field_component == "by":
+        if field_component == 'by':
             b = _np.array(self.fmap.by)
-        elif field_component == "bx":
+        elif field_component == 'bx':
             b = _np.array(self.fmap.bx)
-        elif field_component == "bz":
+        elif field_component == 'bz':
             b = _np.array(self.fmap.bz)
 
-        if plane == "x":
+        if plane == 'x':
             b_transverse = b[self.fmap.ry_zero, :, idxmax]
-        elif plane == "y":
+        elif plane == 'y':
             b_transverse = b[:, self.fmap.rx_zero, idxmax]
 
-        r_transverse = self.fmap.rx if plane == "x" else self.fmap.ry
+        r_transverse = self.fmap.rx if plane == 'x' else self.fmap.ry
         return r_transverse, b_transverse
 
-    def get_fmap_roll_off(self, field_component, peak_search=0.1, plane="x"):
+    def get_fmap_roll_off(self, field_component, peak_search=0.1, plane='x'):
         """Get fieldmap roll-off.
 
         Args:
@@ -200,7 +200,7 @@ class RadiaModelAnalysis:
 
     @staticmethod
     def _get_field_component_idx(field_component):
-        components = {"bx": 0, "by": 1, "bz": 2}
+        components = {'bx': 0, 'by': 1, 'bz': 2}
         return components[field_component]
 
     def find_field_peak(self, field_component):
@@ -225,7 +225,7 @@ class RadiaModelAnalysis:
         return idxmax, rzmax, _np.abs(b[idxmax])
 
     def calc_radia_transverse_dependence(
-        self, field_component, r_transverse, plane="x"
+        self, field_component, r_transverse, plane='x'
     ):
         """Get field transverse dependence.
 
@@ -244,15 +244,15 @@ class RadiaModelAnalysis:
         _, rzmax, _ = self.find_field_peak(field_component)
         comp_idx = self._get_field_component_idx(field_component)
 
-        if plane == "x":
+        if plane == 'x':
             field = self.model.get_field(r_transverse, 0, rzmax)
-        elif plane == "y":
+        elif plane == 'y':
             field = self.model.get_field(0, r_transverse, rzmax)
         b_transverse = field[:, comp_idx]
 
         return r_transverse, b_transverse
 
-    def calc_radia_roll_off(self, field_component, r_transverse, plane="x"):
+    def calc_radia_roll_off(self, field_component, r_transverse, plane='x'):
         """Get field roll-off.
 
         Args:
@@ -456,15 +456,15 @@ class TrajectoryAnalysis:
 
     def _is_fiedsource_fieldmap(self):
         typ = str(self._fieldsource.__class__)
-        if "imaids" in typ:
+        if 'imaids' in typ:
             return False
-        elif "fieldmap" in typ:
+        elif 'fieldmap' in typ:
             return True
-        elif "str" in typ:
+        elif 'str' in typ:
             return True
         else:
             raise ValueError(
-                "Field source must be RADIA model, fieldmap or a fieldmap name."
+                'Field source must be RADIA model, fieldmap or a fieldmap name.'
             )
 
     def set_traj_configs(self):
@@ -472,16 +472,14 @@ class TrajectoryAnalysis:
         self._idkickmap = _IDKickMap()
 
         if self._is_fiedsource_fieldmap():
-            print("Fieldmap setted as fieldsource")
+            print('Fieldmap setted as fieldsource')
             typ = str(self._fieldsource.__class__)
-            if "str" in typ:
+            if 'str' in typ:
                 self._idkickmap.fmap_fname = self.fieldsource
             else:
-                self._idkickmap.fmap_fname = (
-                    self.fieldsource.filename
-                )
+                self._idkickmap.fmap_fname = self.fieldsource.filename
         else:
-            print("RADIA model setted as fieldsource")
+            print('RADIA model setted as fieldsource')
             self._idkickmap.radia_model = self.fieldsource
 
         self._idkickmap.beam_energy = self.beam_energy
@@ -496,7 +494,7 @@ class TrajectoryAnalysis:
         Returns:
             Fieldmaptrack object: Trajectory object
         """
-        print("Calculating trajectory...")
+        print('Calculating trajectory...')
         self._idkickmap.fmap_calc_trajectory(
             traj_init_rx=self.traj_init_rx,
             traj_init_ry=self.traj_init_ry,
@@ -539,10 +537,10 @@ class KickmapAnalysis(Tools):
         kicky0 = self._idkickmap.kicky[idxy, idxx]
         self._idkickmap.kickx -= kickx0
         self._idkickmap.kicky -= kicky0
-        fname = fname.replace(".txt", "-shifted_on_axis.txt")
+        fname = fname.replace('.txt', '-shifted_on_axis.txt')
         self._idkickmap.save_kickmap_file(fname)
 
-    def _calc_idkmap_kicks(self, plane_idx=0, indep_var="X"):
+    def _calc_idkmap_kicks(self, plane_idx=0, indep_var='X'):
         beam = Beam(energy=3)
         brho = beam.brho
         rx0 = self._idkickmap.posx
@@ -551,12 +549,12 @@ class KickmapAnalysis(Tools):
         fposy = self._idkickmap.fposy
         kickx = self._idkickmap.kickx
         kicky = self._idkickmap.kicky
-        if indep_var.lower() == "x":
+        if indep_var.lower() == 'x':
             rxf = fposx[plane_idx, :]
             ryf = fposy[plane_idx, :]
             pxf = kickx[plane_idx, :] / brho**2
             pyf = kicky[plane_idx, :] / brho**2
-        elif indep_var.lower() == "y":
+        elif indep_var.lower() == 'y':
             rxf = fposx[:, plane_idx]
             ryf = fposy[:, plane_idx]
             pxf = kickx[:, plane_idx] / brho**2
@@ -564,7 +562,7 @@ class KickmapAnalysis(Tools):
 
         return rx0, ry0, pxf, pyf, rxf, ryf
 
-    def get_kicks_at_plane(self, indep_var="X", plane=0):
+    def get_kicks_at_plane(self, indep_var='X', plane=0):
         """Get kicks at plane.
 
         Args:
@@ -579,9 +577,9 @@ class KickmapAnalysis(Tools):
             1D numpy array: rx final positions of kickmap
             1D numpy array: ry final positions of kickmap
         """
-        if indep_var.lower() == "x":
+        if indep_var.lower() == 'x':
             pos_zero_idx = list(self._idkickmap.posy).index(plane)
-        elif indep_var.lower() == "y":
+        elif indep_var.lower() == 'y':
             pos_zero_idx = list(self._idkickmap.posx).index(plane)
 
         rx0, ry0, pxf, pyf, rxf, ryf = self._calc_idkmap_kicks(
@@ -590,7 +588,7 @@ class KickmapAnalysis(Tools):
 
         return rx0, ry0, pxf, pyf, rxf, ryf
 
-    def get_kicks_all_planes(self, indep_var="X"):
+    def get_kicks_all_planes(self, indep_var='X'):
         """Get kicks at all planes.
 
         Args:
@@ -605,10 +603,10 @@ class KickmapAnalysis(Tools):
             1D numpy array: rx final positions of kickmap
             1D numpy array: ry final positions of kickmap
         """
-        if indep_var.lower() == "x":
+        if indep_var.lower() == 'x':
             kmappos = self._idkickmap.posy
             nr_pts = len(self._idkickmap.posx)
-        elif indep_var.lower() == "y":
+        elif indep_var.lower() == 'y':
             kmappos = self._idkickmap.posx
             nr_pts = len(self._idkickmap.posy)
 
@@ -637,7 +635,7 @@ class KickmapAnalysis(Tools):
         nr_steps=40,
         rescale_kicks=1,
         rescale_length=1,
-        indep_var="X",
+        indep_var='X',
         plane=0,
     ):
         """Check kicks using tracking.
@@ -672,12 +670,12 @@ class KickmapAnalysis(Tools):
         model = self.create_model_with_ids(ids)
 
         famdata = pymodels.si.get_family_data(model)
-        mia = pyaccel.lattice.find_indices(model, "fam_name", "mia")
-        mib = pyaccel.lattice.find_indices(model, "fam_name", "mib")
-        mip = pyaccel.lattice.find_indices(model, "fam_name", "mip")
+        mia = pyaccel.lattice.find_indices(model, 'fam_name', 'mia')
+        mib = pyaccel.lattice.find_indices(model, 'fam_name', 'mib')
+        mip = pyaccel.lattice.find_indices(model, 'fam_name', 'mip')
         mid_subsections = _np.sort(_np.array(mia + mib + mip))
         idx = mid_subsections[int(subsec[2:4]) - 1]
-        idcs = _np.array(famdata[fam_name]["index"])
+        idcs = _np.array(famdata[fam_name]['index'])
         idcs = idcs[_np.isclose(idcs.mean(axis=1), idx)].ravel()
         idx_begin = idcs[0]
         idx_end = idcs[-1]
@@ -687,17 +685,17 @@ class KickmapAnalysis(Tools):
 
         out = self.get_kicks_at_plane(indep_var=indep_var, plane=plane)
         rx0, ry0 = out[0], out[1]
-        r0 = rx0 if indep_var.lower() == "x" else ry0
+        r0 = rx0 if indep_var.lower() == 'x' else ry0
         rxf_trk, ryf_trk = _np.ones(len(r0)), _np.ones(len(r0))
         pxf_trk, pyf_trk = _np.ones(len(r0)), _np.ones(len(r0))
         for i, pos0 in enumerate(r0):
             coord_ini = (
                 _np.array([pos0, 0, 0, 0, 0, 0])
-                if indep_var.lower() == "x"
+                if indep_var.lower() == 'x'
                 else _np.array([0, 0, pos0, 0, 0, 0])
             )
             coord_fin, lost_flag, *_ = pyaccel.tracking.line_pass(
-                model, coord_ini, indices="open"
+                model, coord_ini, indices='open'
             )
             rxf_trk[i] = coord_fin[0, idx_dif + 1]
             ryf_trk[i] = coord_fin[2, idx_dif + 1]
@@ -723,7 +721,7 @@ class StorageRingAnalysis(Tools):
         self.model_ids = None
         self.nom_model = None
 
-        self._orbcorr_system = "SOFB"
+        self._orbcorr_system = 'SOFB'
         self._plot_orbcorr = False
         self._calc_type = self.CalcTypes.symmetrized
         self._figs_fpath = None
@@ -782,11 +780,12 @@ class StorageRingAnalysis(Tools):
 
     @staticmethod
     def _get_idcs(fam_name, mod, idc_id):
-        idc = _np.array(pyaccel.lattice.find_indices(mod, 'fam_name',
-                                                     fam_name))
-        idx = _np.argsort(_np.abs(idc_id-idc))[:2]
+        idc = _np.array(
+            pyaccel.lattice.find_indices(mod, 'fam_name', fam_name)
+        )
+        idx = _np.argsort(_np.abs(idc_id - idc))[:2]
         return idc[idx]
-    
+
     def add_id_to_model(
         self,
         kmap_fname,
@@ -852,31 +851,31 @@ class StorageRingAnalysis(Tools):
         kickmaps, _ = pymodels.si.lattice.create_id_kickmaps_dict(
             self.ids, energy=3e9
         )
-        twiss, *_ = pyaccel.optics.calc_twiss(model, indices="closed")
+        twiss, *_ = pyaccel.optics.calc_twiss(model, indices='closed')
         if verbose:
-            print("Model without ID:")
-            print("length : {:.4f} m".format(model.length))
-            print("tunex  : {:.6f}".format(twiss.mux[-1] / 2 / _np.pi))
-            print("tuney  : {:.6f}".format(twiss.muy[-1] / 2 / _np.pi))
+            print('Model without ID:')
+            print('length : {:.4f} m'.format(model.length))
+            print('tunex  : {:.6f}'.format(twiss.mux[-1] / 2 / _np.pi))
+            print('tuney  : {:.6f}'.format(twiss.muy[-1] / 2 / _np.pi))
             print()
 
-        mia = pyaccel.lattice.find_indices(model, "fam_name", "mia")
-        mib = pyaccel.lattice.find_indices(model, "fam_name", "mib")
-        mip = pyaccel.lattice.find_indices(model, "fam_name", "mip")
+        mia = pyaccel.lattice.find_indices(model, 'fam_name', 'mia')
+        mib = pyaccel.lattice.find_indices(model, 'fam_name', 'mib')
+        mip = pyaccel.lattice.find_indices(model, 'fam_name', 'mip')
         mid_subsections = _np.sort(_np.array(mia + mib + mip))
 
         for id_ in self.ids:
             idx = mid_subsections[int(id_.subsec[2:4]) - 1]
-            idcs = [idx-1, idx+1]
+            idcs = [idx - 1, idx + 1]
             for i, idc in enumerate(idcs):
                 model[idc] = kickmaps[id_.subsec][i]
 
-        twiss, *_ = pyaccel.optics.calc_twiss(model, indices="closed")
+        twiss, *_ = pyaccel.optics.calc_twiss(model, indices='closed')
         if verbose:
-            print("Model with ID:")
-            print("length : {:.4f} m".format(model.length))
-            print("tunex  : {:.6f}".format(twiss.mux[-1] / 2 / _np.pi))
-            print("tuney  : {:.6f}".format(twiss.muy[-1] / 2 / _np.pi))
+            print('Model with ID:')
+            print('length : {:.4f} m'.format(model.length))
+            print('tunex  : {:.6f}'.format(twiss.mux[-1] / 2 / _np.pi))
+            print('tuney  : {:.6f}'.format(twiss.muy[-1] / 2 / _np.pi))
             print()
         return model
 
@@ -990,11 +989,11 @@ class StorageRingAnalysis(Tools):
         """
         if twiss is None:
             twiss, *_ = pyaccel.optics.calc_twiss(
-                self.model_ids, indices="closed"
+                self.model_ids, indices='closed'
             )
         if twiss_nom is None:
             twiss, *_ = pyaccel.optics.calc_twiss(
-                self.nom_model, indices="closed"
+                self.nom_model, indices='closed'
             )
         dtunex = (twiss.mux[-1] - twiss_nom.mux[-1]) / 2 / _np.pi
         dtuney = (twiss.muy[-1] - twiss_nom.muy[-1]) / 2 / _np.pi
@@ -1019,11 +1018,11 @@ class StorageRingAnalysis(Tools):
         """
         if twiss is None:
             twiss, *_ = pyaccel.optics.calc_twiss(
-                self.model_ids, indices="closed"
+                self.model_ids, indices='closed'
             )
         if twiss_nom is None:
             twiss_nom, *_ = pyaccel.optics.calc_twiss(
-                self.nom_model, indices="closed"
+                self.nom_model, indices='closed'
             )
         bbeatx = 100 * (twiss.betax - twiss_nom.betax) / twiss_nom.betax
         bbeaty = 100 * (twiss.betay - twiss_nom.betay) / twiss_nom.betay
@@ -1065,20 +1064,21 @@ class StorageRingAnalysis(Tools):
             if i == 0:
                 k0 = k
             if verbose:
-                print("iteration #{}, \u0394K: {}".format(i + 1, dk))
+                print('iteration #{}, \u0394K: {}'.format(i + 1, dk))
             dk_tot += dk
         delta = dk_tot / k0
         stg = str()
         for i, fam in enumerate(knobs):
-            stg += "{:<9s} \u0394K: {:+9.3f} % \n".format(fam, 100 * delta[i])
-        twiss, *_ = pyaccel.optics.calc_twiss(self.model_ids, indices="closed")
+            stg += '{:<9s} \u0394K: {:+9.3f} % \n'.format(fam, 100 * delta[i])
+        twiss, *_ = pyaccel.optics.calc_twiss(self.model_ids, indices='closed')
         if verbose:
             print(stg)
             print()
         return twiss, stg
 
-    def correct_tunes(self, goal_tunes, verbose=True, nr_iter=2,
-                      idcs_out=None):
+    def correct_tunes(
+        self, goal_tunes, verbose=True, nr_iter=2, idcs_out=None
+    ):
         """Correct tunes.
 
         Args:
@@ -1091,29 +1091,30 @@ class StorageRingAnalysis(Tools):
         Returns:
             Twiss: Twiss after tunes corretion
         """
-        twiss, *_ = pyaccel.optics.calc_twiss(self.model_ids, indices="closed")
+        twiss, *_ = pyaccel.optics.calc_twiss(self.model_ids, indices='closed')
         tunes = (
             twiss.mux[-1] / _np.pi / 2,
             twiss.muy[-1] / _np.pi / 2,
         )
         if verbose:
-            print("init    tunes: {:.9f} {:.9f}".format(tunes[0], tunes[1]))
+            print('init    tunes: {:.9f} {:.9f}'.format(tunes[0], tunes[1]))
         for i in range(nr_iter):
-            optics.correct_tunes_twoknobs(self.model_ids, goal_tunes,
-                                          idcs_out=idcs_out)
+            optics.correct_tunes_twoknobs(
+                self.model_ids, goal_tunes, idcs_out=idcs_out
+            )
             twiss, *_ = pyaccel.optics.calc_twiss(
-                self.model_ids, indices="closed"
+                self.model_ids, indices='closed'
             )
             tunes = twiss.mux[-1] / _np.pi / 2, twiss.muy[-1] / _np.pi / 2
             if verbose:
                 print(
-                    "iter #{} tunes: {:.9f} {:.9f}".format(
+                    'iter #{} tunes: {:.9f} {:.9f}'.format(
                         i + 1, tunes[0], tunes[1]
                     )
                 )
         if verbose:
             print(
-                "goal    tunes: {:.9f} {:.9f}".format(
+                'goal    tunes: {:.9f} {:.9f}'.format(
                     goal_tunes[0], goal_tunes[1]
                 )
             )
@@ -1130,43 +1131,42 @@ class StorageRingAnalysis(Tools):
             string: String containg informations about beta correction.
         """
         twiss_no_corr, *_ = pyaccel.optics.calc_twiss(
-            self.model_ids, indices="closed"
+            self.model_ids, indices='closed'
         )
         knobs, locs_beta, straight_nr = self.get_symm_knobs_locs()
 
-        print("element indices for straight section begin and end:")
+        print('element indices for straight section begin and end:')
         for idsubsec, locs_beta_ in locs_beta.items():
             print(idsubsec, locs_beta_)
 
-        print("local quadrupole fams: ")
+        print('local quadrupole fams: ')
         for idsubsec, knobs_ in knobs.items():
             print(idsubsec, knobs_)
 
         # get list of ID model indices and set rescale_kicks to zero
         ids_ind_all = orbcorr.get_ids_indices(self.model_ids)
         rescale_kicks_orig = list()
-        for idx in range(len(ids_ind_all) // 2):
-            ind_id = ids_ind_all[2 * idx : 2 * (idx + 1)]
-            rescale_kicks_orig.append(self.model_ids[ind_id[0]].rescale_kicks)
-            self.model_ids[ind_id[0]].rescale_kicks = 0
-            self.model_ids[ind_id[1]].rescale_kicks = 0
-
+        for idcs in ids_ind_all:
+            rescale_kicks_local = list()
+            for i, idx in enumerate(idcs):
+                rescale_kicks_local.append(self.model_ids[idx].rescale_kicks)
+                self.model_ids[idx].rescale_kicks = 0
+                rescale_kicks_orig.append(rescale_kicks_local)
         # loop over IDs turning rescale_kicks on, one by one.
-        for idx in range(len(ids_ind_all) // 2):
+        for i, idcs in enumerate(ids_ind_all):
             # turn rescale_kicks on for ID index idx
-            ind_id = ids_ind_all[2 * idx : 2 * (idx + 1)]
-            self.model_ids[ind_id[0]].rescale_kicks = rescale_kicks_orig[idx]
-            self.model_ids[ind_id[1]].rescale_kicks = rescale_kicks_orig[idx]
-            fam_name = self.model_ids[ind_id[0]].fam_name
+            for j, idx in enumerate(idcs):
+                self.model_ids[idx].rescale_kicks = rescale_kicks_orig[i][j]
+            fam_name = self.model_ids[idcs[0]].fam_name
 
             # search knob and straight_nr for ID index idx
             for subsec in knobs:
                 straight_nr_ = straight_nr[subsec]
                 knobs_ = knobs[subsec]
                 locs_beta_ = locs_beta[subsec]
-                if min(locs_beta_) < ind_id[0] and ind_id[1] < max(locs_beta_):
+                if min(locs_beta_) < idcs[0] and idcs[-1] < max(locs_beta_):
                     break
-            print("symmetrizing ID {} in subsec {}".format(fam_name, subsec))
+            print('symmetrizing ID {} in subsec {}'.format(fam_name, subsec))
 
             # calculate nominal twiss
             twiss0, *_ = pyaccel.optics.calc_twiss(self.nom_model)
@@ -1197,12 +1197,13 @@ class StorageRingAnalysis(Tools):
             idcs_out = None
             if not exclude_loc_qn:
                 idcs_out = list()
-                idcs_out.extend(self._get_idcs('QFB', self.model_ids,
-                                               ind_id[0]))
-                idcs_out.extend(self._get_idcs('QDB1', self.model_ids,
-                                               ind_id[0]))
-                idcs_out.extend(self._get_idcs('QDB2', self.model_ids,
-                                               ind_id[0]))
+                idcs_out.extend(self._get_idcs('QFB', self.model_ids, idcs[0]))
+                idcs_out.extend(
+                    self._get_idcs('QDB1', self.model_ids, idcs[0])
+                )
+                idcs_out.extend(
+                    self._get_idcs('QDB2', self.model_ids, idcs[0])
+                )
 
             # Correct tunes
             twiss_tune_corr = self.correct_tunes(goal_tunes, idcs_out=idcs_out)
@@ -1245,32 +1246,32 @@ class StorageRingAnalysis(Tools):
         bbmax = _np.max(_np.concatenate((bbeatx, bbeaty)))
         bbmin = _np.min(_np.concatenate((bbeatx, bbeaty)))
         ylim = (1.1 * bbmin, 1.1 * bbmax)
-        print("Not symmetrized optics :")
-        print(f"dtunex: {dtunex:+.2e}")
-        print(f"dtuney: {dtuney:+.2e}")
+        print('Not symmetrized optics :')
+        print(f'dtunex: {dtunex:+.2e}')
+        print(f'dtuney: {dtuney:+.2e}')
         print(
-            f"bbetax: {bbeatx_rms:04.3f} % rms,"
-            + f" {bbeatx_absmax:04.3f} % absmax"
+            f'bbetax: {bbeatx_rms:04.3f} % rms,'
+            + f' {bbeatx_absmax:04.3f} % absmax'
         )
         print(
-            f"bbetay: {bbeaty_rms:04.3f} % rms,"
-            + f" {bbeaty_absmax:04.3f} % absmax"
+            f'bbetay: {bbeaty_rms:04.3f} % rms,'
+            + f' {bbeaty_absmax:04.3f} % absmax'
         )
         print()
 
-        stg_tune = f"\u0394\u03bdx: {dtunex:+0.04f}\n"
-        stg_tune += f"\u0394\u03bdy: {dtuney:+0.04f}"
-        labelx = f"X ({bbeatx_rms:.3f} % rms)"
-        labely = f"Y ({bbeaty_rms:.3f} % rms)"
+        stg_tune = f'\u0394\u03bdx: {dtunex:+0.04f}\n'
+        stg_tune += f'\u0394\u03bdy: {dtuney:+0.04f}'
+        labelx = f'X ({bbeatx_rms:.3f} % rms)'
+        labely = f'Y ({bbeaty_rms:.3f} % rms)'
 
         _plt.figure()
-        _plt.plot(twiss_nom.spos, bbeatx, color="b", alpha=1.0, label=labelx)
-        _plt.plot(twiss_nom.spos, bbeaty, color="r", alpha=0.8, label=labely)
+        _plt.plot(twiss_nom.spos, bbeatx, color='b', alpha=1.0, label=labelx)
+        _plt.plot(twiss_nom.spos, bbeaty, color='r', alpha=0.8, label=labely)
         _plt.ylim(ylim)
-        _plt.xlabel("spos [m]")
-        _plt.ylabel("Beta Beating [%]")
-        _plt.title("Tune shift:" + "\n" + stg_tune)
-        _plt.suptitle("Non-symmetrized optics")
+        _plt.xlabel('spos [m]')
+        _plt.ylabel('Beta Beating [%]')
+        _plt.title('Tune shift:' + '\n' + stg_tune)
+        _plt.suptitle('Non-symmetrized optics')
         _plt.tight_layout()
         _plt.legend()
         _plt.grid()
@@ -1278,7 +1279,7 @@ class StorageRingAnalysis(Tools):
             self.model_ids, offset=bbmin, height=bbmax / 8, gca=True
         )
         if fpath is not None:
-            _plt.savefig(fpath + "Non-symmetrized", dpi=300, format="png")
+            _plt.savefig(fpath + 'Non-symmetrized', dpi=300, format='png')
 
         # Compare optics between nominal value and symmetrized optics
         dtunex, dtuney = self.calc_dtune(
@@ -1293,31 +1294,31 @@ class StorageRingAnalysis(Tools):
         bbmax = _np.max(_np.concatenate((bbeatx, bbeaty)))
         bbmin = _np.min(_np.concatenate((bbeatx, bbeaty)))
         ylim = (1.1 * bbmin, 1.1 * bbmax)
-        print("symmetrized optics but uncorrect tunes:")
-        print(f"dtunex: {dtunex:+.0e}")
-        print(f"dtuney: {dtuney:+.0e}")
+        print('symmetrized optics but uncorrect tunes:')
+        print(f'dtunex: {dtunex:+.0e}')
+        print(f'dtuney: {dtuney:+.0e}')
         print(
-            f"bbetax: {bbeatx_rms:04.3f} % rms,"
-            + f" {bbeatx_absmax:04.3f} % absmax"
+            f'bbetax: {bbeatx_rms:04.3f} % rms,'
+            + f' {bbeatx_absmax:04.3f} % absmax'
         )
         print(
-            f"bbetay: {bbeaty_rms:04.3f} % rms,"
-            + f" {bbeaty_absmax:04.3f} % absmax"
+            f'bbetay: {bbeaty_rms:04.3f} % rms,'
+            + f' {bbeaty_absmax:04.3f} % absmax'
         )
         print()
 
-        labelx = f"X ({bbeatx_rms:.3f} % rms)"
-        labely = f"Y ({bbeaty_rms:.3f} % rms)"
+        labelx = f'X ({bbeatx_rms:.3f} % rms)'
+        labely = f'Y ({bbeaty_rms:.3f} % rms)'
 
         _plt.figure()
-        _plt.plot(twiss_nom.spos, bbeatx, color="b", alpha=1.0, label=labelx)
-        _plt.plot(twiss_nom.spos, bbeaty, color="r", alpha=0.8, label=labely)
+        _plt.plot(twiss_nom.spos, bbeatx, color='b', alpha=1.0, label=labelx)
+        _plt.plot(twiss_nom.spos, bbeaty, color='r', alpha=0.8, label=labely)
         _plt.ylim(ylim)
         # bbmax = _np.max(_np.concatenate((bbeatx, bbeaty)))
-        _plt.xlabel("spos [m]")
-        _plt.ylabel("Beta Beating [%]")
-        _plt.title("Beta Beating")
-        _plt.suptitle("Symmetrized optics and uncorrected tunes")
+        _plt.xlabel('spos [m]')
+        _plt.ylabel('Beta Beating [%]')
+        _plt.title('Beta Beating')
+        _plt.suptitle('Symmetrized optics and uncorrected tunes')
         _plt.legend()
         _plt.grid()
         _plt.tight_layout()
@@ -1325,7 +1326,7 @@ class StorageRingAnalysis(Tools):
             self.model_ids, offset=bbmin, height=bbmax / 8, gca=True
         )
         if fpath is not None:
-            _plt.savefig(fpath + "Symmetrized", dpi=300, format="png")
+            _plt.savefig(fpath + 'Symmetrized', dpi=300, format='png')
 
         # Compare optics between nominal value and all corrected
         dtunex, dtuney = self.calc_dtune(
@@ -1341,31 +1342,31 @@ class StorageRingAnalysis(Tools):
         bbmin = _np.min(_np.concatenate((bbeatx, bbeaty)))
         ylim = (1.1 * bbmin, 1.1 * bbmax)
 
-        print("symmetrized optics and corrected tunes:")
-        print(f"dtunex: {dtunex:+.0e}")
-        print(f"dtuney: {dtuney:+.0e}")
+        print('symmetrized optics and corrected tunes:')
+        print(f'dtunex: {dtunex:+.0e}')
+        print(f'dtuney: {dtuney:+.0e}')
         print(
-            f"bbetax: {bbeatx_rms:04.3f} % rms,"
-            + f" {bbeatx_absmax:04.3f} % absmax"
+            f'bbetax: {bbeatx_rms:04.3f} % rms,'
+            + f' {bbeatx_absmax:04.3f} % absmax'
         )
         print(
-            f"bbetay: {bbeaty_rms:04.3f} % rms,"
-            + f" {bbeaty_absmax:04.3f} % absmax"
+            f'bbetay: {bbeaty_rms:04.3f} % rms,'
+            + f' {bbeaty_absmax:04.3f} % absmax'
         )
 
-        labelx = f"X ({bbeatx_rms:.3f} % rms)"
-        labely = f"Y ({bbeaty_rms:.3f} % rms)"
+        labelx = f'X ({bbeatx_rms:.3f} % rms)'
+        labely = f'Y ({bbeaty_rms:.3f} % rms)'
 
         _plt.figure()
-        _plt.plot(twiss_nom.spos, bbeatx, color="b", alpha=1.0, label=labelx)
-        _plt.plot(twiss_nom.spos, bbeaty, color="r", alpha=0.8, label=labely)
+        _plt.plot(twiss_nom.spos, bbeatx, color='b', alpha=1.0, label=labelx)
+        _plt.plot(twiss_nom.spos, bbeaty, color='r', alpha=0.8, label=labely)
 
         _plt.ylim(ylim)
         # bbmax = _np.max(_np.concatenate((bbeatx, bbeaty)))
-        _plt.xlabel("spos [m]")
-        _plt.ylabel("Beta Beating [%]")
-        _plt.title("Corrections: {}".format(stg_beta))
-        _plt.suptitle("Symmetrized optics and corrected tunes")
+        _plt.xlabel('spos [m]')
+        _plt.ylabel('Beta Beating [%]')
+        _plt.title('Corrections: {}'.format(stg_beta))
+        _plt.suptitle('Symmetrized optics and corrected tunes')
         _plt.legend()
         _plt.grid()
         _plt.tight_layout()
@@ -1373,7 +1374,7 @@ class StorageRingAnalysis(Tools):
             self.model_ids, offset=bbmin, height=bbmax / 8, gca=True
         )
         if fpath is not None:
-            _plt.savefig(fpath + "Symmetrized_TuneCorr", dpi=300, format="png")
+            _plt.savefig(fpath + 'Symmetrized_TuneCorr', dpi=300, format='png')
         else:
             _plt.show()
         return True
@@ -1393,7 +1394,8 @@ class StorageRingAnalysis(Tools):
         else:
             self.nom_model = nom_model
         if self.calc_type == self.CalcTypes.nominal:
-            self.model_ids = self.nom_model
+            # self.model_ids = self.nom_model
+            print('nominal')
         elif self.calc_type in (
             self.CalcTypes.symmetrized,
             self.CalcTypes.nonsymmetrized,
@@ -1405,7 +1407,7 @@ class StorageRingAnalysis(Tools):
                 opt_corr = self.do_optics_corrections()
                 twiss_no_corr, twiss_beta_corr, twiss_tune_corr, stg = opt_corr
                 twiss_nom, *_ = pyaccel.optics.calc_twiss(
-                    self.nom_model, indices="closed"
+                    self.nom_model, indices='closed'
                 )
                 self.plot_optics_corr_results(
                     twiss_nom,
@@ -1416,7 +1418,7 @@ class StorageRingAnalysis(Tools):
                     self._figs_fpath,
                 )
         else:
-            raise ValueError("Invalid calc_type")
+            raise ValueError('Invalid calc_type')
 
     def analysis_dynapt(
         self,
@@ -1448,6 +1450,7 @@ class StorageRingAnalysis(Tools):
         dynapxy = DynapXY(self.model_ids)
         dynapxy.params.x_nrpts = x_nrpts
         dynapxy.params.y_nrpts = y_nrpts
+        dynapxy.params.y_max = 2.5e-3
         dynapxy.params.nrturns = nr_turns
         print(dynapxy)
         dynapxy.do_tracking()
@@ -1459,6 +1462,6 @@ class StorageRingAnalysis(Tools):
         )
 
         if fpath is not None:
-            figname = fpath + "Dynapt" + sufix
-            fig.savefig(figname, dpi=300, format="png")
+            figname = fpath + 'Dynapt' + sufix + '.png'
+            fig.savefig(figname, dpi=300, format='png')
         _plt.show()
