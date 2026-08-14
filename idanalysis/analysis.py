@@ -6,6 +6,7 @@ import pyaccel
 import pymodels
 from apsuite.dynap import DynapXY
 from fieldmaptrack import Beam
+from datetime import datetime as _datetime
 
 from idanalysis import (
     IDKickMap as _IDKickMap,
@@ -275,6 +276,56 @@ class RadiaModelAnalysis:
         r0_idx = _np.argmin(_np.abs(r_transverse))
         roff = 100 * (b_transverse / b_transverse[r0_idx] - 1)
         return r_transverse, b_transverse, roff
+
+    def generate_fieldmap(self, x, y, z, filename, fieldmap_name, magnet_name):
+        """Generate fieldmap.
+
+        Args:
+            filename (_str_): File name to save fieldmap
+            fieldmap_name (_str_): Fieldmap name
+            magnet_name (_str_): Magnet name
+            x (_1D numpy array_): Horizontal positions to calculate field
+            y (_1D numpy array_): Vertical positions to calculate field
+            z (_1D numpy array_): Longitudinal positions to calculate field
+        """
+        bx = _np.zeros((len(x), len(y), len(z)))
+        by = _np.zeros((len(x), len(y), len(z)))
+        bz = _np.zeros((len(x), len(y), len(z)))
+        for j, ry in enumerate(y):
+            for i, rx in enumerate(x):
+                print('Getting field {:.1f} %'.format(100*((j+1)/len(y))), end='\r')
+                field = self.model.get_field(rx, ry, z)
+                bx[i, j, :], by[i, j, :], bz[i, j, :] = (
+                    field[:, 0],
+                    field[:, 1],
+                    field[:, 2],
+                )
+        now = _datetime.now()
+        f = open(filename, "w")
+        stg = 'fieldmap_name:     	{}\n'.format(fieldmap_name)
+        stg += 'timestamp:         	{}\n'.format(now)
+        stg += 'filename:          	{}\n'.format(filename)
+        stg += 'nr_magnets:        	1\n'
+        stg += '\n'
+        stg += 'magnet_name:       	{}\n'.format(magnet_name)
+        stg += 'gap[mm]:           	\n'
+        stg += 'control_gap[mm]:   	--\n'
+        stg += 'magnet_length[mm]: 	\n'
+        stg += 'current_main[A]:   	--\n'
+        stg += 'NI_main[A.esp]:    	--\n'
+        stg += 'center_pos_z[mm]:  	0\n'
+        stg += 'center_pos_x[mm]:  	0\n'
+        stg += 'rotation[deg]:     	0\n'
+        stg += '\n'
+        stg += 'X[mm]	Y[mm]	Z[mm]	Bx	By	Bz [T]\n'
+        stg += '------------------------------------------------------------------------------------------------------------------------------------------------------------------\n'
+        f.write(stg)
+        for k, rz in enumerate(z):
+            for j, ry in enumerate(y):
+                for i, rx in enumerate(x):
+                    stg = '{:.1f} \t{:.1f} \t{:.1f} \t{:.6e} \t{:.6e} \t{:.6e} \n'.format(rx, ry, rz, bx[i, j, k], by[i, j, k], bz[i, j, k])
+                    f.write(stg)
+        f.close()
 
 
 class TrajectoryAnalysis:
@@ -786,7 +837,7 @@ class StorageRingAnalysis(Tools):
                                                      fam_name))
         idx = _np.argsort(_np.abs(idc_id-idc))[:2]
         return idc[idx]
-    
+
     def add_id_to_model(
         self,
         kmap_fname,

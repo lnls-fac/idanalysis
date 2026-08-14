@@ -2,7 +2,6 @@ import sys
 import pickle
 import numpy as np
 import pyaccel
-import matplotlib.pyplot as plt
 
 from apsuite.optics_analysis.tune_correction import TuneCorr
 
@@ -52,6 +51,7 @@ def symm_get_locs_beta(knobs):
 def symm_get_knobs(tr, straight_nr, allquads=False):
 
     idx1, idx2 = get_id_straigh_index_interval(tr, straight_nr)
+    print(idx1, idx2)
 
     knobs, knobs_in, knobs_out = dict(), dict(), dict()
 
@@ -88,13 +88,12 @@ def symm_get_knobs(tr, straight_nr, allquads=False):
     knobs['QDB1'] += knobs['QDP1']; knobs.pop('QDP1')
     knobs['QDB2'] += knobs['QDP2']; knobs.pop('QDP2')
 
-
     return knobs, knobs_in, knobs_out
 
 
 def correct_tunes_twoknobs(tr, goal_tunes, idcs_out=None):
 
-    tunecorr = TuneCorr(tr, 'SI', method='Proportional', grouping='TwoKnobs', 
+    tunecorr = TuneCorr(tr, 'SI', method='Proportional', grouping='TwoKnobs',
                         idcs_out=idcs_out)
     tunemat = tunecorr.calc_jacobian_matrix()
     tunecorr.correct_parameters(
@@ -122,7 +121,6 @@ def symm_calc_residue_withbeta(tr, locs, locs_beta, goal_beta, goal_alpha):
 def correct_symmetry_withbeta(
         tr, straight_nr, goal_beta, goal_alpha, delta_k=1e-5):
     """."""
-
     # get symmetry point indices
     locs = symm_get_locs(tr)
     nrlocs = len(locs)
