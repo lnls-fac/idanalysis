@@ -1032,6 +1032,8 @@ class EllaumeKickMap:
         self.kmap_idlen = None  # [m]
         self.posx = None  # [m]
         self.posy = None  # [m]
+        self.posx_fit = None  # [m]
+        self.posy_fit = None  # [m]
         self.kickx = None  # [T².m²]
         self.kicky = None  # [T².m²]
         self.period_len = None  # [mm]
@@ -1160,19 +1162,28 @@ class EllaumeKickMap:
         potential = _np.zeros((len(rx), len(ry)))
         for i, x in enumerate(rx):
             for j, y in enumerate(ry):
+                x_ = round(x, 10)
+                y_ = round(y, 10)
                 progress = 100 * (i * len(ry) + j + 1) / (len(rx) * len(ry))
                 print(
                     'Calculating potential... Progress: {:.2f}%'.format(progress),
                     end='\r',
                     flush=True)
-                potential[i, j] = self.calc_kickmap_potential_at_xy(x, y, rz, nr_periods, period, nr_harms)
+                potential[i, j] = self.calc_kickmap_potential_at_xy(x_, y_, rz, nr_periods, period, nr_harms)
         self.potential = potential
         return potential
 
-    def plot_potential(self):
-        if self.potential is None:
-            raise ValueError('Potential has not been calculated yet. Call calc_full_potential first.')
-        X, Y = _np.meshgrid(self.posx, self.posy)
+    def plot_potential(self, fitted=False):
+        if fitted:
+            if self.potential_fit is None:
+                raise ValueError('Fitted potential has not been calculated yet. Call calc_full_potential first.')
+            X, Y = _np.meshgrid(self.posx_fit, self.posy_fit)
+            potential = self.potential_fit
+        else:
+            if self.potential is None:
+                raise ValueError('Potential has not been calculated yet. Call calc_full_potential first.')
+            X, Y = _np.meshgrid(self.posx, self.posy)
+            potential = self.potential
 
         fig = _plt.figure(figsize=(9, 6))
         ax = fig.add_subplot(111, projection='3d')
@@ -1180,7 +1191,7 @@ class EllaumeKickMap:
         surf = ax.plot_surface(
             1e3*X,
             1e3*Y,
-            self.potential.T,
+            potential.T,
             edgecolor='none',
             antialiased=True,
         )
@@ -1193,11 +1204,13 @@ class EllaumeKickMap:
         _plt.tight_layout()
         _plt.show()
 
-    def calc_2d_polyfit_matrix(self, degree):
-        if self.posx is None or self.posy is None:
-            raise ValueError('posx and posy must be set before calculating potential.')
-        posx = 1e3*self.posx  # convert [m] to [mm]
-        posy = 1e3*self.posy  # convert [m] to [mm]
+    def calc_2d_polyfit_matrix(self, degree, posx=None, posy=None):
+        if posx is None or posy is None:
+            if self.posx is None or self.posy is None:
+                raise ValueError('posx and posy must be set before calculating potential.')
+            else:
+                posx = 1e3*self.posx  # convert [m] to [mm]
+                posy = 1e3*self.posy  # convert [m] to [mm]
         n = degree + 1
         nr_coefs = int(n*(n+1)/2)
         matrix = _np.zeros((len(posx)*len(posy), nr_coefs))
@@ -1218,18 +1231,27 @@ class EllaumeKickMap:
         potential = self.potential
         posx = self.posx
         posy = self.posy
-        if self.matrix_poly is None:
-            matrix = self.calc_2d_polyfit_matrix(degree)
-        else:
-            matrix = self.matrix_poly
+        matrix = self.calc_2d_polyfit_matrix(degree)
         invmat = _np.linalg.pinv(matrix)
         pot_vec = _np.reshape(potential, len(posx)*len(posy), order='C')
         coefs = _np.dot(invmat, pot_vec)
-        potential_fit = _np.reshape(_np.dot(matrix, coefs), potential.shape, order='C')
+        potential_fit = _np.reshape(_np.dot(matrix, coefs), (len(posx), len(posy)), order='C')
+        residue = _np.sqrt(_np.sum(potential_fit-potential)**2)
         self.matrix_poly = matrix
         self.fit_coefs = coefs
+        return coefs, residue
+
+    def calc_potential_fit(self, degree):
+        if self.posx_fit is None or self.posy_fit is None:
+            raise ValueError('posx_fit and posy_fit must be set before calculating potential.')
+        posx = 1e3*self.posx_fit  # convert [m] to [mm]
+        posy = 1e3*self.posy_fit  # convert [m] to [mm]
+        coefs = self.fit_coefs
+        matrix = self.calc_2d_polyfit_matrix(degree, posx, posy)
+        potential_fit = _np.reshape(_np.dot(matrix, coefs), (len(posx), len(posy)), order='C')
+        self.matrix_poly = matrix
         self.potential_fit = potential_fit
-        return potential_fit, coefs
+        return potential_fit
 
     def calc_dy_operator(self):
         if self.matrix_poly is None:
@@ -1298,10 +1320,39 @@ class EllaumeKickMap:
 
     def calc_kicks(self):
         brho = self.brho
-        dp_dx = 1e-3 * self.calc_delx()
-        dp_dy = 1e-3 * self.calc_dely()
+        dp_dx = 1e3 * self.calc_delx()
+        dp_dy = 1e3 * self.calc_dely()
         kicksx = -1/2 * dp_dx.T
         kicksy = -1/2 * dp_dy.T
         self.kickx = kicksx
         self.kicky = kicksy
         return kicksx/brho**2, kicksy/brho**2
+
+    def plot_kicks(self, plane='x'):
+        if self.kickx is None or self.kicky is None:
+            raise ValueError('Kicks have not been calculated yet.')
+        if plane.lower() == 'x':
+            kick = self.kickx/self.brho**2
+        elif plane.lower() == 'y':
+            kick = self.kicky/self.brho**2
+        else:
+            raise ValueError('Invalid plane value.')
+        X, Y = _np.meshgrid(self.posx_fit, self.posy_fit)
+        fig = _plt.figure(figsize=(9, 6))
+        ax = fig.add_subplot(111, projection='3d')
+
+        surf = ax.plot_surface(
+            1e3*X,
+            1e3*Y,
+            1e6*kick,
+            edgecolor='none',
+            antialiased=True,
+        )
+
+        ax.set_xlabel('x [mm]')
+        ax.set_ylabel('y [mm]')
+        ax.set_zlabel('kick [urad]')
+        ax.set_title('Kick ' + plane.lower())
+        ax.view_init(elev=30, azim=-30)
+        _plt.tight_layout()
+        _plt.show()
