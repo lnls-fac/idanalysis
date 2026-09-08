@@ -298,7 +298,7 @@ class RadiaModelAnalysis:
                 bx[i, j, :], by[i, j, :], bz[i, j, :] = (
                     field[:, 0],
                     field[:, 1],
-                    field[:, 2],
+                    field[:, 2],)
         for idx in _np.ndindex(bx.shape[:-1]):
             i, j = idx
             print('Getting field {:.1f} %'.format(100*((j+1)/len(y))), end='\r')
