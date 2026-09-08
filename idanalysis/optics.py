@@ -51,7 +51,6 @@ def symm_get_locs_beta(knobs):
 def symm_get_knobs(tr, straight_nr, allquads=False):
 
     idx1, idx2 = get_id_straigh_index_interval(tr, straight_nr)
-    print(idx1, idx2)
 
     knobs, knobs_in, knobs_out = dict(), dict(), dict()
 
