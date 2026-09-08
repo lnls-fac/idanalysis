@@ -299,7 +299,11 @@ class RadiaModelAnalysis:
                     field[:, 0],
                     field[:, 1],
                     field[:, 2],
-                )
+        for idx in _np.ndindex(bx.shape[:-1]):
+            i, j = idx
+            print('Getting field {:.1f} %'.format(100*((j+1)/len(y))), end='\r')
+            field = self.model.get_field(x[i], y[j], z)
+            bx[idx], by[idx], bz[idx] = field.T
         now = _datetime.now()
         stg = 'fieldmap_name:     	{}\n'.format(fieldmap_name)
         stg += 'timestamp:         	{}\n'.format(now)
