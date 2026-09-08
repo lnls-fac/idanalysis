@@ -1132,7 +1132,18 @@ class EllaumeKickMap:
                     'Calculating potential... Progress: {:.2f}%'.format(progress),
                     end='\r',
                     flush=True)
-                potential[i, j] = self.calc_kickmap_potential_at_xy(x_, y_, rz, nr_periods, period, nr_harms)
+        for i, j in _np.ndindex(potential.shape):
+            x_ = round(rx[i], 10)
+            y_ = round(ry[j], 10)
+            progress = 100 * (i * len(ry) + j + 1) / (len(rx) * len(ry))
+            print(
+                f'Calculating potential... Progress: {progress:.2f}%',
+                end='\r',
+                flush=True
+            )
+            potential[i, j] = self.calc_kickmap_potential_at_xy(
+                x_, y_, rz, nr_periods, period, nr_harms
+            )
         self.potential = potential
         return potential
 
