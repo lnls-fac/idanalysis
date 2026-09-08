@@ -1169,7 +1169,18 @@ class EllaumeKickMap:
         ax.set_title('Kickmap potential')
         ax.view_init(elev=30, azim=-30)
         _plt.tight_layout()
-        _plt.show()
+        for i, j in _np.ndindex(potential.shape):
+            x_ = round(rx[i], 10)
+            y_ = round(ry[j], 10)
+            progress = 100 * (i * len(ry) + j + 1) / (len(rx) * len(ry))
+            print(
+                f'Calculating potential... Progress: {progress:.2f}%',
+                end='\r',
+                flush=True
+            )
+            potential[i, j] = self.calc_kickmap_potential_at_xy(
+                x_, y_, rz, nr_periods, period, nr_harms
+            )
 
     def calc_2d_polyfit_matrix(self, degree, posx=None, posy=None):
         if posx is None or posy is None:
