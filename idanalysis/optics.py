@@ -92,8 +92,9 @@ def symm_get_knobs(tr, straight_nr, allquads=False):
 
 def correct_tunes_twoknobs(tr, goal_tunes, idcs_out=None):
 
-    tunecorr = TuneCorr(tr, 'SI', method='Proportional', grouping='TwoKnobs',
-                        idcs_out=idcs_out)
+    tunecorr = TuneCorr(
+        tr, 'SI', method='Proportional', grouping='TwoKnobs', idcs_out=idcs_out
+    )
     tunemat = tunecorr.calc_jacobian_matrix()
     tunecorr.correct_parameters(
         model=tr, goal_parameters=goal_tunes, jacobian_matrix=tunemat)
