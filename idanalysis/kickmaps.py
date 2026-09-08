@@ -1084,11 +1084,7 @@ class EllaumeKickMap:
 
     def fit_fourier_coefs(self, z, b, period, nr_harms):
         modes_matrix = _np.zeros((len(z), 2 * nr_harms))
-        ks = _np.arange(
-            2 * _np.pi / period,
-            (nr_harms + 1) * 2 * _np.pi / period,
-            2 * _np.pi / period,
-        )
+        ks = _np.arange(1, nr_harms + 1) * 2 * _np.pi / period
         for i, k in enumerate(ks):
             modes_matrix[:, 2 * i] = _np.cos(k * z)
             modes_matrix[:, 2 * i + 1] = _np.sin(k * z)
