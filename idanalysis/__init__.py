@@ -1,8 +1,7 @@
 from .deltadata import DeltaData
 from .epudata import EPUData
 from .trajectory import IDTrajectory
-from .kickmaps import IDKickMap
-from .kickmaps import EllaumeKickMap
+from .kickmaps import IDKickMap, EllaumeKickMap
 import os as _os
 
 # This has to be defined before using the library.
