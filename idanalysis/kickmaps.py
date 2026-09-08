@@ -1203,7 +1203,7 @@ class EllaumeKickMap:
         pot_vec = _np.reshape(potential, len(posx)*len(posy), order='C')
         coefs = _np.dot(invmat, pot_vec)
         potential_fit = _np.reshape(_np.dot(matrix, coefs), (len(posx), len(posy)), order='C')
-        residue = _np.sqrt(_np.sum(potential_fit-potential)**2)
+        residue = _np.sqrt(_np.sum((potential_fit-potential))**2)
         self.matrix_poly = matrix
         self.fit_coefs = coefs
         return coefs, residue
