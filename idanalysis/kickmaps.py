@@ -7,6 +7,7 @@ import multiprocessing
 from copy import deepcopy
 import numpy as _np
 from scipy.optimize import curve_fit as _curve_fit
+from imaids.insertiondevice import InsertionDeviceModel as _IDModel
 
 from . import utils as _utils
 
@@ -14,7 +15,7 @@ from . import utils as _utils
 class IDKickMap:
     """ID KickMap and FieldMap."""
 
-    DEF_AUTHOR = "# Author: FAC idanalysis.IDKickMap"
+    DEF_AUTHOR = '# Author: FAC idanalysis.IDKickMap'
     DEF_BEAM_ENERGY = 3  # [GeV]
     DEF_RK_S_STEP = 0.2  # [mm]
 
@@ -102,7 +103,7 @@ class IDKickMap:
     def beam_energy(self, value):
         """."""
         if not self._fmap_config and not self._radia_model_config:
-            raise AttributeError("Undefined configuration!")
+            raise AttributeError('Undefined configuration!')
         elif not self._radia_model_config:
             IDKickMap._update_fmap_energy(self._fmap_config, value)
         else:
@@ -134,7 +135,7 @@ class IDKickMap:
     def rk_s_step(self, value):
         """."""
         if not self._fmap_config and not self._radia_model_config:
-            raise AttributeError("Undefined fieldmap configuration!")
+            raise AttributeError('Undefined fieldmap configuration!')
         elif not self._radia_model_config:
             self._fmap_config.traj_rk_s_step = value
         else:
@@ -154,7 +155,7 @@ class IDKickMap:
     def traj_init_rz(self, value):
         """."""
         if not self._fmap_config and not self._radia_model_config:
-            raise AttributeError("Undefined configuration!")
+            raise AttributeError('Undefined configuration!')
         elif not self._radia_model_config:
             self._fmap_config.traj_init_rz = value
         else:
@@ -174,7 +175,7 @@ class IDKickMap:
     def traj_rk_min_rz(self, value):
         """."""
         if not self._fmap_config and not self._radia_model_config:
-            raise AttributeError("Undefined configuration!")
+            raise AttributeError('Undefined configuration!')
         elif not self._radia_model_config:
             self._fmap_config.traj_rk_min_rz = value
         else:
@@ -244,10 +245,10 @@ class IDKickMap:
             for j, rxi in enumerate(self.posx):
                 pxf = cxx * rxi + cxy * ryi
                 pyf = cyx * rxi + cyy * ryi
-                stg = "rx = {:.01f} mm, ry = {:.01f}: ".format(
+                stg = 'rx = {:.01f} mm, ry = {:.01f}: '.format(
                     rxi * 1e3, ryi * 1e3
                 )
-                stg += "px = {:.01f} urad, py = {:.01f} urad".format(
+                stg += 'px = {:.01f} urad, py = {:.01f} urad'.format(
                     pxf * 1e6, pyf * 1e6
                 )
                 if verbose:
@@ -271,12 +272,10 @@ class IDKickMap:
     def _addoutput_to_kickmap(self, i, j, pxf, pyf, rxf, ryf):
         brho = self.brho
         rxi, ryi = self.posx[j], self.posy[i]
-        stg = "rx = {:.01f} mm, ry = {:.01f}: ".format(
-                        rxi * 1e3, ryi * 1e3
-            )
-        stg += "px = {:.01f} urad, py = {:.01f} urad".format(
-                        pxf * 1e6, pyf * 1e6
-            )
+        stg = 'rx = {:.01f} mm, ry = {:.01f}: '.format(rxi * 1e3, ryi * 1e3)
+        stg += 'px = {:.01f} urad, py = {:.01f} urad'.format(
+            pxf * 1e6, pyf * 1e6
+        )
         print(stg)
         self.kickx[i, j] = pxf * brho**2
         self.kicky[i, j] = pyf * brho**2
@@ -336,18 +335,18 @@ class IDKickMap:
                 xf = _np.polyval(xfit, posx)
                 kickx[i, :] = pxf
                 fposx[i, :] = xf
-                label = "y = {:.2f} mm".format(1e3 * ryi)
+                label = 'y = {:.2f} mm'.format(1e3 * ryi)
                 if plot_flag:
                     _plt.plot(
                         1e3 * self.posx,
                         1e6 * self.kickx[i, :],
-                        ".",
+                        '.',
                         label=label,
                     )
                     _plt.plot(1e3 * posx, 1e6 * kickx[i, :])
             if plot_flag:
-                _plt.xlabel("x pos [mm]")
-                _plt.ylabel("kicks x [Tm²]")
+                _plt.xlabel('x pos [mm]')
+                _plt.ylabel('kicks x [Tm²]')
                 _plt.legend()
                 _plt.show()
 
@@ -360,18 +359,18 @@ class IDKickMap:
                 yf = _np.polyval(yfit, posx)
                 kicky[i, :] = pyf
                 fposy[i, :] = yf
-                label = "y = {:.2f} mm".format(1e3 * ryi)
+                label = 'y = {:.2f} mm'.format(1e3 * ryi)
                 if plot_flag:
                     _plt.plot(
                         1e3 * self.posx,
                         1e6 * self.kicky[i, :],
-                        ".",
+                        '.',
                         label=label,
                     )
                     _plt.plot(1e3 * posx, 1e6 * kicky[i, :])
             if plot_flag:
-                _plt.xlabel("x pos [mm]")
-                _plt.ylabel("kicks y [Tm²]")
+                _plt.xlabel('x pos [mm]')
+                _plt.ylabel('kicks y [Tm²]')
                 _plt.legend()
                 _plt.show()
 
@@ -393,18 +392,18 @@ class IDKickMap:
                 xf = _np.polyval(xfit, posy)
                 kickx[:, i] = pxf
                 fposx[:, i] = xf
-                label = "x = {:.2f} mm".format(1e3 * rxi)
+                label = 'x = {:.2f} mm'.format(1e3 * rxi)
                 if plot_flag:
                     _plt.plot(
                         1e3 * self.posy,
                         1e6 * self.kickx[:, i],
-                        ".",
+                        '.',
                         label=label,
                     )
                     _plt.plot(1e3 * posy, 1e6 * kickx[:, i])
             if plot_flag:
-                _plt.xlabel("y pos [mm]")
-                _plt.ylabel("kicks x [Tm²]")
+                _plt.xlabel('y pos [mm]')
+                _plt.ylabel('kicks x [Tm²]')
                 _plt.legend()
                 _plt.show()
 
@@ -417,18 +416,18 @@ class IDKickMap:
                 yf = _np.polyval(yfit, posy)
                 kicky[:, i] = pyf
                 fposy[:, i] = yf
-                label = "x = {:.2f} mm".format(1e3 * rxi)
+                label = 'x = {:.2f} mm'.format(1e3 * rxi)
                 if plot_flag:
                     _plt.plot(
                         1e3 * self.posy,
                         1e6 * self.kicky[:, i],
-                        ".",
+                        '.',
                         label=label,
                     )
                     _plt.plot(1e3 * posy, 1e6 * kicky[:, i])
             if plot_flag:
-                _plt.xlabel("y pos [mm]")
-                _plt.ylabel("kicks y [Tm²]")
+                _plt.xlabel('y pos [mm]')
+                _plt.ylabel('kicks y [Tm²]')
                 _plt.legend()
                 _plt.show()
 
@@ -443,7 +442,7 @@ class IDKickMap:
     def save_kickmap_file(self, kickmap_filename):
         """."""
         rst = self.__str__()
-        my_file = open(kickmap_filename, "w")  # w=writing
+        my_file = open(kickmap_filename, 'w')  # w=writing
         my_file.write(rst)
         my_file.close()
 
@@ -456,14 +455,14 @@ class IDKickMap:
         if plot:
             kickx_fit = _np.polyval(poly, posy)
             _plt.clf()
-            _plt.plot(1e3 * posy, 1e6 * kickx, "o", label="data")
-            _plt.plot(1e3 * posy, 1e6 * kickx_fit, label="fit")
-            _plt.xlabel("posy [mm]")
-            _plt.ylabel("kickx [urad]")
-            _plt.title("Kickx @ x = {:.1f} mm".format(1e3 * posx))
+            _plt.plot(1e3 * posy, 1e6 * kickx, 'o', label='data')
+            _plt.plot(1e3 * posy, 1e6 * kickx_fit, label='fit')
+            _plt.xlabel('posy [mm]')
+            _plt.ylabel('kickx [urad]')
+            _plt.title('Kickx @ x = {:.1f} mm'.format(1e3 * posx))
             _plt.legend()
             _plt.grid()
-            _plt.savefig("kickx_ix_{}.png".format(ix))
+            _plt.savefig('kickx_ix_{}.png'.format(ix))
             # plt.show()
         KsL = poly[-2] * self.brho
         return KsL
@@ -477,14 +476,14 @@ class IDKickMap:
         if plot:
             kicky_fit = _np.polyval(poly, posx)
             _plt.clf()
-            _plt.plot(1e3 * posx, 1e6 * kicky, "o", label="data")
-            _plt.plot(1e3 * posx, 1e6 * kicky_fit, label="fit")
-            _plt.xlabel("posx [mm]")
-            _plt.ylabel("kicky [urad]")
-            _plt.title("Kicky @ y = {:.1f} mm".format(1e3 * posy))
+            _plt.plot(1e3 * posx, 1e6 * kicky, 'o', label='data')
+            _plt.plot(1e3 * posx, 1e6 * kicky_fit, label='fit')
+            _plt.xlabel('posx [mm]')
+            _plt.ylabel('kicky [urad]')
+            _plt.title('Kicky @ y = {:.1f} mm'.format(1e3 * posy))
             _plt.legend()
             _plt.grid()
-            _plt.savefig("kicky_iy_{}.png".format(iy))
+            _plt.savefig('kicky_iy_{}.png'.format(iy))
             # plt.show()
         KsL = poly[-2] * self.brho
         return KsL
@@ -557,20 +556,20 @@ class IDKickMap:
             kick_end = pxy[-1] - linefit[idx_end_ID]
             if plot_flag:
                 _plt.plot(rz, pxy)
-                _plt.plot(rz_sample, p_sample, ".")
+                _plt.plot(rz_sample, p_sample, '.')
                 _plt.plot(rz, linefit)
                 _plt.show()
             if idx == 0:
                 self.kickx_upstream = kick_begin * self.brho**2
                 self.kickx_downstream = kick_end * self.brho**2
-                print("ID length: {:.3f} m".format(kmap_idlen))
+                print('ID length: {:.3f} m'.format(kmap_idlen))
                 print(
-                    "kickx_upstream: {:11.4e}  T2m2".format(
+                    'kickx_upstream: {:11.4e}  T2m2'.format(
                         self.kickx_upstream
                     )
                 )
                 print(
-                    "kickx_downstream: {:11.4e}  T2m2".format(
+                    'kickx_downstream: {:11.4e}  T2m2'.format(
                         self.kickx_downstream
                     )
                 )
@@ -578,17 +577,17 @@ class IDKickMap:
                 self.kicky_upstream = kick_begin * self.brho**2
                 self.kicky_downstream = kick_end * self.brho**2
                 print(
-                    "kicky_upstream: {:11.4e}  T2m2".format(
+                    'kicky_upstream: {:11.4e}  T2m2'.format(
                         self.kicky_upstream
                     )
                 )
                 print(
-                    "kicky_downstream: {:11.4e}  T2m2".format(
+                    'kicky_downstream: {:11.4e}  T2m2'.format(
                         self.kicky_downstream
                     )
                 )
 
-    def plot_kickx_vs_posy(self, indx, title=""):
+    def plot_kickx_vs_posy(self, indx, title=''):
         """."""
         posx = self.posx
         posy = self.posy
@@ -597,23 +596,23 @@ class IDKickMap:
         _plt.figure(figsize=(8, 6))
         for c, ix in enumerate(indx):
             x = posx[ix]
-            _plt.plot(1e3 * posy, 1e6 * kickx[:, ix], "-", color=colors[c])
+            _plt.plot(1e3 * posy, 1e6 * kickx[:, ix], '-', color=colors[c])
             _plt.plot(
                 1e3 * posy,
                 1e6 * kickx[:, ix],
-                "o",
+                'o',
                 color=colors[c],
-                label="posx = {:+.1f} mm".format(1e3 * x),
+                label='posx = {:+.1f} mm'.format(1e3 * x),
             )
-        _plt.xlabel("posy [mm]")
-        _plt.ylabel("kickx [urad]")
+        _plt.xlabel('posy [mm]')
+        _plt.ylabel('kickx [urad]')
         _plt.title(title)
         _plt.grid()
-        _plt.legend(loc="upper left", bbox_to_anchor=(1.1, 1.05))
+        _plt.legend(loc='upper left', bbox_to_anchor=(1.1, 1.05))
         _plt.tight_layout(True)
         _plt.show()
 
-    def plot_kicky_vs_posx(self, indy, title=""):
+    def plot_kicky_vs_posx(self, indy, title=''):
         """."""
         posx = self.posx
         posy = self.posy
@@ -622,19 +621,19 @@ class IDKickMap:
         _plt.figure(figsize=(8, 6))
         for c, iy in enumerate(indy):
             y = posy[iy]
-            _plt.plot(1e3 * posx, 1e6 * kicky[iy, :], "-", color=colors[c])
+            _plt.plot(1e3 * posx, 1e6 * kicky[iy, :], '-', color=colors[c])
             _plt.plot(
                 1e3 * posx,
                 1e6 * kicky[iy, :],
-                "o",
+                'o',
                 color=colors[c],
-                label="posy = {:+.1f} mm".format(1e3 * y),
+                label='posy = {:+.1f} mm'.format(1e3 * y),
             )
-        _plt.xlabel("posx [mm]")
-        _plt.ylabel("kicky [urad]")
+        _plt.xlabel('posx [mm]')
+        _plt.ylabel('kicky [urad]')
         _plt.title(title)
         _plt.grid()
-        _plt.legend(loc="upper left", bbox_to_anchor=(1.1, 1.05))
+        _plt.legend(loc='upper left', bbox_to_anchor=(1.1, 1.05))
         _plt.tight_layout(True)
         _plt.show()
 
@@ -666,10 +665,10 @@ class IDKickMap:
         if not self.kmap_fname:
             return
         info = IDKickMap._load_kmap_info(self.kmap_fname)
-        self.fmap_idlen = info["id_length"]
-        self.posx, self.posy = info["posx"], info["posy"]
-        self.kickx, self.kicky = info["kickx"], info["kicky"]
-        self.fposx, self.fposy = info["fposx"], info["fposy"]
+        self.fmap_idlen = info['id_length']
+        self.posx, self.posy = info['posx'], info['posy']
+        self.kickx, self.kicky = info['kickx'], info['kicky']
+        self.fposx, self.fposy = info['fposx'], info['fposy']
 
         if self.shift_on_axis:
             # find indices of central line
@@ -678,7 +677,7 @@ class IDKickMap:
                 indy = list(self.posy).index(0)
             except ValueError:
                 raise ValueError(
-                    "Kickmap does not have central transverse line!"
+                    'Kickmap does not have central transverse line!'
                 )
             # shift kicks on axis
             kickx0 = self.kickx[indy][indx]
@@ -688,65 +687,65 @@ class IDKickMap:
 
     def __str__(self):
         """."""
-        rst = ""
+        rst = ''
         # header
         rst += self.author
-        rst += "\n# "
+        rst += '\n# '
         id_len = self.kmap_idlen or self.fmap_idlen
-        rst += "\n# Total Length of Longitudinal Interval [m]"
-        rst += "\n{}".format(id_len)
-        rst += "\n# Number of Horizontal Points"
-        rst += "\n{}".format(len(self.posx))
-        rst += "\n# Number of Vertical Points"
-        rst += "\n{}".format(len(self.posy))
+        rst += '\n# Total Length of Longitudinal Interval [m]'
+        rst += '\n{}'.format(id_len)
+        rst += '\n# Number of Horizontal Points'
+        rst += '\n{}'.format(len(self.posx))
+        rst += '\n# Number of Vertical Points'
+        rst += '\n{}'.format(len(self.posy))
 
-        rst += "\n# Total Horizontal 2nd Order Kick [T2m2]"
-        rst += "\nSTART"
+        rst += '\n# Total Horizontal 2nd Order Kick [T2m2]'
+        rst += '\nSTART'
         # first line
-        rst += "\n{:11s} ".format("")
+        rst += '\n{:11s} '.format('')
         for rxi in self.posx:
-            rst += "{:+011.5f} ".format(rxi)
+            rst += '{:+011.5f} '.format(rxi)
         # table
         for i, ryi in enumerate(self.posy[::-1]):
-            rst += "\n{:+011.5f} ".format(ryi)
+            rst += '\n{:+011.5f} '.format(ryi)
             for j, rxi in enumerate(self.posx):
-                rst += "{:+11.4e} ".format(self.kickx[-i - 1, j])
+                rst += '{:+11.4e} '.format(self.kickx[-i - 1, j])
 
-        rst += "\n# Total Vertical 2nd Order Kick [T2m2]"
-        rst += "\nSTART"
+        rst += '\n# Total Vertical 2nd Order Kick [T2m2]'
+        rst += '\nSTART'
         # first line
-        rst += "\n{:11s} ".format("")
+        rst += '\n{:11s} '.format('')
         for rxi in self.posx:
-            rst += "{:+011.5f} ".format(rxi)
+            rst += '{:+011.5f} '.format(rxi)
         # table
         for i, ryi in enumerate(self.posy[::-1]):
-            rst += "\n{:+011.5f} ".format(ryi)
+            rst += '\n{:+011.5f} '.format(ryi)
             for j, rxi in enumerate(self.posx):
-                rst += "{:+11.4e} ".format(self.kicky[-i - 1, j])
+                rst += '{:+11.4e} '.format(self.kicky[-i - 1, j])
 
-        rst += "\n# Horizontal Final Position [m]"
-        rst += "\nSTART"
+        rst += '\n# Horizontal Final Position [m]'
+        rst += '\nSTART'
         # first line
-        rst += "\n{:11s} ".format("")
+        rst += '\n{:11s} '.format('')
         for rxi in self.posx:
-            rst += "{:+011.5f} ".format(rxi)
+            rst += '{:+011.5f} '.format(rxi)
         # table
         for i, ryi in enumerate(self.posy[::-1]):
-            rst += "\n{:+011.5f} ".format(ryi)
+            rst += '\n{:+011.5f} '.format(ryi)
             for j, rxi in enumerate(self.posx):
-                rst += "{:+11.4e} ".format(self.fposx[-i - 1, j])
+                rst += '{:+11.4e} '.format(self.fposx[-i - 1, j])
 
-        rst += "\n# Vertical Final Position [m]"
-        rst += "\nSTART"
+        rst += '\n# Vertical Final Position [m]'
+        rst += '\nSTART'
         # first line
-        rst += "\n{:11s} ".format("")
+        rst += '\n{:11s} '.format('')
         for rxi in self.posx:
-            rst += "{:+011.5f} ".format(rxi)
+            rst += '{:+011.5f} '.format(rxi)
         # table
         for i, ryi in enumerate(self.posy[::-1]):
-            rst += "\n{:+011.5f} ".format(ryi)
+            rst += '\n{:+011.5f} '.format(ryi)
             for j, rxi in enumerate(self.posx):
-                rst += "{:+11.4e} ".format(self.fposy[-i - 1, j])
+                rst += '{:+11.4e} '.format(self.fposy[-i - 1, j])
         return rst
 
     @staticmethod
@@ -772,12 +771,12 @@ class IDKickMap:
         params = []
         for line in lines:
             line = line.strip()
-            if line.startswith("START"):
+            if line.startswith('START'):
                 pass
-            elif line.startswith("#"):
-                if "Termination_kicks" in line:
-                    *_, kicks = line.split("Termination_kicks")
-                    _, k1, k2, k3, k4 = kicks.strip().split(" ")
+            elif line.startswith('#'):
+                if 'Termination_kicks' in line:
+                    *_, kicks = line.split('Termination_kicks')
+                    _, k1, k2, k3, k4 = kicks.strip().split(' ')
                     kickx_up = float(k1)
                     kicky_up = float(k2)
                     kickx_down = float(k3)
@@ -810,21 +809,21 @@ class IDKickMap:
             fposx = fposx[::-1, :]
             fposy = fposy[::-1, :]
         info = dict()
-        info["id_length"] = id_length
-        info["posx"], info["posy"] = posx, posy
-        info["kickx"], info["kicky"] = kickx, kicky
-        info["fposx"], info["fposy"] = fposx, fposy
-        info["kickx_upstream"] = kickx_up
-        info["kicky_upstream"] = kicky_up
-        info["kickx_downstream"] = kickx_down
-        info["kicky_downstream"] = kicky_down
+        info['id_length'] = id_length
+        info['posx'], info['posy'] = posx, posy
+        info['kickx'], info['kicky'] = kickx, kicky
+        info['fposx'], info['fposy'] = fposx, fposy
+        info['kickx_upstream'] = kickx_up
+        info['kicky_upstream'] = kicky_up
+        info['kickx_downstream'] = kickx_down
+        info['kicky_downstream'] = kicky_down
         return info
 
     @staticmethod
     def _create_fmap_config(fmap_fname, beam_energy, rk_s_step):
         config = _fmaptrack.common_analysis.Config()
-        config.config_label = "id-3gev"
-        config.magnet_type = "insertion-device"  # not necessary
+        config.config_label = 'id-3gev'
+        config.magnet_type = 'insertion-device'  # not necessary
         config.interactive_mode = True
         config.fmap_filename = fmap_fname
         config.fmap_extrapolation_flag = False
@@ -852,8 +851,8 @@ class IDKickMap:
     @staticmethod
     def _create_radia_model_config(radia_model, rk_s_step):
         config = _fmaptrack.common_analysis.Config()
-        config.config_label = "id-3gev"
-        config.magnet_type = "insertion-device"  # not necessary
+        config.config_label = 'id-3gev'
+        config.magnet_type = 'insertion-device'  # not necessary
         config.interactive_mode = True
         config.radia_model = radia_model
         config.fmap_extrapolation_flag = False
@@ -884,24 +883,24 @@ class IDKickMap:
             init_rx = config.traj_init_rx
         else:
             init_rx = 0.0
-        if hasattr(config, "traj_init_ry"):
+        if hasattr(config, 'traj_init_ry'):
             init_ry = config.traj_init_ry
         else:
             config.traj_init_ry = init_ry = 0.0
-        if hasattr(config, "traj_init_rz"):
+        if hasattr(config, 'traj_init_rz'):
             init_rz = config.traj_init_rz
         else:
             config.traj_init_rz = init_rz = 0.0
-        if hasattr(config, "traj_init_px"):
+        if hasattr(config, 'traj_init_px'):
             init_px = config.traj_init_px  # * 180/_np.pi
         else:
             config.traj_init_px = init_px = 0.0
-        if hasattr(config, "traj_init_py"):
+        if hasattr(config, 'traj_init_py'):
             init_py = config.traj_init_py  # * 180/_np.pi
         else:
             config.traj_init_py = init_py = 0.0
         init_pz = _np.sqrt(1.0 - init_px**2 - init_py**2)
-        has_rk_min_rz = hasattr(config, "traj_rk_min_rz")
+        has_rk_min_rz = hasattr(config, 'traj_rk_min_rz')
         if has_rk_min_rz and config.traj_rk_min_rz is not None:
             rk_min_rz = config.traj_rk_min_rz
         elif config.traj_rk_s_step > 0.0:
@@ -961,7 +960,7 @@ class IDKickMap:
         monomials = config.multipoles.normal_field_fitting_monomials
         idx_n = monomials.index(main_monomial)
 
-        if hasattr(config, "hardedge_half_region"):
+        if hasattr(config, 'hardedge_half_region'):
             sel = config.traj.s < config.hardedge_half_region
             s = config.traj.s[sel]
             field = config.multipoles.normal_multipoles[idx_n, sel]
@@ -983,11 +982,11 @@ class IDKickMap:
 
         # saves multipoles to file
         if not config.interactive_mode:
-            config.multipoles.save("multipoles.txt")
+            config.multipoles.save('multipoles.txt')
 
         # prints basic information on multipoles
         # ======================================
-        print("--- multipoles on reference trajectory (rz > 0) ---")
+        print('--- multipoles on reference trajectory (rz > 0) ---')
         print(config.multipoles)
 
         if not config.interactive_mode:
@@ -1021,3 +1020,324 @@ class IDKickMap:
             return
         radia_model_config.beam_energy = beam_energy
         radia_model_config.beam = _fmaptrack.Beam(energy=beam_energy)
+
+
+class EllaumeKickMap:
+    """Class to generante kickmaps from Ellaume formalism."""
+
+    def __init__(self, fieldsource, kmap_fname=None, author=None):
+        """."""
+        self._kmap_fname = kmap_fname
+        self.fmap_idlen = None  # [m]
+        self.kmap_idlen = None  # [m]
+        self.posx = None  # [m]
+        self.posy = None  # [m]
+        self.posx_fit = None  # [m]
+        self.posy_fit = None  # [m]
+        self.kickx = None  # [T².m²]
+        self.kicky = None  # [T².m²]
+        self.period_len = None  # [mm]
+        self._fieldsource_type = None
+        self.potential = None
+        self.matrix_poly = None
+        self.fit_coefs = None
+        self.potential_fit = None
+        self.author = author or IDKickMap.DEF_AUTHOR
+        self.fieldsource = fieldsource
+        self.brho = _fmaptrack.Beam(energy=3).brho  # [Tm]
+
+    @property
+    def fieldsource(self):
+        return self._fieldsource
+
+    @fieldsource.setter
+    def fieldsource(self, value):
+        self._fieldsource = value
+        if isinstance(value, _fmaptrack.FieldMap):
+            self._fieldsource_type = 'Fieldmap'
+        elif isinstance(value, _IDModel):
+            self._fieldsource_type = 'RADIA'
+        else:
+            raise ValueError('Invalid fieldsource')
+
+    def get_field_transverse(self, x, y, rz):
+        if self._fieldsource_type == 'RADIA':
+            b = self.fieldsource.get_field(x, y, rz)
+            return b[:, 0], b[:, 1]
+        else:
+            idx = _np.argwhere(self.fieldsource.rx == x)[0][0]
+            idy = _np.argwhere(self.fieldsource.ry == y)[0][0]
+            return self.fieldsource.bx[idy, idx, :], self.fieldsource.by[
+                idy, idx, :
+            ]
+
+    def get_field_one_period(self, x, y, rz, period):
+        bx, by = self.get_field_transverse(x, y, rz)
+        if self._fieldsource_type == 'Fieldmap':
+            rz = self.fieldsource.rz
+        idx_begin = _np.argmin(_np.abs(rz + period / 2))
+        idx_end = _np.argmin(_np.abs(rz - period / 2))
+        z = rz[idx_begin:idx_end]
+        bx = bx[idx_begin:idx_end]
+        by = by[idx_begin:idx_end]
+        return z, bx, by
+
+    def fit_fourier_coefs(self, z, b, period, nr_harms):
+        modes_matrix = _np.zeros((len(z), 2 * nr_harms))
+        ks = _np.arange(1, nr_harms + 1) * 2 * _np.pi / period
+        for i, k in enumerate(ks):
+            modes_matrix[:, 2 * i] = _np.cos(k * z)
+            modes_matrix[:, 2 * i + 1] = _np.sin(k * z)
+        invmat = _np.linalg.pinv(modes_matrix)
+        coefs = invmat @ b
+        return coefs, modes_matrix
+
+    def get_field_amps(self, coefs, nr_harms):
+        coefs = _np.reshape(coefs, (nr_harms, 2))
+        field_amps = _np.sqrt(_np.sum(coefs**2, axis=1))
+        return field_amps
+
+    def calc_kickmap_potential_at_xy(
+        self, x, y, rz, nr_periods, period, nr_harms
+    ):
+        z, bx, by = self.get_field_one_period(x, y, rz, period)
+        coefs_by, _ = self.fit_fourier_coefs(z, by, period, nr_harms)
+        coefs_bx, _ = self.fit_fourier_coefs(z, bx, period, nr_harms)
+        period *= 1e-3
+        by_amps = self.get_field_amps(coefs_by, nr_harms)
+        bx_amps = self.get_field_amps(coefs_bx, nr_harms)
+        n = _np.arange(1, nr_harms + 1, 1)
+        by_amps_n = by_amps / n
+        bx_amps_n = bx_amps / n
+        phi = (
+            nr_periods
+            * (period / 2)
+            * (period / (2 * _np.pi)) ** 2
+            * _np.sum(by_amps_n**2 + bx_amps_n**2)
+        )
+        return phi
+
+    def calc_full_potential(self, nr_periods, period, nr_harms, rz):
+        if self.posx is None or self.posy is None:
+            raise ValueError('posx and posy must be set before calculating potential.')
+        rx = 1e3*self.posx  # convert [m] to [mm]
+        ry = 1e3*self.posy  # convert [m] to [mm]
+        potential = _np.zeros((len(rx), len(ry)))
+        for i, x in enumerate(rx):
+            for j, y in enumerate(ry):
+                x_ = round(x, 10)
+                y_ = round(y, 10)
+                progress = 100 * (i * len(ry) + j + 1) / (len(rx) * len(ry))
+                print(
+                    'Calculating potential... Progress: {:.2f}%'.format(progress),
+                    end='\r',
+                    flush=True)
+        for i, j in _np.ndindex(potential.shape):
+            x_ = round(rx[i], 10)
+            y_ = round(ry[j], 10)
+            progress = 100 * (i * len(ry) + j + 1) / (len(rx) * len(ry))
+            print(
+                f'Calculating potential... Progress: {progress:.2f}%',
+                end='\r',
+                flush=True
+            )
+            potential[i, j] = self.calc_kickmap_potential_at_xy(
+                x_, y_, rz, nr_periods, period, nr_harms
+            )
+        self.potential = potential
+        return potential
+
+    def plot_potential(self, fitted=False):
+        if fitted:
+            if self.potential_fit is None:
+                raise ValueError('Fitted potential has not been calculated yet. Call calc_full_potential first.')
+            X, Y = _np.meshgrid(self.posx_fit, self.posy_fit)
+            potential = self.potential_fit
+        else:
+            if self.potential is None:
+                raise ValueError('Potential has not been calculated yet. Call calc_full_potential first.')
+            X, Y = _np.meshgrid(self.posx, self.posy)
+            potential = self.potential
+
+        fig = _plt.figure(figsize=(9, 6))
+        ax = fig.add_subplot(111, projection='3d')
+
+        surf = ax.plot_surface(
+            1e3*X,
+            1e3*Y,
+            potential.T,
+            edgecolor='none',
+            antialiased=True,
+        )
+
+        ax.set_xlabel('x [mm]')
+        ax.set_ylabel('y [mm]')
+        ax.set_zlabel(r'$K_x$ [$T^2\,m^3$]')
+        ax.set_title('Kickmap potential')
+        ax.view_init(elev=30, azim=-30)
+        _plt.tight_layout()
+        for i, j in _np.ndindex(potential.shape):
+            x_ = round(rx[i], 10)
+            y_ = round(ry[j], 10)
+            progress = 100 * (i * len(ry) + j + 1) / (len(rx) * len(ry))
+            print(
+                f'Calculating potential... Progress: {progress:.2f}%',
+                end='\r',
+                flush=True
+            )
+            potential[i, j] = self.calc_kickmap_potential_at_xy(
+                x_, y_, rz, nr_periods, period, nr_harms
+            )
+
+    def calc_2d_polyfit_matrix(self, degree, posx=None, posy=None):
+        if posx is None or posy is None:
+            if self.posx is None or self.posy is None:
+                raise ValueError('posx and posy must be set before calculating potential.')
+            else:
+                posx = 1e3*self.posx  # convert [m] to [mm]
+                posy = 1e3*self.posy  # convert [m] to [mm]
+        n = degree + 1
+        nr_coefs = int(n*(n+1)/2)
+        matrix = _np.zeros((len(posx)*len(posy), nr_coefs))
+        y_vec = _np.tile(posy, len(posx))
+        x_vec = _np.repeat(posx, len(posy))
+        idx = 0
+        for i in _np.arange(degree + 1):
+            for j in _np.arange(degree + 1 -i):
+                matrix[:, idx] = (x_vec**i) * (y_vec**j)
+                idx += 1
+        return matrix
+
+    def fit_2d_polyfit(self, degree):
+        if self.posx is None or self.posy is None:
+            raise ValueError('posx and posy must be set before calculating potential.')
+        if self.potential is None:
+            raise ValueError('Potential has not been calculated yet. Call calc_full_potential first.')
+        potential = self.potential
+        posx = self.posx
+        posy = self.posy
+        matrix = self.calc_2d_polyfit_matrix(degree)
+        invmat = _np.linalg.pinv(matrix)
+        pot_vec = _np.reshape(potential, len(posx)*len(posy), order='C')
+        coefs = _np.dot(invmat, pot_vec)
+        potential_fit = _np.reshape(_np.dot(matrix, coefs), (len(posx), len(posy)), order='C')
+        residue = _np.sqrt(_np.sum((potential_fit-potential))**2)
+        self.matrix_poly = matrix
+        self.fit_coefs = coefs
+        return coefs, residue
+
+    def calc_potential_fit(self, degree):
+        if self.posx_fit is None or self.posy_fit is None:
+            raise ValueError('posx_fit and posy_fit must be set before calculating potential.')
+        posx = 1e3*self.posx_fit  # convert [m] to [mm]
+        posy = 1e3*self.posy_fit  # convert [m] to [mm]
+        coefs = self.fit_coefs
+        matrix = self.calc_2d_polyfit_matrix(degree, posx, posy)
+        potential_fit = _np.reshape(_np.dot(matrix, coefs), (len(posx), len(posy)), order='C')
+        self.matrix_poly = matrix
+        self.potential_fit = potential_fit
+        return potential_fit
+
+    def calc_dy_operator(self):
+        if self.matrix_poly is None:
+            raise ValueError('Polynomial matrix has not been calculated yet.')
+        matrix = self.matrix_poly
+        deg = int((-1 + _np.sqrt(1+8*matrix.shape[1]))/2) - 1
+        dy_operator = _np.zeros((matrix.shape[1], matrix.shape[1]))
+        vec = _np.zeros((matrix.shape[1]))
+        vec[0] = 1
+        count = 0
+        ref_idx = 0
+        amp = 1
+        for i in range(matrix.shape[1]-2):
+            j = i + 1
+            vec = amp*vec/_np.linalg.norm(vec)
+            amp += 1
+            dy_operator[:, j] = vec
+            if (j - ref_idx) == deg + 1 - count:
+                ref_idx = j
+                count += 1
+                amp = 1
+                dy_operator[:, j] = 0
+            vec = _np.roll(vec, 1)
+        return dy_operator
+
+    def calc_dx_operator(self):
+        if self.matrix_poly is None:
+            raise ValueError('Polynomial matrix has not been calculated yet.')
+        matrix = self.matrix_poly
+        deg = int((-1 + _np.sqrt(1+8*matrix.shape[1]))/2) - 1
+        dx_operator = _np.zeros((matrix.shape[1], matrix.shape[1]))
+        vec = _np.zeros((matrix.shape[1]))
+        vec[0] = 1
+        count = 0
+        ref_idx = 0
+        for i in range(matrix.shape[1]-deg-1):
+            j = i + deg + 1
+            if (i+1 - ref_idx) == deg + 1 - count:
+                ref_idx = i
+                vec = _np.roll(vec, 1)
+                count += 1
+                vec = (count+1)*vec/_np.linalg.norm(vec)
+            dx_operator[:, j] = vec
+            vec = _np.roll(vec, 1)
+        return dx_operator
+
+    def calc_dely(self):
+        dy = self.calc_dy_operator()
+        potential_fit = self.potential_fit
+        coefs = self.fit_coefs
+        matrix = self.matrix_poly
+        coefs_dy = _np.dot(dy, coefs)
+        dp_dy = _np.dot(matrix, coefs_dy)
+        dp_dy = _np.reshape(dp_dy, potential_fit.shape, order='C')
+        return dp_dy
+
+    def calc_delx(self):
+        dx = self.calc_dx_operator()
+        potential_fit = self.potential_fit
+        coefs = self.fit_coefs
+        matrix = self.matrix_poly
+        coefs_dx = _np.dot(dx, coefs)
+        dp_dx = _np.dot(matrix, coefs_dx)
+        dp_dx = _np.reshape(dp_dx, potential_fit.shape, order='C')
+        return dp_dx
+
+    def calc_kicks(self):
+        brho = self.brho
+        dp_dx = 1e3 * self.calc_delx()
+        dp_dy = 1e3 * self.calc_dely()
+        kicksx = -1/2 * dp_dx.T
+        kicksy = -1/2 * dp_dy.T
+        self.kickx = kicksx
+        self.kicky = kicksy
+        return kicksx/brho**2, kicksy/brho**2
+
+    def plot_kicks(self, plane='x'):
+        if self.kickx is None or self.kicky is None:
+            raise ValueError('Kicks have not been calculated yet.')
+        if plane.lower() == 'x':
+            kick = self.kickx/self.brho**2
+        elif plane.lower() == 'y':
+            kick = self.kicky/self.brho**2
+        else:
+            raise ValueError('Invalid plane value.')
+        X, Y = _np.meshgrid(self.posx_fit, self.posy_fit)
+        fig = _plt.figure(figsize=(9, 6))
+        ax = fig.add_subplot(111, projection='3d')
+
+        surf = ax.plot_surface(
+            1e3*X,
+            1e3*Y,
+            1e6*kick,
+            edgecolor='none',
+            antialiased=True,
+        )
+
+        ax.set_xlabel('x [mm]')
+        ax.set_ylabel('y [mm]')
+        ax.set_zlabel('kick [urad]')
+        ax.set_title('Kick ' + plane.lower())
+        ax.view_init(elev=30, azim=-30)
+        _plt.tight_layout()
+        _plt.show()
