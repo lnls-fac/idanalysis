@@ -1060,7 +1060,7 @@ class EllaumeKickMap:
         else:
             raise ValueError('Invalid fieldsource')
 
-    def get_field_at_xy(self, x, y, rz):
+    def get_field_transverse(self, x, y, rz):
         if self._fieldsource_type == 'RADIA':
             b = self.fieldsource.get_field(x, y, rz)
             return b[:, 0], b[:, 1]
@@ -1071,8 +1071,8 @@ class EllaumeKickMap:
                 idy, idx, :
             ]
 
-    def get_oneperiod_field(self, x, y, rz, period):
-        bx, by = self.get_field_at_xy(x, y, rz)
+    def get_field_one_period(self, x, y, rz, period):
+        bx, by = self.get_field_transverse(x, y, rz)
         if self._fieldsource_type == 'Fieldmap':
             rz = self.fieldsource.rz
         idx_begin = _np.argmin(_np.abs(rz + period / 2))
@@ -1104,7 +1104,7 @@ class EllaumeKickMap:
     def calc_kickmap_potential_at_xy(
         self, x, y, rz, nr_periods, period, nr_harms
     ):
-        z, bx, by = self.get_oneperiod_field(x, y, rz, period)
+        z, bx, by = self.get_field_one_period(x, y, rz, period)
         coefs_by, _ = self.fit_fourier_coefs(z, by, period, nr_harms)
         coefs_bx, _ = self.fit_fourier_coefs(z, bx, period, nr_harms)
         period *= 1e-3
