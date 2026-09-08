@@ -1038,45 +1038,13 @@ class EllaumeKickMap:
         self.kicky = None  # [T².m²]
         self.period_len = None  # [mm]
         self._fieldsource_type = None
-        self._potential = None
-        self._matrix_poly = None
-        self._fit_coefs = None
-        self._potential_fit = None
+        self.potential = None
+        self.matrix_poly = None
+        self.fit_coefs = None
+        self.potential_fit = None
         self.author = author or IDKickMap.DEF_AUTHOR
         self.fieldsource = fieldsource
         self.brho = _fmaptrack.Beam(energy=3).brho  # [Tm]
-
-    @property
-    def fit_coefs(self):
-        return self._fit_coefs
-
-    @fit_coefs.setter
-    def fit_coefs(self, value):
-        self._fit_coefs = value
-
-    @property
-    def matrix_poly(self):
-        return self._matrix_poly
-
-    @matrix_poly.setter
-    def matrix_poly(self, value):
-        self._matrix_poly = value
-
-    @property
-    def potential_fit(self):
-        return self._potential_fit
-
-    @potential_fit.setter
-    def potential_fit(self, value):
-        self._potential_fit = value
-
-    @property
-    def potential(self):
-        return self._potential
-
-    @potential.setter
-    def potential(self, value):
-        self._potential = value
 
     @property
     def fieldsource(self):
@@ -1150,7 +1118,6 @@ class EllaumeKickMap:
             * (period / 2)
             * (period / (2 * _np.pi)) ** 2
             * _np.sum(by_amps_n**2 + bx_amps_n**2)
-
         )
         return phi
 
