@@ -1177,13 +1177,8 @@ class EllaumeKickMap:
         ax.view_init(elev=30, azim=-30)
         _plt.tight_layout()
 
-    def calc_2d_polyfit_matrix(self, degree, posx=None, posy=None):
-        if posx is None or posy is None:
-            if self.posx is None or self.posy is None:
-                raise ValueError('posx and posy must be set before calculating potential.')
-            else:
-                posx = 1e3*self.posx  # convert [m] to [mm]
-                posy = 1e3*self.posy  # convert [m] to [mm]
+    @staticmethod
+    def calc_2d_polyfit_matrix(degree, posx=None, posy=None):
         n = degree + 1
         nr_coefs = int(n*(n+1)/2)
         matrix = _np.zeros((len(posx)*len(posy), nr_coefs))
@@ -1204,7 +1199,7 @@ class EllaumeKickMap:
         potential = self.potential
         posx = self.posx
         posy = self.posy
-        matrix = self.calc_2d_polyfit_matrix(degree)
+        matrix = self.calc_2d_polyfit_matrix(degree, 1e3*posx, 1e3*posy)
         invmat = _np.linalg.pinv(matrix)
         pot_vec = _np.reshape(potential, len(posx)*len(posy), order='C')
         coefs = _np.dot(invmat, pot_vec)
