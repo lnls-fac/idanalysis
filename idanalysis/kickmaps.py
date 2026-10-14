@@ -1088,8 +1088,7 @@ class EllaumeKickMap:
         for i, k in enumerate(ks):
             modes_matrix[:, 2 * i] = _np.cos(k * z)
             modes_matrix[:, 2 * i + 1] = _np.sin(k * z)
-        invmat = _np.linalg.pinv(modes_matrix)
-        coefs = invmat @ b
+        coefs, *_ = _np.linalg.lstsq(modes_matrix, b)
         return coefs, modes_matrix
 
     def get_field_amps(self, coefs, nr_harms):
@@ -1200,11 +1199,8 @@ class EllaumeKickMap:
         posx = self.posx
         posy = self.posy
         matrix = self.calc_2d_polyfit_matrix(degree, 1e3*posx, 1e3*posy)
-        invmat = _np.linalg.pinv(matrix)
         pot_vec = _np.reshape(potential, len(posx)*len(posy), order='C')
-        coefs = _np.dot(invmat, pot_vec)
-        potential_fit = _np.reshape(_np.dot(matrix, coefs), (len(posx), len(posy)), order='C')
-        residue = _np.sqrt(_np.sum((potential_fit-potential)**2))
+        coefs, residue, *_ = _np.linalg.lstsq(matrix, pot_vec, rcond=None)
         self.matrix_poly = matrix
         self.fit_coefs = coefs
         return coefs, residue
