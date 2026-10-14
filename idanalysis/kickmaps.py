@@ -1088,7 +1088,7 @@ class EllaumeKickMap:
         for i, k in enumerate(ks):
             modes_matrix[:, 2 * i] = _np.cos(k * z)
             modes_matrix[:, 2 * i + 1] = _np.sin(k * z)
-        coefs, *_ = _np.linalg.lstsq(modes_matrix, b)
+        coefs, *_ = _np.linalg.lstsq(modes_matrix, b, rcond=None)
         return coefs, modes_matrix
 
     def get_field_amps(self, coefs, nr_harms):
