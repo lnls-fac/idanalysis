@@ -1172,7 +1172,7 @@ class EllaumeKickMap:
 
         ax.set_xlabel('x [mm]')
         ax.set_ylabel('y [mm]')
-        ax.set_zlabel(r'$K_x$ [$T^2\,m^3$]')
+        ax.set_zlabel(r'$\phi$ [$T^2\,m^3$]')
         ax.set_title('Kickmap potential')
         ax.view_init(elev=30, azim=-30)
         _plt.tight_layout()
