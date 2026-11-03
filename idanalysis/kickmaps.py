@@ -1282,6 +1282,15 @@ class EllaumeKickMap:
         dp_dx = _np.reshape(dp_dx, potential_fit.shape, order='C')
         return dp_dx
 
+    def calc_kicks_numerically(self):
+        brho = self.brho
+        dp_dy, dp_dx = _np.gradient(self.potential.T, self.posy, self.posx)
+        kicksx = -1/2*dp_dy
+        kicksy = -1/2*dp_dx
+        self.kickx = kicksx
+        self.kicky = kicksy
+        return kicksx/brho**2, kicksy/brho**2
+
     def calc_kicks(self):
         brho = self.brho
         dp_dx = 1e3 * self.calc_delx()
